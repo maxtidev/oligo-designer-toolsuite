@@ -38,10 +38,10 @@ TM_PARAMETERS = {
     "strict": True,  # default
     "c_seq": None,  # default
     "shift": 0,  # default
-    "nn_table": getattr(mt, "DNA_NN3"),
-    "tmm_table": getattr(mt, "DNA_TMM1"),
-    "imm_table": getattr(mt, "DNA_IMM1"),
-    "de_table": getattr(mt, "DNA_DE1"),
+    "nn_table": mt.DNA_NN3,
+    "tmm_table": mt.DNA_TMM1,
+    "imm_table": mt.DNA_IMM1,
+    "de_table": mt.DNA_DE1,
     "dnac1": 50,  # [nM]
     "dnac2": 0,  # [nM]
     "selfcomp": False,  # default

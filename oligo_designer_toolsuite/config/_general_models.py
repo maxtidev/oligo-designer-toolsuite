@@ -1,4 +1,4 @@
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Self
 
 from pydantic import (
     AliasChoices,
@@ -11,7 +11,6 @@ from pydantic import (
     model_serializer,
     model_validator,
 )
-from typing_extensions import Self
 
 
 class General(BaseModel):

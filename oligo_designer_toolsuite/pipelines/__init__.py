@@ -11,12 +11,12 @@ from ._scrinshot_probe_designer import ScrinshotProbeDesigner
 from ._seqfish_plus_probe_designer import SeqFishPlusProbeDesigner
 
 __all__ = [
+    "CycleHCRProbeDesigner",
     "GenomicRegionGenerator",
+    "HcrProbeDesigner",
+    "MerfishProbeDesigner",
     "OligoSeqProbeDesigner",
-    "oligo_seq_probe_designer",
     "ScrinshotProbeDesigner",
     "SeqFishPlusProbeDesigner",
-    "MerfishProbeDesigner",
-    "CycleHCRProbeDesigner",
-    "HcrProbeDesigner",
+    "oligo_seq_probe_designer",
 ]

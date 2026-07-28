@@ -415,7 +415,7 @@ class TestGffParser(unittest.TestCase):
     def test_load_annotation_from_pickle_file(self) -> None:
         """Test loading annotation from a pickle file."""
         result = self.parser.load_annotation_from_pickle(FILE_PICKLE)
-        assert type(result) == pd.DataFrame, f"error: GTF dataframe not correctly loaded from pickle file"
+        assert type(result) == pd.DataFrame, "error: GTF dataframe not correctly loaded from pickle file"
 
 
 class TestFastaParser(unittest.TestCase):
@@ -568,7 +568,7 @@ class TestFastaParser(unittest.TestCase):
         # Verify that a new index file was created (not the stale one)
         assert os.path.exists(index_file), f"error: index file {index_file} should exist after indexing"
         # Verify the index file is not the stale content
-        with open(index_file, "r") as f:
+        with open(index_file) as f:
             content = f.read()
             assert "stale_index_content" not in content, "error: stale index content should have been removed"
 

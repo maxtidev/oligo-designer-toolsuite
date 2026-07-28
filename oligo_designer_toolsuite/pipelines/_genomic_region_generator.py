@@ -190,7 +190,7 @@ def main() -> None:
     args = base_parser()
 
     # read the config file
-    with open(args["config"], "r") as handle:
+    with open(args["config"]) as handle:
         config = yaml.safe_load(handle)
 
     pipeline = GenomicRegionGenerator(dir_output=config["dir_output"])

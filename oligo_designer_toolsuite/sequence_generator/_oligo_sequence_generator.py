@@ -106,10 +106,7 @@ class OligoSequenceGenerator:
         file_fasta_out = safe_append_filename(self.dir_output, f"{filename_out}.fna")
 
         with open(file_fasta_out, "w") as handle_fasta:
-            for i, seq in enumerate(sequences_set):
-                handle_fasta.write(
-                    f">{name_sequences}{SEPARATOR_FASTA_HEADER_FIELDS}regiontype=random_sequence;region_id={name_sequences}_{i}\n{seq}\n"
-                )
+            handle_fasta.writelines(f">{name_sequences}{SEPARATOR_FASTA_HEADER_FIELDS}regiontype=random_sequence;region_id={name_sequences}_{i}\n{seq}\n" for i, seq in enumerate(sequences_set))
         return file_fasta_out
 
     def create_sequences_sliding_window(

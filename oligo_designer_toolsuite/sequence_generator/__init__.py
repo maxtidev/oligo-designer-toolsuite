@@ -12,11 +12,11 @@ from ._oligo_sequence_generator import OligoSequenceGenerator
 
 __all__ = [
     "BaseFtpLoader",
+    "CustomGenomicRegionGenerator",
+    "EnsemblGenomicRegionGenerator",
     "FtpLoaderEnsembl",
     "FtpLoaderNCBI",
-    "CustomGenomicRegionGenerator",
     "NcbiGenomicRegionGenerator",
-    "EnsemblGenomicRegionGenerator",
     "OligoSequenceGenerator",
 ]
 

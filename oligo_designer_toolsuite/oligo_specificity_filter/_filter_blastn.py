@@ -385,7 +385,7 @@ class BlastNFilter(AlignmentSpecificityFilter):
         :rtype: pd.DataFrame
         """
         bed["overflow_start"] = bed["start"].apply(lambda x: -x if x < 0 else 0)
-        bed["start"] = bed["start"].apply(lambda x: x if x >= 0 else 0)
+        bed["start"] = bed["start"].apply(lambda x: max(x, 0))
 
         records = SeqIO.parse(file_reference, "fasta")
         regions_length = {record.id: len(record.seq) for record in records}
@@ -396,7 +396,7 @@ class BlastNFilter(AlignmentSpecificityFilter):
             axis=1,
         )
         bed["end"] = bed[["end", "len_region"]].apply(
-            lambda x: x["end"] if x["end"] <= x["len_region"] else x["len_region"],
+            lambda x: min(x["end"], x["len_region"]),
             axis=1,
         )
         return bed
@@ -671,8 +671,8 @@ class BlastNSeedregionFilter(BlastNSeedregionFilterBase):
 
     def __init__(
         self,
-        seedregion_start: int | float,
-        seedregion_end: int | float,
+        seedregion_start: float,
+        seedregion_end: float,
         remove_hits: bool = True,
         search_parameters: dict | None = None,
         hit_parameters: dict | None = None,

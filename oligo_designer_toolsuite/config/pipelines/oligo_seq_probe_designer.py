@@ -1,7 +1,6 @@
-from typing import Literal
+from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, PositiveInt, model_validator
-from typing_extensions import Self
 
 from oligo_designer_toolsuite.config._general_models import (
     BlastnHitParameters,

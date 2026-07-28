@@ -88,7 +88,7 @@ class PipelinesBase(unittest.TestCase, ABC):
 
 class TestGenomicRegionGenerator(PipelinesBase, unittest.TestCase):
     def setup_output_dir(self) -> Any:
-        with open(CONFIG_GENOMIC_REGION_GENERATOR, "r") as handle:
+        with open(CONFIG_GENOMIC_REGION_GENERATOR) as handle:
             config = yaml.safe_load(handle)
         dir_output = config.get("dir_output")
         if dir_output is None:
@@ -104,7 +104,7 @@ class TestGenomicRegionGenerator(PipelinesBase, unittest.TestCase):
 
 class TestOligoSeqProbeDesigner(PipelinesBase, unittest.TestCase):
     def setup_output_dir(self) -> Any:
-        with open(CONFIG_OLIGO_SEQ_PROBE_DESIGNER, "r") as handle:
+        with open(CONFIG_OLIGO_SEQ_PROBE_DESIGNER) as handle:
             config = OligoSeqProbeDesignerConfig(**yaml.safe_load(handle))
         dir_output = config.general.dir_output
         if dir_output is None:
@@ -120,7 +120,7 @@ class TestOligoSeqProbeDesigner(PipelinesBase, unittest.TestCase):
 
 class TestScrinshotProbeDesigner(PipelinesBase, unittest.TestCase):
     def setup_output_dir(self) -> Any:
-        with open(CONFIG_SCRINSHOT_PROBE_DESIGNER, "r") as handle:
+        with open(CONFIG_SCRINSHOT_PROBE_DESIGNER) as handle:
             config = yaml.safe_load(handle)
         dir_output = config.get("dir_output")
         if dir_output is None:
@@ -136,7 +136,7 @@ class TestScrinshotProbeDesigner(PipelinesBase, unittest.TestCase):
 
 class TestSeqfishplusProbeDesigner(PipelinesBase, unittest.TestCase):
     def setup_output_dir(self) -> Any:
-        with open(CONFIG_SEQFISHPLUS_PROBE_DESIGNER, "r") as handle:
+        with open(CONFIG_SEQFISHPLUS_PROBE_DESIGNER) as handle:
             config = yaml.safe_load(handle)
         dir_output = config.get("dir_output")
         if dir_output is None:
@@ -152,7 +152,7 @@ class TestSeqfishplusProbeDesigner(PipelinesBase, unittest.TestCase):
 
 class TestMerfishProbeDesigner(PipelinesBase, unittest.TestCase):
     def setup_output_dir(self) -> Any:
-        with open(CONFIG_MERFISH_PROBE_DESIGNER, "r") as handle:
+        with open(CONFIG_MERFISH_PROBE_DESIGNER) as handle:
             config = yaml.safe_load(handle)
         dir_output = config.get("dir_output")
         if dir_output is None:
@@ -168,7 +168,7 @@ class TestMerfishProbeDesigner(PipelinesBase, unittest.TestCase):
 
 class TestCycleHCRProbeDesigner(PipelinesBase, unittest.TestCase):
     def setup_output_dir(self) -> Any:
-        with open(CONFIG_CYCLEHCR_PROBE_DESIGNER, "r") as handle:
+        with open(CONFIG_CYCLEHCR_PROBE_DESIGNER) as handle:
             config = yaml.safe_load(handle)
         dir_output = config.get("dir_output")
         if dir_output is None:
@@ -184,7 +184,7 @@ class TestCycleHCRProbeDesigner(PipelinesBase, unittest.TestCase):
 
 class TestHCRProbeDesigner(PipelinesBase, unittest.TestCase):
     def setup_output_dir(self) -> Any:
-        with open(CONFIG_HCR_PROBE_DESIGNER, "r") as handle:
+        with open(CONFIG_HCR_PROBE_DESIGNER) as handle:
             config = yaml.safe_load(handle)
         dir_output = config.get("dir_output")
         if dir_output is None:

@@ -443,7 +443,7 @@ class SeedregionProperty(BaseProperty):
     :type end: int | float
     """
 
-    def __init__(self, start: int | float, end: int | float) -> None:
+    def __init__(self, start: float, end: float) -> None:
         """Constructor for the SeedregionProperty class."""
         super().__init__()
         self.start = start

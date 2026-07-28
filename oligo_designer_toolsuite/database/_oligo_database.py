@@ -110,7 +110,7 @@ class OligoDatabase:
                 f"regions_with_insufficient_oligos_for_{self.database_name}.txt",
             )
             with open(self.file_removed_regions, "a") as handle:
-                handle.write(f"Region\tPipeline step\n")
+                handle.write("Region\tPipeline step\n")
 
     ############################################
     # Load Functions
@@ -185,7 +185,7 @@ class OligoDatabase:
                     else:
                         sequences[region] = {str(entry.seq): oligo_properties}
 
-                database_region: dict[str, dict[str, Any]] = {region: {} for region in sequences.keys()}
+                database_region: dict[str, dict[str, Any]] = {region: {} for region in sequences}
                 for region, sequences_region in sequences.items():
                     i = 1
                     for oligo_sequence, oligo_properties in sequences_region.items():
@@ -205,7 +205,7 @@ class OligoDatabase:
                         max_entries_in_memory=self._max_entries_in_memory,
                     )
                 else:
-                    for region in database_region.keys():
+                    for region in database_region:
                         self.database[region] = database_region[region]
 
         # Check formatting
@@ -222,7 +222,7 @@ class OligoDatabase:
             self.database = EffiDict(disk_backend=backend, replacement_strategy=strategy)
 
         # Load files parallel into database
-        with joblib_progress(description=f"Database Loading", total=len(files_fasta)):
+        with joblib_progress(description="Database Loading", total=len(files_fasta)):
             Parallel(n_jobs=self.n_jobs, prefer="threads", require="sharedmem")(
                 delayed(_load_fasta_file)(file_fasta) for file_fasta in files_fasta
             )
@@ -410,7 +410,7 @@ class OligoDatabase:
         files_database = [entry.path for entry in os.scandir(path) if entry.is_file()]
 
         # Load files parallel into database
-        with joblib_progress(description=f"Database Loading", total=len(files_database)):
+        with joblib_progress(description="Database Loading", total=len(files_database)):
             Parallel(n_jobs=self.n_jobs, prefer="threads", require="sharedmem")(
                 delayed(_load_database_file)(file_database) for file_database in files_database
             )
@@ -1180,9 +1180,7 @@ class OligoDatabase:
         region_ids = cast_to_list(region_ids)
         if self.database:
             for region_id in self.database.keys():
-                if remove_region and (region_id in region_ids):
-                    del self.database[region_id]
-                elif not remove_region and (region_id not in region_ids):
+                if (remove_region and (region_id in region_ids)) or (not remove_region and (region_id not in region_ids)):
                     del self.database[region_id]
         else:
             raise DatabaseError(
@@ -1206,9 +1204,7 @@ class OligoDatabase:
             for region_id in self.database.keys():
                 oligo_ids_region = list(self.database[region_id].keys())
                 for oligo_id in oligo_ids_region:
-                    if remove_region and (oligo_id in oligo_ids):
-                        del self.database[region_id][oligo_id]
-                    elif not remove_region and (oligo_id not in oligo_ids):
+                    if (remove_region and (oligo_id in oligo_ids)) or (not remove_region and (oligo_id not in oligo_ids)):
                         del self.database[region_id][oligo_id]
         else:
             raise DatabaseError(
@@ -1277,14 +1273,11 @@ class OligoDatabase:
                 )
                 if property_values:
                     # remove if any of the items match category
-                    if remove_if_equals_category and any(
+                    if (remove_if_equals_category and any(
                         item in property_category for item in property_values
-                    ):
-                        oligos_to_delete.append((region_id, oligo_id))
-                    # remove if all of the items don't match the category
-                    elif not remove_if_equals_category and all(
+                    )) or (not remove_if_equals_category and all(
                         item not in property_category for item in property_values
-                    ):
+                    )):
                         oligos_to_delete.append((region_id, oligo_id))
 
         for region_id, oligo_id in oligos_to_delete:

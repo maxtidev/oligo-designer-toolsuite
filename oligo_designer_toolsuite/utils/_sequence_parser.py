@@ -150,26 +150,25 @@ class GffParser:
         lines_read = 0
 
         fn_open: Any = gzip.open if annotation_file.endswith(".gz") else open
-        with fn_open(annotation_file, "r") as input_file:
-            with open(csv_file, "w") as out_csv:
-                with open(extra_info_file, "w") as out_extra_info:
-                    while not finished and lines_read < target_lines:
-                        csv_content_chunck = ""
-                        extra_info_content_chunck = ""
-                        for _ in range(chunk_size):
-                            lines_read += 1
-                            if lines_read > target_lines:
-                                break
-                            try:
-                                line = next(input_file)
-                                if not line.startswith("#"):
-                                    csv_content_chunck += "\t".join(line.split("\t")[:8]) + "\n"
-                                    extra_info_content_chunck += "\t".join(line.split("\t")[8:])
-                            except:
-                                finished = True
+        with fn_open(annotation_file, "r") as input_file, open(csv_file, "w") as out_csv:
+            with open(extra_info_file, "w") as out_extra_info:
+                while not finished and lines_read < target_lines:
+                    csv_content_chunck = ""
+                    extra_info_content_chunck = ""
+                    for _ in range(chunk_size):
+                        lines_read += 1
+                        if lines_read > target_lines:
+                            break
+                        try:
+                            line = next(input_file)
+                            if not line.startswith("#"):
+                                csv_content_chunck += "\t".join(line.split("\t")[:8]) + "\n"
+                                extra_info_content_chunck += "\t".join(line.split("\t")[8:])
+                        except:
+                            finished = True
 
-                        out_csv.write(csv_content_chunck)
-                        out_extra_info.write(extra_info_content_chunck)
+                    out_csv.write(csv_content_chunck)
+                    out_extra_info.write(extra_info_content_chunck)
 
         return csv_file, extra_info_file
 
@@ -252,7 +251,7 @@ class GffParser:
         :rtype: pd.DataFrame
         """
         info_dfs = []
-        with open(info_file, "r") as info_f:
+        with open(info_file) as info_f:
             data = info_f.readlines()
             n_lines = len(data)
             for i in range(0, n_lines, chunk_size):

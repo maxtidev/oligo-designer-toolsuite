@@ -121,7 +121,7 @@ def append_nucleotide_to_sequences(input_fasta: str, nucleotide: str) -> str:
     base, ext = os.path.splitext(input_fasta)
     output_fasta = f"{base}_modified{ext}"
     # Open the input and output FASTA files
-    with open(input_fasta, "r") as infile, open(output_fasta, "w") as outfile:
+    with open(input_fasta) as infile, open(output_fasta, "w") as outfile:
         for record in SeqIO.parse(infile, "fasta"):
             # Append the nucleotide to the sequence
             record.seq = record.seq + nucleotide

@@ -1134,7 +1134,7 @@ def main() -> None:
     args = base_parser()
 
     ##### read the config file #####
-    with open(args["config"], "r") as handle:
+    with open(args["config"]) as handle:
         config_raw = yaml.safe_load(handle)
 
     try:

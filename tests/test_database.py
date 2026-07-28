@@ -256,7 +256,7 @@ class TestOligoDatabase(unittest.TestCase):
             file_database, database_overwrite=True, merge_databases_on_sequence_type="oligo"
         )
 
-        assert check_tsv_format(file_database) == True, f"error: wrong file format"
+        assert check_tsv_format(file_database) == True, "error: wrong file format"
         assert len(self.oligo_database.database.keys()) == 2, "error: wrong number regions saved and loaded"
         assert (
             self.oligo_database.get_oligo_property_value(
@@ -276,7 +276,7 @@ class TestOligoDatabase(unittest.TestCase):
             file_database, database_overwrite=True, merge_databases_on_sequence_type="oligo"
         )
 
-        assert check_tsv_format(file_database) == True, f"error: wrong file format"
+        assert check_tsv_format(file_database) == True, "error: wrong file format"
         assert len(self.oligo_database.database.keys()) == 2, "error: wrong number regions saved and loaded"
         assert (
             self.oligo_database.get_oligo_property_value(
@@ -297,7 +297,7 @@ class TestOligoDatabase(unittest.TestCase):
             filename="database_region1_region2_bed", region_ids=["region_1", "region_2"]
         )
 
-        assert check_tsv_format(file_bed) == True, f"error: wrong file format"
+        assert check_tsv_format(file_bed) == True, "error: wrong file format"
 
         bed_table = pd.read_csv(
             file_bed, sep="\t", names=["chromosome", "start", "end", "name", "score", "strand"]
@@ -346,22 +346,22 @@ class TestOligoDatabase(unittest.TestCase):
 
         # Construct file path since function returns None
         file_yaml = os.path.join(os.path.dirname(self.oligo_database.dir_output), "oligosets.yml")
-        with open(file_yaml, "r") as handle:
+        with open(file_yaml) as handle:
             yaml_oligosets = yaml.safe_load(handle)
 
         assert yaml_oligosets["region_1"]["Oligoset 1"]["Oligoset Score"] == {
             "set_score_lowest": 1.59,
             "set_score_sum": 2.36,
-        }, f"error: wrong oligoset loaded"
+        }, "error: wrong oligoset loaded"
 
         assert yaml_oligosets["region_1"]["Oligoset 1"]["Oligo 1"]["test_property"] == ["red"], (
-            f"error: wrong oligoset loaded"
+            "error: wrong oligoset loaded"
         )
 
         assert yaml_oligosets["region_1"]["Oligoset 1"]["Oligo 1"]["transcript_id"] == [
             ["NM_001605.3"],
             ["XM_047433666.1"],
-        ], f"error: wrong oligoset loaded"
+        ], "error: wrong oligoset loaded"
 
     def test_write_ready_to_order_yaml(self) -> None:
         self.oligo_database.load_database_from_table(
@@ -399,7 +399,7 @@ class TestOligoDatabase(unittest.TestCase):
         assert os.path.exists(file_yaml), f"error: YAML file {file_yaml} was not created"
 
         # Load and verify YAML structure
-        with open(file_yaml, "r") as handle:
+        with open(file_yaml) as handle:
             yaml_order = yaml.safe_load(handle)
 
         # Verify structure: region_id -> oligoset_id -> oligo_id -> properties

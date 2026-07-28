@@ -5,7 +5,8 @@
 import inspect
 import sys
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
-from typing import Any, Callable, TypeVar, cast
+from collections.abc import Callable
+from typing import Any, TypeVar, cast
 
 from Bio.SeqUtils import MeltingTemp as mt
 
@@ -110,10 +111,8 @@ def get_oligo_length_min_max_from_database(oligo_database: OligoDatabase) -> tup
         oligo_ids = oligo_database.database[region_id].keys()
         for oligo_id in oligo_ids:
             length = oligo_database.database[region_id][oligo_id]["length"]
-            if length < oligo_length_min:
-                oligo_length_min = length
-            if length > oligo_length_max:
-                oligo_length_max = length
+            oligo_length_min = min(oligo_length_min, length)
+            oligo_length_max = max(oligo_length_max, length)
 
     return oligo_length_min, oligo_length_max
 

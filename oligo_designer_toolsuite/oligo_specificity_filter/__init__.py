@@ -18,21 +18,21 @@ from ._policies import (
 from ._specificity_filter import SpecificityFilter
 
 __all__ = [
-    "BaseSpecificityFilter",
-    "ReferenceSpecificityFilter",
     "AlignmentSpecificityFilter",
-    "ExactMatchFilter",
+    "BaseFilterPolicy",
+    "BaseSpecificityFilter",
     "BlastNFilter",
     "BlastNSeedregionFilter",
     "BlastNSeedregionSiteFilter",
-    "BowtieFilter",
     "Bowtie2Filter",
+    "BowtieFilter",
     "CrossHybridizationFilter",
+    "ExactMatchFilter",
     "HybridizationProbabilityFilter",
-    "VariantsFilter",
-    "BaseFilterPolicy",
+    "ReferenceSpecificityFilter",
     "RemoveAllFilterPolicy",
     "RemoveByDegreeFilterPolicy",
     "RemoveByLargerRegionFilterPolicy",
     "SpecificityFilter",
+    "VariantsFilter",
 ]

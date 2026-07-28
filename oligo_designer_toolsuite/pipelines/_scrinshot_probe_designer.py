@@ -1810,7 +1810,7 @@ class DetectionOligoDesigner:
         ]
 
         # either start cut from left or right and make sure that oligo length is >= oligo_length_min
-        for count in range(0, len(oligo) - oligo_length_min):
+        for count in range(len(oligo) - oligo_length_min):
             if bool(count % 2) * cut_from_right:
                 oligo = oligo[1:]
             else:
@@ -1918,7 +1918,7 @@ def main() -> None:
     args = base_parser()
 
     ##### read the config file #####
-    with open(args["config"], "r") as handle:
+    with open(args["config"]) as handle:
         config = yaml.safe_load(handle)
 
     ##### read the genes file #####

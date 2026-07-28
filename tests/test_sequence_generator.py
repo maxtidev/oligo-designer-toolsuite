@@ -6,8 +6,9 @@ import os
 import shutil
 import unittest
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, cast
+from typing import Any, cast
 from unittest.mock import patch
 
 from Bio import SeqIO

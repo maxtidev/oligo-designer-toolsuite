@@ -201,7 +201,7 @@ def calc_split_sequence(sequence: str, split_start_end: list[tuple]) -> list[str
     return split_sequences
 
 
-def calc_seedregion(sequence: str, start: int | float, end: int | float) -> tuple[int, int]:
+def calc_seedregion(sequence: str, start: float, end: float) -> tuple[int, int]:
     """Calculate the seed region of a nucleotide sequence based on the provided start and end positions.
 
     The seed region is calculated based on start and end parameters. The start and end can be specified as absolute

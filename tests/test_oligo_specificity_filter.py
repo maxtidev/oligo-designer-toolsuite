@@ -343,7 +343,7 @@ class TestCrossHybridizationFilter(unittest.TestCase):
             n_jobs=2,
         )
         assert res.database in expected_oligos, (
-            f"The cross-hybridization filter didn't return the expected oligos."
+            "The cross-hybridization filter didn't return the expected oligos."
         )
 
     def test_crosshyb_filter_blast_larger_region_policy(self) -> None:

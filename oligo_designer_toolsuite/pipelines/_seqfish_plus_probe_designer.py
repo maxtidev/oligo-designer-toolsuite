@@ -806,7 +806,7 @@ class SeqFishPlusProbeDesigner:
         :rtype: tuple[str, str]
         """
         file_fasta_hybridization_probes_database = hybridization_probe_database.write_database_to_fasta(
-            filename=f"db_reference_hybridization_probes",
+            filename="db_reference_hybridization_probes",
             save_description=False,
             region_ids=None,
             sequence_type="sequence_hybridization_probe",
@@ -2395,7 +2395,7 @@ def main() -> None:
     args = base_parser()
 
     ##### read the config file #####
-    with open(args["config"], "r") as handle:
+    with open(args["config"]) as handle:
         config = yaml.safe_load(handle)
 
     ##### read the genes file #####

@@ -5,7 +5,7 @@
 import copy
 import os
 import random
-from typing import Callable, Iterable
+from collections.abc import Callable, Iterable
 
 import numpy as np
 import pandas as pd
@@ -218,8 +218,7 @@ class CustomGenomicRegionGenerator:
 
             file_chromosome_length = os.path.join(self.dir_output, "annotation.genome")
             with open(file_chromosome_length, "w") as handle:
-                for key, value in sorted(chromosome_lengths.items()):
-                    handle.write(f"{key}\t{value}\n")
+                handle.writelines(f"{key}\t{value}\n" for key, value in sorted(chromosome_lengths.items()))
 
             return file_chromosome_length
 
@@ -361,7 +360,7 @@ class CustomGenomicRegionGenerator:
             + f"species={self.species}{SEPARATOR_FASTA_HEADER_FIELDS_LIST}"
             + f"annotation_release={self.annotation_release}{SEPARATOR_FASTA_HEADER_FIELDS_LIST}"
             + f"genome_assembly={self.genome_assembly}{SEPARATOR_FASTA_HEADER_FIELDS_LIST}"
-            + f"regiontype=intergenic"
+            + "regiontype=intergenic"
         )
         annotation["region"] = self._get_annotation_region(annotation)
 
@@ -792,7 +791,7 @@ class CustomGenomicRegionGenerator:
             + f"species={self.species}{SEPARATOR_FASTA_HEADER_FIELDS_LIST}"
             + f"annotation_release={self.annotation_release}{SEPARATOR_FASTA_HEADER_FIELDS_LIST}"
             + f"genome_assembly={self.genome_assembly}{SEPARATOR_FASTA_HEADER_FIELDS_LIST}"
-            + f"regiontype="
+            + "regiontype="
             + annotation["type"]
             + SEPARATOR_FASTA_HEADER_FIELDS_LIST
             + annotation["add_inf"]
@@ -1291,10 +1290,10 @@ class NcbiGenomicRegionGenerator(CustomGenomicRegionGenerator):
 
         if mode == "species":
             if taxon is None:
-                raise ConfigurationError(f"No taxon defined.")
+                raise ConfigurationError("No taxon defined.")
 
             if species is None:
-                raise ConfigurationError(f"No species defined.")
+                raise ConfigurationError("No species defined.")
 
             if annotation_release is None:
                 annotation_release = "current"

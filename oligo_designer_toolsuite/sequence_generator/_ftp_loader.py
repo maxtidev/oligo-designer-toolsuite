@@ -77,9 +77,8 @@ class BaseFtpLoader:
         :rtype: str
         """
         file_output = file_gzip.split(".gz")[0]
-        with gzip.open(file_gzip, "rb") as f_in:
-            with open(file_output, "wb") as f_out:
-                shutil.copyfileobj(f_in, f_out)
+        with gzip.open(file_gzip, "rb") as f_in, open(file_output, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
         os.remove(file_gzip)
 
         return file_output
@@ -199,7 +198,7 @@ class FtpLoaderEnsembl(BaseFtpLoader):
 
         if self.annotation_release == "current":
             file_version = self._download(self.ftp_link, "pub/", "VERSION")
-            with open(file_version, "r") as handle:
+            with open(file_version) as handle:
                 self.annotation_release = handle.readline().strip()
             os.remove(file_version)
 
@@ -548,7 +547,7 @@ class FtpLoaderNCBI(BaseFtpLoader):
             try:
                 file_path = self._download(self.ftp_link, ftp_directory, pattern)
                 try:
-                    with open(file_path, "r") as handle:
+                    with open(file_path) as handle:
                         parser(handle)
                 finally:
                     os.remove(file_path)
@@ -572,7 +571,7 @@ class FtpLoaderNCBI(BaseFtpLoader):
         """
         try:
             file_readme = self._download(self.ftp_link, ftp_directory, r"README_(?!patch_release\.txt$).*")
-            with open(file_readme, "r") as handle:
+            with open(file_readme) as handle:
                 for line in handle:
                     if line.startswith("ANNOTATION RELEASE NAME:"):
                         annotation_release_name = line.split(":", 1)[1].strip()
@@ -713,6 +712,6 @@ class FtpLoaderNCBI(BaseFtpLoader):
                     )
                     SeqIO.write(chromosome_sequnece, handle, "fasta")
                 else:
-                    logger.warning("No mapping for accession number: {}".format(accession_number))
+                    logger.warning(f"No mapping for accession number: {accession_number}")
 
         os.replace(file_tmp, ftp_file)

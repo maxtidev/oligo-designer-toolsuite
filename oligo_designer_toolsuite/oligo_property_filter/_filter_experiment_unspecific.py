@@ -139,7 +139,7 @@ class HomopolymericRunsFilter(BasePropertyFilter):
         """Constructor for the HomopolymericRunsFilter class."""
         super().__init__()
         # check that the nucleotides provided are valid
-        for b in base_n.keys():
+        for b in base_n:
             if not check_if_dna_sequence(b):
                 raise ConfigurationError(
                     f"Base '{b}' is not a valid DNA sequence. "
