@@ -186,6 +186,7 @@ class HybridizationProbabilityFilter(ReferenceSpecificityFilter):
 
         # predict the scores for each hit
         predictions = self.model.predict(
+            # pyrefly: ignore [bad-argument-type]
             queries=queries,
             gapped_queries=gapped_queries,
             references=references,

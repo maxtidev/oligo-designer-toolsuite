@@ -153,7 +153,7 @@ class CycleHCRProbeDesigner:
     :param n_jobs: Number of parallel jobs to use for processing. Set to 1 for serial processing or higher
         values for parallel processing.
     :type n_jobs: int
-    """
+    """  # noqa: RUF002
 
     def __init__(
         self,
@@ -909,6 +909,7 @@ class CycleHCRProbeDesigner:
         for region_id, barcode in codebook.iterrows():
             bits = barcode[barcode == 1].index
             readout_probe_info = readout_probe_table.loc[bits, :]
+            # pyrefly: ignore [unsupported-operation]
             readout_probe_info["region_id"] = region_id
             readout_probe_table_regions.append(readout_probe_info)
         readout_probe_table_regions_df = pd.concat(readout_probe_table_regions, axis=0)
@@ -1229,6 +1230,7 @@ class TargetProbeDesigner:
         ]
 
         # initialize the preoperty filter class
+        # pyrefly: ignore [bad-argument-type]
         property_filter = PropertyFilter(filters=filters)
 
         # filter the database
@@ -1659,7 +1661,7 @@ class ReadoutProbeDesigner:
             codebook_list.append(barcode)
 
         codebook: pd.DataFrame = pd.DataFrame(
-            codebook_list, index=region_ids, columns=[f"bit_{i+1}" for i in range(codebook_size)]
+            codebook_list, index=region_ids, columns=[f"bit_{i + 1}" for i in range(codebook_size)]
         )
 
         # Remove columns where all values are 0
@@ -1883,7 +1885,7 @@ def main() -> None:
     args = base_parser()
 
     ##### read the config file #####
-    with open(args["config"], "r") as handle:
+    with open(args["config"]) as handle:
         config = yaml.safe_load(handle)
 
     ##### read the genes file #####
@@ -1896,7 +1898,7 @@ def main() -> None:
         with open(config["file_regions"]) as handle:
             lines = handle.readlines()
             # ensure that the list contains unique gene ids
-            region_ids = list(set([line.rstrip() for line in lines]))
+            region_ids = list(set([line.rstrip() for line in lines]))  # noqa: C403
 
     ##### initialize probe designer pipeline #####
     pipeline = CycleHCRProbeDesigner(

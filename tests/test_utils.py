@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -112,13 +112,14 @@ class TestCheckers(unittest.TestCase):
         """Test if check_if_dna_sequence works correctly for an invalid DNA sequence."""
         seq = "GGctAAgTuuTCCaGTttGCA"
         valid_characters = ["A", "C", "T", "G", "W", "X"]
-        assert not check_if_dna_sequence(
-            seq, valid_characters
-        ), "error: check_if_dna_sequence succeeded when it should have failed"
+        assert not check_if_dna_sequence(seq, valid_characters), (
+            "error: check_if_dna_sequence succeeded when it should have failed"
+        )
 
     def test_check_if_key_exists_empty(self) -> None:
         """Test the check_if_key_exists function with an empty cache."""
         empty_dict = EffiDict(disk_backend=self.backend, replacement_strategy=self.strategy)
+        # pyrefly: ignore [bad-argument-type]
         assert not check_if_key_exists(empty_dict, "a"), "Failed: Should return False for empty dictionary"
 
     def test_check_if_key_exists_flat(self) -> None:
@@ -126,10 +127,12 @@ class TestCheckers(unittest.TestCase):
         flat_database = EffiDict(disk_backend=self.backend, replacement_strategy=self.strategy)
         flat_database.load_from_dict({"a": 1, "b": 2})
 
+        # pyrefly: ignore [bad-argument-type]
         assert check_if_key_exists(flat_database, "a"), "Failed: Key 'a' should exist in flat_database"
-        assert not check_if_key_exists(
-            flat_database, "z"
-        ), "Failed: Key 'z' should not exist in flat_database"
+        # pyrefly: ignore [bad-argument-type]
+        assert not check_if_key_exists(flat_database, "z"), (
+            "Failed: Key 'z' should not exist in flat_database"
+        )
 
     def test_check_if_key_exists_nested(self) -> None:
         """Test the check_if_key_exists function with a nested cache."""
@@ -137,13 +140,16 @@ class TestCheckers(unittest.TestCase):
         nested_database = EffiDict(disk_backend=self.backend, replacement_strategy=self.strategy)
         nested_database.load_from_dict({"a": {"b": {"c": 1}}, "d": 2, "e": {"f": {"g": {"h": 3}}}})
 
+        # pyrefly: ignore [bad-argument-type]
         assert check_if_key_exists(nested_database, "c"), "Failed: Key 'c' should exist in nested_database"
-        assert not check_if_key_exists(
-            nested_database, "z"
-        ), "Failed: Key 'z' should not exist in nested_database"
-        assert check_if_key_exists(
-            nested_database, "h"
-        ), "Failed: Key 'h' should exist deep within nested_database"
+        # pyrefly: ignore [bad-argument-type]
+        assert not check_if_key_exists(nested_database, "z"), (
+            "Failed: Key 'z' should not exist in nested_database"
+        )
+        # pyrefly: ignore [bad-argument-type]
+        assert check_if_key_exists(nested_database, "h"), (
+            "Failed: Key 'h' should exist deep within nested_database"
+        )
 
     def test_cast_to_list_str(self) -> None:
         """Test if cast_to_list works correctly for a string."""
@@ -161,9 +167,9 @@ class TestCheckers(unittest.TestCase):
         """Test if cast_to_list_of_lists works correctly for a string."""
         value = "test"
         result = cast_to_list_of_lists(value)
-        assert result == [
-            [value]
-        ], f"error: cast_to_list_of_lists failed. Expected: [[{value}]], got: {result}"
+        assert result == [[value]], (
+            f"error: cast_to_list_of_lists failed. Expected: [[{value}]], got: {result}"
+        )
 
     def test_cast_to_list_of_lists_list(self) -> None:
         """Test if cast_to_list_of_lists works correctly for a list."""
@@ -181,7 +187,7 @@ class TestCheckers(unittest.TestCase):
         """Test if the parser extracts fasta header correctly."""
         try:
             check_tsv_format(FILE_TSV)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             assert False, f"error: checker: check_tsv_format raised an exception: {e}, with file {FILE_TSV}"
 
     def test_generate_unique_filename(self) -> None:
@@ -246,9 +252,9 @@ class TestDatabaseProcessor(unittest.TestCase):
         )
 
         assert len(oligo_database_merged["AARS1"]) == 4, "error: region not succesfully merged"
-        assert oligo_database_merged["AARS1"]["AARS1::1"]["start"] == [
-            [70265563]
-        ], "error: properties incorrectly merged"
+        assert oligo_database_merged["AARS1"]["AARS1::1"]["start"] == [[70265563]], (
+            "error: properties incorrectly merged"
+        )
         assert oligo_database_merged["AARS1"]["AARS1::2"]["start"] == [
             [70265562],
             [70265560],
@@ -342,6 +348,7 @@ class TestDatabaseProcessor(unittest.TestCase):
     def test_check_if_region_in_database(self) -> None:
         file_removed_regions = os.path.join(self.tmp_path, "removed_regions.tsv")
         check_if_region_in_database(
+            # pyrefly: ignore [bad-argument-type]
             database=self.oligo_database1.database,
             region_ids=["no_region1", "no_region2"],
             write_regions_with_insufficient_oligos=True,
@@ -361,9 +368,9 @@ class TestDatabaseProcessor(unittest.TestCase):
             "strand": [["+", "+"], ["-"]],
         }
 
-        assert flatten_property_list(oligo_properties["chromosome"]) == [
-            "10"
-        ], "error: property not flattened"
+        assert flatten_property_list(oligo_properties["chromosome"]) == ["10"], (
+            "error: property not flattened"
+        )
         assert flatten_property_list(oligo_properties["strand"]) == [
             "+",
             "+",
@@ -383,28 +390,31 @@ class TestGffParser(unittest.TestCase):
         """Test parsing GFF annotation data."""
         try:
             self.parser.check_gff_format(FILE_GFF)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             assert False, f"error: checker: check_gff_format raised an exception: {e}, with file {FILE_GFF}"
 
     def test_check_gtf_format(self) -> None:
         """Test parsing GTF annotation data."""
         try:
             self.parser.check_gff_format(FILE_GTF)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             assert False, f"error: checker: check_gff_format raised an exception: {e}, with file {FILE_GTF}"
 
     def test_parse_annotation_from_gff(self) -> None:
         """Test parsing GFF annotation."""
+        # pyrefly: ignore [bad-assignment]
         result: pd.DataFrame = self.parser.parse_annotation_from_gff(FILE_GFF, target_lines=10)
         assert result.shape[1] == 23, "error: GFF3 dataframe not correctly loaded"
 
     def test_parse_annotation_from_gtf(self) -> None:
         """Test parsing GTF annotation."""
+        # pyrefly: ignore [bad-assignment]
         result: pd.DataFrame = self.parser.parse_annotation_from_gff(FILE_GTF, target_lines=10)
         assert result.shape[1] == 20, "error: GTF dataframe not correctly loaded"
 
     def test_parse_annotation_from_gtf_no_duplicates(self) -> None:
         """Test when parsing GTF annotation chromosomes are not read in as both integers and strings."""
+        # pyrefly: ignore [bad-assignment]
         result: pd.DataFrame = self.parser.parse_annotation_from_gff(FILE_GTF_COMPLEX)
         self.assertListEqual(
             result["seqid"].unique().tolist(),
@@ -415,7 +425,7 @@ class TestGffParser(unittest.TestCase):
     def test_load_annotation_from_pickle_file(self) -> None:
         """Test loading annotation from a pickle file."""
         result = self.parser.load_annotation_from_pickle(FILE_PICKLE)
-        assert type(result) == pd.DataFrame, f"error: GTF dataframe not correctly loaded from pickle file"
+        assert type(result) == pd.DataFrame, "error: GTF dataframe not correctly loaded from pickle file"
 
 
 class TestFastaParser(unittest.TestCase):
@@ -432,20 +442,20 @@ class TestFastaParser(unittest.TestCase):
         """Test parsing fasta file."""
         try:
             out = self.parser.check_fasta_format(FILE_FASTA)
-            assert (
-                out == True
-            ), f"error: checker: check_fasta_format should have passed with file {FILE_FASTA}"
-        except Exception as e:
-            assert (
-                False
-            ), f"error: checker: check_fasta_format raised an exception: {e}, with file {FILE_FASTA}"
+            assert out == True, (
+                f"error: checker: check_fasta_format should have passed with file {FILE_FASTA}"
+            )
+        except Exception as e:  # noqa: BLE001
+            assert False, (
+                f"error: checker: check_fasta_format raised an exception: {e}, with file {FILE_FASTA}"
+            )
 
         try:
             out = self.parser.check_fasta_format(FILE_GFF)
-            assert (
-                out == False
-            ), f"error: checker: check_fasta_format did not raise an exception with file {FILE_GFF}"
-        except Exception:
+            assert out == False, (
+                f"error: checker: check_fasta_format did not raise an exception with file {FILE_GFF}"
+            )
+        except Exception:  # noqa: BLE001, S110
             pass  # should go into this case
 
     def test_is_coordinate(self) -> None:
@@ -455,26 +465,26 @@ class TestFastaParser(unittest.TestCase):
         entry_false2 = "17:15-20"
         entry_false3 = "15-20(-)"
 
-        assert (
-            self.parser.is_coordinate(entry_true) == True
-        ), f"error: {entry_true} should be recognized as coordinate."
-        assert (
-            self.parser.is_coordinate(entry_false1) == False
-        ), f"error: {entry_false1} should not be recognized as coordinate."
-        assert (
-            self.parser.is_coordinate(entry_false2) == False
-        ), f"error: {entry_false2} should not be recognized as coordinate."
-        assert (
-            self.parser.is_coordinate(entry_false3) == False
-        ), f"error: {entry_false3} should not be recognized as coordinate."
+        assert self.parser.is_coordinate(entry_true) == True, (
+            f"error: {entry_true} should be recognized as coordinate."
+        )
+        assert self.parser.is_coordinate(entry_false1) == False, (
+            f"error: {entry_false1} should not be recognized as coordinate."
+        )
+        assert self.parser.is_coordinate(entry_false2) == False, (
+            f"error: {entry_false2} should not be recognized as coordinate."
+        )
+        assert self.parser.is_coordinate(entry_false3) == False, (
+            f"error: {entry_false3} should not be recognized as coordinate."
+        )
 
     def test_get_fasta_regions(self) -> None:
         """Test if the parser extracts fasta regions correctly."""
         expected_result = ["16"]
         result = self.parser.get_fasta_regions(FILE_FASTA)
-        assert (
-            result == expected_result
-        ), f"error: fasta regions not correctly extracted. Expected ['16'] got {result}"
+        assert result == expected_result, (
+            f"error: fasta regions not correctly extracted. Expected ['16'] got {result}"
+        )
 
     def test_read_fasta_sequences_existing_regions(self) -> None:
         """Test parsing fasta file."""
@@ -483,12 +493,12 @@ class TestFastaParser(unittest.TestCase):
 
         assert len(result) == 1, f"error: the function loaded {len(result)} entries instead of 1"
         assert result[0].name == "16", f"error: the name should be '16' instead of {result[0].name}"
-        assert (
-            result[0].description == "16 Homo sapiens chromosome 16, GRCh38.p14 Primary Assembly"
-        ), f"error: the description should be '16 Homo sapiens chromosome 16, GRCh38.p14 Primary Assembly' instead of {result[0].description}"
-        assert (
-            result[0].dbxrefs == []
-        ), f"error: the dbxrefs should be an empty list instead of {result[0].dbxrefs}"
+        assert result[0].description == "16 Homo sapiens chromosome 16, GRCh38.p14 Primary Assembly", (
+            f"error: the description should be '16 Homo sapiens chromosome 16, GRCh38.p14 Primary Assembly' instead of {result[0].description}"
+        )
+        assert result[0].dbxrefs == [], (
+            f"error: the dbxrefs should be an empty list instead of {result[0].dbxrefs}"
+        )
 
     def test_parse_fasta_header(self) -> None:
         """Test if the parser extracts fasta header correctly."""
@@ -513,7 +523,7 @@ class TestFastaParser(unittest.TestCase):
 
         try:
             self.parser.check_fasta_format(file=file_out)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             assert False, f"error: raised an exception: {e}, with written file."
 
     def test_merge_fasta_files(self) -> None:
@@ -526,7 +536,7 @@ class TestFastaParser(unittest.TestCase):
 
         try:
             self.parser.check_fasta_format(file=file_out)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             assert False, f"error: raised an exception: {e}, with merged files."
 
     def test_index_fasta_file_creates_index(self) -> None:
@@ -568,7 +578,7 @@ class TestFastaParser(unittest.TestCase):
         # Verify that a new index file was created (not the stale one)
         assert os.path.exists(index_file), f"error: index file {index_file} should exist after indexing"
         # Verify the index file is not the stale content
-        with open(index_file, "r") as f:
+        with open(index_file) as f:
             content = f.read()
             assert "stale_index_content" not in content, "error: stale index content should have been removed"
 
@@ -588,19 +598,19 @@ class TestVCFParser(unittest.TestCase):
         try:
             out = self.parser.check_vcf_format(FILE_VCF)
             assert out == True, f"error: checker: check_fasta_format should have passed with file {FILE_VCF}"
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             assert False, f"error: checker: check_fasta_format raised an exception: {e}, with file {FILE_VCF}"
 
         try:
             out = self.parser.check_vcf_format(FILE_GFF)
-            assert (
-                out == False
-            ), f"error: checker: check_fasta_format did not raise an exception with file {FILE_GFF}"
-        except Exception:
+            assert out == False, (
+                f"error: checker: check_fasta_format did not raise an exception with file {FILE_GFF}"
+            )
+        except Exception:  # noqa: BLE001, S110
             pass  # should go into this case
 
     def test_read_vcf_variants(self) -> None:
-        variants, vcf_in = self.parser.read_vcf_variants(FILE_VCF)
+        variants, vcf_in = self.parser.read_vcf_variants(FILE_VCF)  # noqa: RUF059
 
         variant_type = variants[0].INFO.get("VC")
         variant_id = variants[0].ID
@@ -697,9 +707,9 @@ class TestCountKmerAbundance(unittest.TestCase):
 
         assert 4 in result, "error: k=4 should be in result"
         total_abundance = sum(result[4].values())
-        assert (
-            abs(total_abundance - 1.0) < 1e-10
-        ), f"error: fractional abundances should sum to 1.0, got {total_abundance}"
+        assert abs(total_abundance - 1.0) < 1e-10, (
+            f"error: fractional abundances should sum to 1.0, got {total_abundance}"
+        )
 
     def test_count_kmer_abundance_sorting(self) -> None:
         """Test that k-mers are sorted by abundance in descending order."""
@@ -709,9 +719,9 @@ class TestCountKmerAbundance(unittest.TestCase):
         abundances = list(result[4].values())
         # Check that abundances are in descending order
         for i in range(len(abundances) - 1):
-            assert (
-                abundances[i] >= abundances[i + 1]
-            ), f"error: abundances should be sorted in descending order, got {abundances[i]} < {abundances[i + 1]}"
+            assert abundances[i] >= abundances[i + 1], (
+                f"error: abundances should be sorted in descending order, got {abundances[i]} < {abundances[i + 1]}"
+            )
 
     def test_count_kmer_abundance_empty_fasta_file(self) -> None:
         """Test k-mer counting with empty FASTA file."""
@@ -747,7 +757,7 @@ class TestCountKmerAbundance(unittest.TestCase):
         result = count_kmer_abundance(files_fasta=self.file_lowercase, k=4)
 
         # Check that all k-mers are uppercase
-        for kmer in result[4].keys():
+        for kmer in result[4].keys():  # noqa: SIM118
             assert kmer.isupper(), f"error: k-mer {kmer} should be uppercase"
         # Check that lowercase k-mer is not present, but uppercase version is
         assert "atcg" not in result[4], "error: lowercase k-mer should not be present"
@@ -774,9 +784,9 @@ class TestGetHighlyAbundantKmerSequences(unittest.TestCase):
         )
         kmer_set = set(kmers)
 
-        assert {"AAA", "AAAA", "AAAAA"}.issubset(
-            kmer_set
-        ), "error: high-abundance k-mers should be identified"
+        assert {"AAA", "AAAA", "AAAAA"}.issubset(kmer_set), (
+            "error: high-abundance k-mers should be identified"
+        )
 
     def test_excludes_low_abundance_kmers(self) -> None:
         kmers = get_highly_abundant_kmer_sequences(

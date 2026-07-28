@@ -1,7 +1,6 @@
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt, PositiveInt, model_validator
-from typing_extensions import Self
 
 from oligo_designer_toolsuite.config._general_models import HomopolymericRunThreshold
 from oligo_designer_toolsuite.config._types import (

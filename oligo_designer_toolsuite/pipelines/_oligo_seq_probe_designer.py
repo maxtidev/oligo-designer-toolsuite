@@ -107,7 +107,7 @@ class OligoSeqProbeDesigner:
     :type write_intermediate_steps: bool
     :ivar n_jobs: Number of parallel threads to use for probe design and computational validation.
     :type n_jobs: int
-    """
+    """  # noqa: RUF002
 
     def __init__(self, write_intermediate_steps: bool, dir_output: str, n_jobs: int) -> None:
         """Constructor for the OligoSeqProbeDesigner class."""
@@ -185,7 +185,7 @@ class OligoSeqProbeDesigner:
             An `OligoDatabase` containing the designed target probes organized into sets,
             including computed properties and metadata for each probe.
         :rtype: OligoDatabase
-        """
+        """  # noqa: RUF002
 
         target_probe_designer = TargetProbeDesigner(self.dir_output, self.n_jobs)
 
@@ -1134,7 +1134,7 @@ def main() -> None:
     args = base_parser()
 
     ##### read the config file #####
-    with open(args["config"], "r") as handle:
+    with open(args["config"]) as handle:
         config_raw = yaml.safe_load(handle)
 
     try:

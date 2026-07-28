@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -58,7 +58,7 @@ class BaseFtpLoader:
         for file in files:
             if re.match(file_name, file):
                 file_output = os.path.join(self.dir_output, file)
-                ftp.retrbinary("RETR " + file, open(file_output, "wb").write)
+                ftp.retrbinary("RETR " + file, open(file_output, "wb").write)  # noqa: SIM115
 
         ftp.quit()
 
@@ -77,9 +77,8 @@ class BaseFtpLoader:
         :rtype: str
         """
         file_output = file_gzip.split(".gz")[0]
-        with gzip.open(file_gzip, "rb") as f_in:
-            with open(file_output, "wb") as f_out:
-                shutil.copyfileobj(f_in, f_out)
+        with gzip.open(file_gzip, "rb") as f_in, open(file_output, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
         os.remove(file_gzip)
 
         return file_output
@@ -120,9 +119,9 @@ class BaseFtpLoader:
         :type sequence_nature: _TYPES_FILE_SEQ["dna", "ncrna"]
         """
         options = get_args(_TYPES_FILE_SEQ)
-        assert (
-            sequence_nature in options
-        ), f"Sequence nature type not supported! '{sequence_nature}' is not in {options}."
+        assert sequence_nature in options, (
+            f"Sequence nature type not supported! '{sequence_nature}' is not in {options}."
+        )
 
 
 class FtpLoaderEnsembl(BaseFtpLoader):
@@ -199,7 +198,7 @@ class FtpLoaderEnsembl(BaseFtpLoader):
 
         if self.annotation_release == "current":
             file_version = self._download(self.ftp_link, "pub/", "VERSION")
-            with open(file_version, "r") as handle:
+            with open(file_version) as handle:
                 self.annotation_release = handle.readline().strip()
             os.remove(file_version)
 
@@ -245,7 +244,7 @@ class FtpLoaderNCBI(BaseFtpLoader):
     :type assembly_name: str | None
     """
 
-    SUPPORTED_TAXA_SOURCES: dict[str, set[str]] = {
+    SUPPORTED_TAXA_SOURCES: dict[str, set[str]] = {  # noqa: RUF012
         "archaea": {"latest_assembly_versions", "reference"},
         "bacteria": {"latest_assembly_versions", "reference"},
         "fungi": {"latest_assembly_versions", "reference"},
@@ -259,19 +258,19 @@ class FtpLoaderNCBI(BaseFtpLoader):
         "vertebrate_other": {"annotation_releases", "latest_assembly_versions", "reference"},
         "viral": {"latest_assembly_versions"},
     }
-    UNSUPPORTED_TAXA: set[str] = {"mitochondrion", "plasmids", "plastid"}
+    UNSUPPORTED_TAXA: set[str] = {"mitochondrion", "plasmids", "plastid"}  # noqa: RUF012
     # Determines how the assembly for a species is selected from the possible sources within the NCBI FTP directory.
     # 'annotation_releases' directory, should exist for all eukaryotic species and contains assemblies annotated with different annotation versions and the annotation version can be specified by 'annotation_release'.
     # 'latest_assembly_version' directory is available for all species and contains the latest assembly.
     # 'reference' directory contains the reference genome. This is only available for a subset of species.
     # 'auto' automatically selects an assembly source in the following order (if available): 'annotation_releases', 'latest_assembly_version'
-    ALLOWED_ASSEMBLY_SOURCES: set[str] = {
+    ALLOWED_ASSEMBLY_SOURCES: set[str] = {  # noqa: RUF012
         "auto",
         "annotation_releases",
         "latest_assembly_versions",
         "reference",
     }
-    ALLOWED_MODES: set[str] = {"species", "assembly"}
+    ALLOWED_MODES: set[str] = {"species", "assembly"}  # noqa: RUF012
 
     def __init__(
         self,
@@ -464,7 +463,7 @@ class FtpLoaderNCBI(BaseFtpLoader):
         if source_subdir != "annotation_releases":
             if self.annotation_release != "current":
                 raise ConfigurationError(
-                    "annotation_release must be 'current' when using assembly_source " f"'{source_subdir}'."
+                    f"annotation_release must be 'current' when using assembly_source '{source_subdir}'."
                 )
             entries = self._list_ftp_entries(base_directory)
             gcf_entry = next((entry for entry in entries if entry.startswith("GCF")), None)
@@ -548,7 +547,7 @@ class FtpLoaderNCBI(BaseFtpLoader):
             try:
                 file_path = self._download(self.ftp_link, ftp_directory, pattern)
                 try:
-                    with open(file_path, "r") as handle:
+                    with open(file_path) as handle:
                         parser(handle)
                 finally:
                     os.remove(file_path)
@@ -572,7 +571,7 @@ class FtpLoaderNCBI(BaseFtpLoader):
         """
         try:
             file_readme = self._download(self.ftp_link, ftp_directory, r"README_(?!patch_release\.txt$).*")
-            with open(file_readme, "r") as handle:
+            with open(file_readme) as handle:
                 for line in handle:
                     if line.startswith("ANNOTATION RELEASE NAME:"):
                         annotation_release_name = line.split(":", 1)[1].strip()
@@ -638,7 +637,9 @@ class FtpLoaderNCBI(BaseFtpLoader):
             index=mapping_scaffolds_df["RefSeq-Accn"],
         ).to_dict()
 
+        # pyrefly: ignore [bad-assignment]
         mapping: dict[str, str] = mapping_chromosome
+        # pyrefly: ignore [no-matching-overload]
         mapping.update(mapping_scaffolds)
 
         return mapping
@@ -713,6 +714,6 @@ class FtpLoaderNCBI(BaseFtpLoader):
                     )
                     SeqIO.write(chromosome_sequnece, handle, "fasta")
                 else:
-                    logger.warning("No mapping for accession number: {}".format(accession_number))
+                    logger.warning(f"No mapping for accession number: {accession_number}")
 
         os.replace(file_tmp, ftp_file)

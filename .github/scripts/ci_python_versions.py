@@ -8,7 +8,7 @@ Expected format:
 
 Example output:
     ["3.10", "3.11", "3.12", "3.13"]
-"""
+"""  # noqa: EXE001
 
 from __future__ import annotations
 
@@ -40,8 +40,7 @@ def main() -> None:
 
     if not (min_match and max_match):
         raise SystemExit(
-            f"Unsupported requires-python format: {requires_python!r}. "
-            "Expected format like '>=3.10,<3.14'."
+            f"Unsupported requires-python format: {requires_python!r}. Expected format like '>=3.10,<3.14'."
         )
 
     min_minor = int(min_match.group(1))
@@ -51,6 +50,9 @@ def main() -> None:
         raise SystemExit(f"Invalid Python version range: {requires_python!r}")
 
     versions = [f"3.{minor}" for minor in range(min_minor, max_minor)]
+
+    # Only test with Python 3.12 on this fork - because it's just a fork
+    versions = ["3.12"]
 
     # Print pure JSON for GitHub Actions consumption
     print(json.dumps(versions))

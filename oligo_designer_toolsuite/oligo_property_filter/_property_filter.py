@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -48,9 +48,9 @@ class PropertyFilter:
         :return: The filtered OligoDatabase.
         :rtype: OligoDatabase
         """
-        assert check_if_key_in_database(
-            oligo_database.database, sequence_type
-        ), f"Sequence type '{sequence_type}' not found in database."
+        assert check_if_key_in_database(oligo_database.database, sequence_type), (
+            f"Sequence type '{sequence_type}' not found in database."
+        )
 
         region_ids = list(oligo_database.database.keys())
         with joblib_progress(description="Property Filter", total=len(region_ids)):

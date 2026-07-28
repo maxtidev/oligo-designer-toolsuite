@@ -15,17 +15,17 @@ from ._scorer_set_property import UniformDistanceScorer
 from ._set_scoring import AverageSetScoring, LowestSetScoring, SetScoringBase
 
 __all__ = [
+    "AverageSetScoring",
     "BaseScorer",
-    "OverlapTargetedExonsScorer",
-    "OverlapUTRScorer",
-    "IsoformConsensusScorer",
     "DeviationFromOptimalGCContentScorer",
     "DeviationFromOptimalTmScorer",
+    "IsoformConsensusScorer",
+    "LowestSetScoring",
     "NormalizedDeviationFromOptimalGCContentScorer",
     "NormalizedDeviationFromOptimalTmScorer",
     "OligoScoring",
+    "OverlapTargetedExonsScorer",
+    "OverlapUTRScorer",
     "SetScoringBase",
-    "LowestSetScoring",
-    "AverageSetScoring",
     "UniformDistanceScorer",
 ]

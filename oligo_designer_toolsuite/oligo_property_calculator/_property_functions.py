@@ -201,7 +201,7 @@ def calc_split_sequence(sequence: str, split_start_end: list[tuple]) -> list[str
     return split_sequences
 
 
-def calc_seedregion(sequence: str, start: int | float, end: int | float) -> tuple[int, int]:
+def calc_seedregion(sequence: str, start: float, end: float) -> tuple[int, int]:
     """Calculate the seed region of a nucleotide sequence based on the provided start and end positions.
 
     The seed region is calculated based on start and end parameters. The start and end can be specified as absolute
@@ -237,8 +237,8 @@ def calc_seedregion(sequence: str, start: int | float, end: int | float) -> tupl
                 f"Start and end positions must be in the interval [0,1] for float type. "
                 f"Received: start={start}, end={end}."
             )
-        seedregion_start = int(round(start * length))
-        seedregion_end = int(round(end * length))
+        seedregion_start = int(round(start * length))  # noqa: RUF046
+        seedregion_end = int(round(end * length))  # noqa: RUF046
     else:
         raise ConfigurationError(
             f"Start and end parameters must be both integers or both floats. "
@@ -397,14 +397,11 @@ def calc_detect_oligo(
         # 1.2 if the maximal length is odd -> return three different oligos: even, longer left, longer right
         if detect_oligo_length_max % 2 == 1:
             detect_oligo_long_left = sequence[
-                ligation_site
-                - detect_oligo_length_max_half
-                - 1 : ligation_site
+                ligation_site - detect_oligo_length_max_half - 1 : ligation_site
                 + detect_oligo_length_max_half
             ]
             detect_oligo_long_right = sequence[
-                ligation_site
-                - detect_oligo_length_max_half : ligation_site
+                ligation_site - detect_oligo_length_max_half : ligation_site
                 + detect_oligo_length_max_half
                 + 1
             ]

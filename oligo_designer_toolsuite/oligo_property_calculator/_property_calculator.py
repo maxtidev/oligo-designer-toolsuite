@@ -45,9 +45,9 @@ class PropertyCalculator:
         :return: The updated OligoDatabase with the calculated properties.
         :rtype: OligoDatabase
         """
-        assert check_if_key_in_database(
-            oligo_database.database, sequence_type
-        ), f"Sequence type '{sequence_type}' not found in database."
+        assert check_if_key_in_database(oligo_database.database, sequence_type), (
+            f"Sequence type '{sequence_type}' not found in database."
+        )
 
         region_ids = list(oligo_database.database.keys())
         with joblib_progress(description="Property Calculator", total=len(region_ids)):
@@ -74,7 +74,7 @@ class PropertyCalculator:
         """
         new_oligo_property: dict[str, dict[str, Any]] = {}
 
-        for oligo_id in oligo_database.database[region_id].keys():
+        for oligo_id in oligo_database.database[region_id].keys():  # noqa: SIM118
             # Calculate all properties for this oligo
             for property_calc in self.properties:
                 property_result = property_calc.apply(
@@ -88,5 +88,5 @@ class PropertyCalculator:
                     new_oligo_property[oligo_id] = {}
                 new_oligo_property[oligo_id].update(property_result)
 
-        # Update only this region (avoids O(regions × total_oligos) full-database scan per worker)
+        # Update only this region (avoids O(regions × total_oligos) full-database scan per worker)  # noqa: RUF003
         oligo_database.update_oligo_properties(new_oligo_property, region_ids=region_id)

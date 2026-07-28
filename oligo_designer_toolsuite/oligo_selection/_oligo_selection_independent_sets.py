@@ -175,7 +175,7 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
         :type region_id: str
         :return: A sparse distance matrix and the corresponding list of oligo IDs.
         :rtype: tuple[csr_matrix, list[str]]
-        """
+        """  # noqa: RUF002
 
         def _get_distance(seq1_intervals: list[list[int]], seq2_intervals: list[list[int]]) -> int:
             # Determine if two ligos do NOT overlap based on a distance value
@@ -333,7 +333,6 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
         )
 
         for attempt in range(self.n_attempts_graph):
-
             # --- Diversification: remove nodes (except first attempt) ---
             if attempt > 0 and n_nodes_removed > 0:
                 # Weight node removal by oligo scores to bias diversification.
@@ -379,6 +378,7 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
                 if len(clique) < oligoset_size:
                     continue
 
+                # pyrefly: ignore [bad-argument-type]
                 _add_clique_to_oligosets(clique, oligoset_size)
 
         return oligosets

@@ -1,6 +1,6 @@
 """
 This module provides a comprehensive set of filters designed to assess and mitigate the off-target and cross-hybridization potential of oligonucleotide sequences, ensuring high specificity and low off-target effects.
-"""
+"""  # noqa: EXE002
 
 from ._filter_base import AlignmentSpecificityFilter, BaseSpecificityFilter, ReferenceSpecificityFilter
 from ._filter_blastn import BlastNFilter, BlastNSeedregionFilter, BlastNSeedregionSiteFilter
@@ -18,21 +18,21 @@ from ._policies import (
 from ._specificity_filter import SpecificityFilter
 
 __all__ = [
-    "BaseSpecificityFilter",
-    "ReferenceSpecificityFilter",
     "AlignmentSpecificityFilter",
-    "ExactMatchFilter",
+    "BaseFilterPolicy",
+    "BaseSpecificityFilter",
     "BlastNFilter",
     "BlastNSeedregionFilter",
     "BlastNSeedregionSiteFilter",
-    "BowtieFilter",
     "Bowtie2Filter",
+    "BowtieFilter",
     "CrossHybridizationFilter",
+    "ExactMatchFilter",
     "HybridizationProbabilityFilter",
-    "VariantsFilter",
-    "BaseFilterPolicy",
+    "ReferenceSpecificityFilter",
     "RemoveAllFilterPolicy",
     "RemoveByDegreeFilterPolicy",
     "RemoveByLargerRegionFilterPolicy",
     "SpecificityFilter",
+    "VariantsFilter",
 ]

@@ -60,7 +60,7 @@ class BaseFilterPolicy(ABC):
         :return: A dictionary mapping each region to the number of oligos it contains.
         :rtype: dict
         """
-        return {region: len(oligo_database.database[region]) for region in oligo_database.database.keys()}
+        return {region: len(oligo_database.database[region]) for region in oligo_database.database.keys()}  # noqa: SIM118
 
 
 class RemoveAllFilterPolicy(BaseFilterPolicy):
@@ -88,7 +88,7 @@ class RemoveAllFilterPolicy(BaseFilterPolicy):
         :return: A dictionary mapping each region to a list of oligos that should be removed based on the policy.
         :rtype: dict
         """
-        oligos_with_hits: dict[str, list[str]] = {region: [] for region in oligo_database.database.keys()}
+        oligos_with_hits: dict[str, list[str]] = {region: [] for region in oligo_database.database.keys()}  # noqa: SIM118
 
         # remove all query oligos
         for hit in oligo_pair_hits:
@@ -99,7 +99,7 @@ class RemoveAllFilterPolicy(BaseFilterPolicy):
             oligos_with_hits[str(region_1)].append(hit[1])
 
         # remove duplicated entries
-        for key in oligos_with_hits:
+        for key in oligos_with_hits:  # noqa: PLC0206
             oligos_with_hits[key] = list(set(oligos_with_hits[key]))
 
         return oligos_with_hits
@@ -133,10 +133,10 @@ class RemoveByLargerRegionFilterPolicy(BaseFilterPolicy):
         """
         graph = nx.from_edgelist(oligo_pair_hits)
         number_oligos_per_region = self._get_number_oligos_per_region(oligo_database=oligo_database)
-        oligos_with_hits: dict[str, list[str]] = {region: [] for region in oligo_database.database.keys()}
+        oligos_with_hits: dict[str, list[str]] = {region: [] for region in oligo_database.database.keys()}  # noqa: SIM118
 
         while graph.number_of_edges() > 0:
-            edge = list(graph.edges)[0]
+            edge = list(graph.edges)[0]  # noqa: RUF015
             region_0 = self._oligo_to_region(oligo=edge[0])
             region_1 = self._oligo_to_region(oligo=edge[1])
             if number_oligos_per_region[region_0] > number_oligos_per_region[region_1]:
@@ -174,7 +174,7 @@ class RemoveByDegreeFilterPolicy(BaseFilterPolicy):
         :rtype: dict
         """
         graph = nx.from_edgelist(oligo_pair_hits)
-        oligos_with_hits: dict[str, list[str]] = {region: [] for region in oligo_database.database.keys()}
+        oligos_with_hits: dict[str, list[str]] = {region: [] for region in oligo_database.database.keys()}  # noqa: SIM118
 
         while graph.number_of_edges() > 0:
             degrees = dict(graph.degree())

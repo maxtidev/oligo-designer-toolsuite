@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -233,7 +233,7 @@ class ExactMatchFilter(BaseSpecificityFilter):
         """
         database_region = oligo_database.database[region_id]
         hit_dict = {}
-        for oligo_id in database_region.keys():
+        for oligo_id in database_region.keys():  # noqa: SIM118
             oligo_seq = database_region[oligo_id][self.sequence_type].upper()
             if oligo_seq in search_results:
                 # find all reverse complements with the same sequence

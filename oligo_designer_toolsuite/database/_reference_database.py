@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -98,7 +98,7 @@ class ReferenceDatabase:
             files_in = files
             self.database_type = file_type
         elif self.database_file is not None and self.database_type == file_type:
-            files_in = files + [self.database_file]
+            files_in = files + [self.database_file]  # noqa: RUF005
         else:
             raise DatabaseError(
                 f"Cannot mix {file_type} and {self.database_type} databases. "
@@ -282,10 +282,11 @@ class ReferenceDatabase:
                 continue
             if property_name in properties:
                 property_values = cast_to_list(properties[property_name])
-                if keep_if_equals_category and any(item in property_category for item in property_values):
-                    fasta_sequences_filtered.append(entry)
-                elif not keep_if_equals_category and all(
-                    item not in property_category for item in property_values
+                if (
+                    keep_if_equals_category and any(item in property_category for item in property_values)
+                ) or (
+                    not keep_if_equals_category
+                    and all(item not in property_category for item in property_values)
                 ):
                     fasta_sequences_filtered.append(entry)
 

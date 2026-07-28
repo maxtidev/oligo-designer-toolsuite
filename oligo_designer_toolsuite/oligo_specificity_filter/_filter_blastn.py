@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -70,9 +70,9 @@ class BlastNFilter(AlignmentSpecificityFilter):
     def __init__(
         self,
         remove_hits: bool = True,
-        search_parameters: dict = {},
-        hit_parameters: dict = {},
-        names_search_output: list = [
+        search_parameters: dict = {},  # noqa: B006
+        hit_parameters: dict = {},  # noqa: B006
+        names_search_output: list = [  # noqa: B006
             "query",
             "reference",
             "alignment_length",
@@ -92,7 +92,7 @@ class BlastNFilter(AlignmentSpecificityFilter):
 
         # Define default output format for blast search filter. The fields are:
         # query, reference, alignment_length, query_start, query_end, query_length
-        if "-outfmt" not in self.search_parameters.keys():
+        if "-outfmt" not in self.search_parameters.keys():  # noqa: SIM118
             self.search_parameters["-outfmt"] = "6 qseqid sseqid length qstart qend qlen"
 
     def _create_reference(
@@ -215,13 +215,13 @@ class BlastNFilter(AlignmentSpecificityFilter):
         :return: A DataFrame containing the filtered BLAST search hits.
         :rtype: pd.DataFrame
         """
-        if "min_alignment_length" in self.hit_parameters.keys():
-            if "coverage" in self.hit_parameters.keys():
+        if "min_alignment_length" in self.hit_parameters.keys():  # noqa: SIM118
+            if "coverage" in self.hit_parameters.keys():  # noqa: SIM118
                 logger.warning(
                     "Both, 'min_alignment_length' and 'coverage' parameters were provided. Using 'min_alignment_length' parameter."
                 )
             min_alignment_length = self.hit_parameters["min_alignment_length"]
-        elif "coverage" in self.hit_parameters.keys():
+        elif "coverage" in self.hit_parameters.keys():  # noqa: SIM118
             min_alignment_length = search_results["query_length"] * self.hit_parameters["coverage"] / 100
         else:
             raise ConfigurationError(
@@ -385,7 +385,7 @@ class BlastNFilter(AlignmentSpecificityFilter):
         :rtype: pd.DataFrame
         """
         bed["overflow_start"] = bed["start"].apply(lambda x: -x if x < 0 else 0)
-        bed["start"] = bed["start"].apply(lambda x: x if x >= 0 else 0)
+        bed["start"] = bed["start"].apply(lambda x: max(x, 0))
 
         records = SeqIO.parse(file_reference, "fasta")
         regions_length = {record.id: len(record.seq) for record in records}
@@ -396,7 +396,7 @@ class BlastNFilter(AlignmentSpecificityFilter):
             axis=1,
         )
         bed["end"] = bed[["end", "len_region"]].apply(
-            lambda x: x["end"] if x["end"] <= x["len_region"] else x["len_region"],
+            lambda x: min(x["end"], x["len_region"]),
             axis=1,
         )
         return bed
@@ -456,11 +456,13 @@ class BlastNFilter(AlignmentSpecificityFilter):
             return seq
 
         table_hits["query_gaps"] = (
+            # pyrefly: ignore [no-matching-overload]
             table_hits["query_sequence"].apply(lambda x: np.where(np.array(list(x)) == "-")[0])
             + table_hits["query_start"]
             - 1  # blastn has 1-based indices
         )
         table_hits["reference_gaps"] = (
+            # pyrefly: ignore [no-matching-overload]
             table_hits["reference_sequence"].apply(lambda x: np.where(np.array(list(x)) == "-")[0])
             + table_hits["query_start"]
             - 1
@@ -588,13 +590,13 @@ class BlastNSeedregionFilterBase(BlastNFilter):
         :return: Filtered BLAST search results containing significant hits.
         :rtype: pd.DataFrame
         """
-        if "min_alignment_length" in self.hit_parameters.keys():
-            if "coverage" in self.hit_parameters.keys():
+        if "min_alignment_length" in self.hit_parameters.keys():  # noqa: SIM118
+            if "coverage" in self.hit_parameters.keys():  # noqa: SIM118
                 logger.warning(
                     "Both, 'min_alignment_length' and 'coverage' parameters were provided. Using 'min_alignment_length' parameter."
                 )
             min_alignment_length = self.hit_parameters["min_alignment_length"]
-        elif "coverage" in self.hit_parameters.keys():
+        elif "coverage" in self.hit_parameters.keys():  # noqa: SIM118
             min_alignment_length = search_results["query_length"] * self.hit_parameters["coverage"] / 100
         else:
             raise ConfigurationError(
@@ -671,8 +673,8 @@ class BlastNSeedregionFilter(BlastNSeedregionFilterBase):
 
     def __init__(
         self,
-        seedregion_start: int | float,
-        seedregion_end: int | float,
+        seedregion_start: float,
+        seedregion_end: float,
         remove_hits: bool = True,
         search_parameters: dict | None = None,
         hit_parameters: dict | None = None,
@@ -794,9 +796,9 @@ class BlastNSeedregionSiteFilter(BlastNSeedregionFilterBase):
         seedregion_size: int,
         seedregion_site_name: str,
         remove_hits: bool = True,
-        search_parameters: dict = {},
-        hit_parameters: dict = {},
-        names_search_output: list = [
+        search_parameters: dict = {},  # noqa: B006
+        hit_parameters: dict = {},  # noqa: B006
+        names_search_output: list = [  # noqa: B006
             "query",
             "reference",
             "alignment_length",

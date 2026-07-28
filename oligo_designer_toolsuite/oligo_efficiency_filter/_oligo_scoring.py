@@ -61,9 +61,9 @@ class OligoScoring:
         :rtype: pd.Series
         """
 
-        assert check_if_key_in_database(
-            oligo_database.database, sequence_type
-        ), f"Sequence type '{sequence_type}' not found in database."
+        assert check_if_key_in_database(oligo_database.database, sequence_type), (
+            f"Sequence type '{sequence_type}' not found in database."
+        )
 
         oligos_scores = pd.Series(index=oligo_ids, dtype=float)
         for oligo_id in oligo_ids:

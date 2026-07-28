@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -43,7 +43,7 @@ class OligoSequenceGenerator:
         length_sequences: int,
         num_sequences: int,
         name_sequences: str = "randomsequence",
-        base_alphabet_with_probability: dict = {
+        base_alphabet_with_probability: dict = {  # noqa: B006
             "A": 0.25,
             "C": 0.25,
             "G": 0.25,
@@ -106,10 +106,10 @@ class OligoSequenceGenerator:
         file_fasta_out = safe_append_filename(self.dir_output, f"{filename_out}.fna")
 
         with open(file_fasta_out, "w") as handle_fasta:
-            for i, seq in enumerate(sequences_set):
-                handle_fasta.write(
-                    f">{name_sequences}{SEPARATOR_FASTA_HEADER_FIELDS}regiontype=random_sequence;region_id={name_sequences}_{i}\n{seq}\n"
-                )
+            handle_fasta.writelines(
+                f">{name_sequences}{SEPARATOR_FASTA_HEADER_FIELDS}regiontype=random_sequence;region_id={name_sequences}_{i}\n{seq}\n"
+                for i, seq in enumerate(sequences_set)
+            )
         return file_fasta_out
 
     def create_sequences_sliding_window(
@@ -253,7 +253,7 @@ class OligoSequenceGenerator:
 
                                 # Build the header strings, pairing adjacent coordinates
                                 header_coordinates = [
-                                    f"{chromosome}:{all_coordinates[i]}-{all_coordinates[i+1]}({strand})"
+                                    f"{chromosome}:{all_coordinates[i]}-{all_coordinates[i + 1]}({strand})"
                                     for i in range(0, len(all_coordinates), 2)
                                 ]
                                 header = f"{region}{SEPARATOR_FASTA_HEADER_FIELDS}{additional_info}{SEPARATOR_FASTA_HEADER_FIELDS}{SEPARATOR_FASTA_HEADER_FIELDS_LIST.join(header_coordinates)})"
@@ -316,10 +316,10 @@ class OligoSequenceGenerator:
         for one_file in list(file_fasta_out):
             if os.path.getsize(one_file) == 0:
                 logger.warning(
-                    f"No oligos were created for region {os.path.basename(one_file).replace('.fna','')}. "
+                    f"No oligos were created for region {os.path.basename(one_file).replace('.fna', '')}. "
                     "This can happen if the input sequences are shorter than the specified minimum oligo length."
                 )
                 file_fasta_out.remove(one_file)
                 os.remove(one_file)
 
-        return sorted(list(file_fasta_out))
+        return sorted(list(file_fasta_out))  # noqa: C414

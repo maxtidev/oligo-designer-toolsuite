@@ -1,4 +1,4 @@
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Self
 
 from pydantic import (
     AliasChoices,
@@ -11,7 +11,6 @@ from pydantic import (
     model_serializer,
     model_validator,
 )
-from typing_extensions import Self
 
 
 class General(BaseModel):
@@ -436,7 +435,7 @@ class TmChemCorrectionParametersDetails(BaseModel):
             if self.fmd is not None and self.fmd < 0.0:
                 raise ValueError("For fmdmethod=2, fmd must be a non-negative molar concentration.")
             if self.GC is None:
-                raise ValueError("For fmdmethod=2, GC must be provided (0–100%) for the formula.")
+                raise ValueError("For fmdmethod=2, GC must be provided (0–100%) for the formula.")  # noqa: RUF001
 
         return self
 

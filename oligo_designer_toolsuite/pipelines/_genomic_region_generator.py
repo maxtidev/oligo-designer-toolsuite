@@ -190,7 +190,7 @@ def main() -> None:
     args = base_parser()
 
     # read the config file
-    with open(args["config"], "r") as handle:
+    with open(args["config"]) as handle:
         config = yaml.safe_load(handle)
 
     pipeline = GenomicRegionGenerator(dir_output=config["dir_output"])
@@ -208,7 +208,7 @@ def main() -> None:
         source_params=config["source_params"],
     )
 
-    files_fasta = pipeline.generate_genomic_regions(
+    files_fasta = pipeline.generate_genomic_regions(  # noqa: F841
         region_generator=region_generator,
         genomic_regions=config["genomic_regions"],
         block_size=config["exon_exon_junction_block_size"],

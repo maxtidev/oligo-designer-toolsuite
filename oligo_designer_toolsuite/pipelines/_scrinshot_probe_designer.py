@@ -125,7 +125,7 @@ class ScrinshotProbeDesigner:
     :type write_intermediate_steps: bool
     :ivar n_jobs: Number of parallel threads to use for sequence design and BLAST validation.
     :type n_jobs: int
-    """
+    """  # noqa: RUF002
 
     def __init__(self, write_intermediate_steps: bool, dir_output: str, n_jobs: int) -> None:
         """Constructor for the ScrinshotProbeDesigner class."""
@@ -891,6 +891,7 @@ class TargetProbeDesigner:
             ReverseComplementSequenceProperty(sequence_type_reverse_complement="oligo"),
             IsoformConsensusProperty(),
         ]
+        # pyrefly: ignore [bad-argument-type]
         calculator = PropertyCalculator(properties=properties)
         oligo_database = calculator.apply(
             oligo_database=oligo_database, sequence_type="target", n_jobs=self.n_jobs
@@ -1052,6 +1053,7 @@ class TargetProbeDesigner:
         ]
 
         # initialize the preoperty filter class
+        # pyrefly: ignore [bad-argument-type]
         property_filter = PropertyFilter(filters=filters)
 
         # filter the database
@@ -1810,7 +1812,7 @@ class DetectionOligoDesigner:
         ]
 
         # either start cut from left or right and make sure that oligo length is >= oligo_length_min
-        for count in range(0, len(oligo) - oligo_length_min):
+        for count in range(len(oligo) - oligo_length_min):
             if bool(count % 2) * cut_from_right:
                 oligo = oligo[1:]
             else:
@@ -1918,7 +1920,7 @@ def main() -> None:
     args = base_parser()
 
     ##### read the config file #####
-    with open(args["config"], "r") as handle:
+    with open(args["config"]) as handle:
         config = yaml.safe_load(handle)
 
     ##### read the genes file #####
@@ -1931,7 +1933,7 @@ def main() -> None:
         with open(config["file_regions"]) as handle:
             lines = handle.readlines()
             # ensure that the list contains unique gene ids
-            region_ids = list(set([line.rstrip() for line in lines]))
+            region_ids = list(set([line.rstrip() for line in lines]))  # noqa: C403
 
     ##### Preprocess Tm parameters #####
     target_probe_Tm_parameters = preprocess_tm_parameters(config["target_probe_Tm_parameters"])

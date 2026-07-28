@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -54,9 +54,9 @@ class SpecificityFilter:
         :rtype: OligoDatabase
         """
         if sequence_type is not None:
-            assert check_if_key_in_database(
-                oligo_database.database, sequence_type
-            ), f"Sequence type '{sequence_type}' not found in database."
+            assert check_if_key_in_database(oligo_database.database, sequence_type), (
+                f"Sequence type '{sequence_type}' not found in database."
+            )
 
         for specificity_filter in self.filters:
             oligo_database = specificity_filter.apply(

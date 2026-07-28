@@ -11,14 +11,14 @@ Thank you for your interest in contributing to Oligo Designer Toolsuite! This gu
 
 ## Environment Setup
 
-1. **Supported Python and platforms**: Tested with Python 3.10–3.12 on Linux (x64) and macOS (x64, arm64).
+1. **Supported Python and platforms**: Tested with Python 3.10–3.12 on Linux (x64) and macOS (arm64).
 2. **Recommended**: Use a conda environment for a stable installation.
    - If your institution does not support Anaconda, use miniforge: `https://github.com/conda-forge/miniforge`.
 3. **Create and activate an environment** (choose one):
    - Using conda:
      ```bash
-     conda create -n odt python=3.12 -y
-     conda activate odt
+     conda env create
+     conda activate odt-thesis
      ```
    - Using `venv`:
      ```bash
@@ -27,7 +27,7 @@ Thank you for your interest in contributing to Oligo Designer Toolsuite! This gu
      ```
 4. **Install the project (editable) and dev tools**:
    ```bash
-   pip install -e .[dev]
+   pip install --group dev -e .
    ```
 5. **Install pre-commit hooks**:
    ```bash
@@ -39,10 +39,10 @@ Thank you for your interest in contributing to Oligo Designer Toolsuite! This gu
 
 We use the following tools (configured in `pyproject.toml` and `.pre-commit-config.yaml`):
 
-- **Black**: code formatting (line length 110)
-- **isort**: import sorting (Black profile)
-- **autoflake**: remove unused imports/variables
-- **pre-commit**: runs the above hooks automatically
+- **ruff format**: code formatting (line length 110)
+- **ruff check**: linting, import sorting, removing unused imports/variables
+- **Pyrefly**: type checking
+- **pre-commit**: running the above hooks automatically
 
 Before committing, run:
 ```bash
@@ -100,7 +100,7 @@ The HTML will be generated in `docs/_build/html`.
 
 ## Pull Request Checklist
 
-- [ ] Code formatted with Black and imports sorted with isort
+- [ ] Code linted with `ruff check` and formatted with `ruff format`
 - [ ] `pre-commit run --all-files` passes with no changes
 - [ ] Tests added/updated and `pytest` passes locally
 - [ ] Documentation added/updated (docstrings and, if relevant, Sphinx pages)

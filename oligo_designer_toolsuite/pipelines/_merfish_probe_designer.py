@@ -164,7 +164,7 @@ class MerfishProbeDesigner:
         values for parallel processing. This affects the parallelization of filtering, property calculation,
         and set generation operations.
     :type n_jobs: int
-    """
+    """  # noqa: RUF002
 
     def __init__(
         self,
@@ -741,7 +741,6 @@ class MerfishProbeDesigner:
             new_properties: dict[str, dict[str, str]] = {probe_id: {} for probe_id in probe_ids}
 
             for probe_id in probe_ids:
-
                 new_properties[probe_id]["sequence_target"] = format_sequence(
                     database=target_probe_database,
                     property="target",
@@ -911,7 +910,7 @@ class MerfishProbeDesigner:
         :rtype: tuple[str, str]
         """
         file_fasta_hybridization_probes_database = hybridization_probe_database.write_database_to_fasta(
-            filename=f"db_reference_hybridization_probes",
+            filename="db_reference_hybridization_probes",
             save_description=False,
             region_ids=None,
             sequence_type="sequence_hybridization_probe",
@@ -1287,6 +1286,7 @@ class TargetProbeDesigner:
             ReverseComplementSequenceProperty(sequence_type_reverse_complement="oligo"),
             IsoformConsensusProperty(),
         ]
+        # pyrefly: ignore [bad-argument-type]
         calculator = PropertyCalculator(properties=properties)
         oligo_database = calculator.apply(
             oligo_database=oligo_database, sequence_type="target", n_jobs=self.n_jobs
@@ -1418,6 +1418,7 @@ class TargetProbeDesigner:
         ]
 
         # initialize the preoperty filter class
+        # pyrefly: ignore [bad-argument-type]
         property_filter = PropertyFilter(filters=filters)
 
         # filter the database
@@ -1867,6 +1868,7 @@ class ReadoutProbeDesigner:
         ]
 
         # initialize the preoperty filter class
+        # pyrefly: ignore [bad-argument-type]
         property_filter = PropertyFilter(filters=filters)
 
         # filter the database
@@ -2066,6 +2068,7 @@ class ReadoutProbeDesigner:
             ),
             GCContentProperty(),
         ]
+        # pyrefly: ignore [bad-argument-type]
         calculator = PropertyCalculator(properties=properties)
         oligo_database = calculator.apply(
             oligo_database=oligo_database, sequence_type="oligo", n_jobs=self.n_jobs
@@ -2160,7 +2163,7 @@ class ReadoutProbeDesigner:
             )
 
         codebook: pd.DataFrame = pd.DataFrame(
-            codebook_list[0:n_regions], index=region_ids, columns=[f"bit_{i+1}" for i in range(n_bits)]
+            codebook_list[0:n_regions], index=region_ids, columns=[f"bit_{i + 1}" for i in range(n_bits)]
         )
 
         # Remove columns where all values are 0
@@ -2210,9 +2213,9 @@ class ReadoutProbeDesigner:
         readout_probes = readout_probe_database.get_oligoid_sequence_mapping(
             sequence_type="oligo", sequence_to_upper=False
         )
-        assert (
-            len(readout_probes) >= n_bits
-        ), f"There are less readout probes ({len(readout_probes)}) than bits ({n_bits})."
+        assert len(readout_probes) >= n_bits, (
+            f"There are less readout probes ({len(readout_probes)}) than bits ({n_bits})."
+        )
         readout_probe_table = pd.DataFrame(
             columns=["bit", "channel", "readout_probe_id", "readout_probe_sequence"],
             index=list(range(n_bits)),
@@ -2222,7 +2225,7 @@ class ReadoutProbeDesigner:
         for i, (readout_probe_id, readout_probe_sequence) in enumerate(readout_probes.items()):
             readout_probe_table.iloc[i] = pd.Series(
                 [
-                    f"bit_{i+1}",
+                    f"bit_{i + 1}",
                     channels_ids[channel],
                     readout_probe_id,
                     readout_probe_sequence,
@@ -2488,6 +2491,7 @@ class PrimerDesigner:
         ]
 
         # initialize the preoperty filter class
+        # pyrefly: ignore [bad-argument-type]
         property_filter = PropertyFilter(filters=filters)
 
         # filter the database
@@ -2650,7 +2654,7 @@ def main() -> None:
     args = base_parser()
 
     ##### read the config file #####
-    with open(args["config"], "r") as handle:
+    with open(args["config"]) as handle:
         config = yaml.safe_load(handle)
 
     ##### read the genes file #####
@@ -2663,7 +2667,7 @@ def main() -> None:
         with open(config["file_regions"]) as handle:
             lines = handle.readlines()
             # ensure that the list contains unique gene ids
-            region_ids = list(set([line.rstrip() for line in lines]))
+            region_ids = list(set([line.rstrip() for line in lines]))  # noqa: C403
 
     ##### initialize probe designer pipeline #####
     pipeline = MerfishProbeDesigner(

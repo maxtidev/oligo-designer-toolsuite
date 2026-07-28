@@ -63,23 +63,23 @@ class TestReferenceDatabase(unittest.TestCase):
     def tearDown(self) -> None:
         try:
             shutil.rmtree(self.tmp_path)
-        except:
+        except:  # noqa: E722, S110
             pass
 
     def test_write_database(self) -> None:
         file_fasta_database = self.reference_fasta.write_database_to_file(filename="ref_db_filtered_fasta")
-        assert (
-            self.fasta_parser.check_fasta_format(file_fasta_database) == True
-        ), f"error: wrong file format for database in {file_fasta_database}"
+        assert self.fasta_parser.check_fasta_format(file_fasta_database) == True, (
+            f"error: wrong file format for database in {file_fasta_database}"
+        )
 
         # Verify that .fai index file is created when writing FASTA database
         index_file = f"{file_fasta_database}.fai"
         assert os.path.exists(index_file), f"error: .fai index file should be created at {index_file}"
 
         file_vcf_database = self.reference_vcf.write_database_to_file(filename="ref_db_filtered_vcf")
-        assert (
-            self.vcf_parser.check_vcf_format(file_vcf_database) == True
-        ), f"error: wrong file format for database in {file_vcf_database}"
+        assert self.vcf_parser.check_vcf_format(file_vcf_database) == True, (
+            f"error: wrong file format for database in {file_vcf_database}"
+        )
 
     def test_load_database_from_file(self) -> None:
         """Test that index files are removed when database_overwrite=True."""
@@ -97,9 +97,9 @@ class TestReferenceDatabase(unittest.TestCase):
         )
 
         # Verify that the old index file was removed
-        assert not os.path.exists(
-            file_index_old
-        ), "error: old .fai index file should have been removed when database_overwrite=True"
+        assert not os.path.exists(file_index_old), (
+            "error: old .fai index file should have been removed when database_overwrite=True"
+        )
 
     def test_filter_database_by_region(self) -> None:
         self.reference_fasta.filter_database_by_region(region_ids="AARS1", keep_region=False)
@@ -186,12 +186,12 @@ class TestOligoDatabase(unittest.TestCase):
 
         assert len(self.oligo_database.database) == 6, "error: wrong number of sequences loaded into database"
         # Verify that sequence types are set correctly
-        assert (
-            "oligo" in self.oligo_database.database_sequence_types
-        ), "error: 'oligo' should be in database_sequence_types"
-        assert (
-            "target" in self.oligo_database.database_sequence_types
-        ), "error: 'target' should be in database_sequence_types"
+        assert "oligo" in self.oligo_database.database_sequence_types, (
+            "error: 'oligo' should be in database_sequence_types"
+        )
+        assert "target" in self.oligo_database.database_sequence_types, (
+            "error: 'target' should be in database_sequence_types"
+        )
 
     def test_load_database_from_table(self) -> None:
         self.oligo_database.load_database_from_table(
@@ -203,9 +203,9 @@ class TestOligoDatabase(unittest.TestCase):
 
         assert len(self.oligo_database.database) == 2, "error: wrong number of sequences loaded into database"
         # Verify that sequence type is set when loading from table
-        assert (
-            "oligo" in self.oligo_database.database_sequence_types
-        ), "error: 'oligo' should be in database_sequence_types after loading from table"
+        assert "oligo" in self.oligo_database.database_sequence_types, (
+            "error: 'oligo' should be in database_sequence_types after loading from table"
+        )
 
     def test_load_save_database(self) -> None:
         self.oligo_database.load_database_from_table(
@@ -232,13 +232,13 @@ class TestOligoDatabase(unittest.TestCase):
             sequence_type="oligo", save_description=True, filename="database_region1_region2"
         )
 
-        assert (
-            self.fasta_parser.check_fasta_format(file_fasta) == True
-        ), f"error: wrong file format for database in {file_fasta}"
+        assert self.fasta_parser.check_fasta_format(file_fasta) == True, (
+            f"error: wrong file format for database in {file_fasta}"
+        )
 
-        assert (
-            len(self.fasta_parser.get_fasta_regions(file_fasta_in=file_fasta)) == 2
-        ), f"error: wrong number of regions stored in {file_fasta}"
+        assert len(self.fasta_parser.get_fasta_regions(file_fasta_in=file_fasta)) == 2, (
+            f"error: wrong number of regions stored in {file_fasta}"
+        )
 
     def test_write_database_to_table(self) -> None:
         self.oligo_database.load_database_from_table(
@@ -256,7 +256,7 @@ class TestOligoDatabase(unittest.TestCase):
             file_database, database_overwrite=True, merge_databases_on_sequence_type="oligo"
         )
 
-        assert check_tsv_format(file_database) == True, f"error: wrong file format"
+        assert check_tsv_format(file_database) == True, "error: wrong file format"
         assert len(self.oligo_database.database.keys()) == 2, "error: wrong number regions saved and loaded"
         assert (
             self.oligo_database.get_oligo_property_value(
@@ -276,7 +276,7 @@ class TestOligoDatabase(unittest.TestCase):
             file_database, database_overwrite=True, merge_databases_on_sequence_type="oligo"
         )
 
-        assert check_tsv_format(file_database) == True, f"error: wrong file format"
+        assert check_tsv_format(file_database) == True, "error: wrong file format"
         assert len(self.oligo_database.database.keys()) == 2, "error: wrong number regions saved and loaded"
         assert (
             self.oligo_database.get_oligo_property_value(
@@ -297,7 +297,7 @@ class TestOligoDatabase(unittest.TestCase):
             filename="database_region1_region2_bed", region_ids=["region_1", "region_2"]
         )
 
-        assert check_tsv_format(file_bed) == True, f"error: wrong file format"
+        assert check_tsv_format(file_bed) == True, "error: wrong file format"
 
         bed_table = pd.read_csv(
             file_bed, sep="\t", names=["chromosome", "start", "end", "name", "score", "strand"]
@@ -346,22 +346,22 @@ class TestOligoDatabase(unittest.TestCase):
 
         # Construct file path since function returns None
         file_yaml = os.path.join(os.path.dirname(self.oligo_database.dir_output), "oligosets.yml")
-        with open(file_yaml, "r") as handle:
+        with open(file_yaml) as handle:
             yaml_oligosets = yaml.safe_load(handle)
 
         assert yaml_oligosets["region_1"]["Oligoset 1"]["Oligoset Score"] == {
             "set_score_lowest": 1.59,
             "set_score_sum": 2.36,
-        }, f"error: wrong oligoset loaded"
+        }, "error: wrong oligoset loaded"
 
-        assert yaml_oligosets["region_1"]["Oligoset 1"]["Oligo 1"]["test_property"] == [
-            "red"
-        ], f"error: wrong oligoset loaded"
+        assert yaml_oligosets["region_1"]["Oligoset 1"]["Oligo 1"]["test_property"] == ["red"], (
+            "error: wrong oligoset loaded"
+        )
 
         assert yaml_oligosets["region_1"]["Oligoset 1"]["Oligo 1"]["transcript_id"] == [
             ["NM_001605.3"],
             ["XM_047433666.1"],
-        ], f"error: wrong oligoset loaded"
+        ], "error: wrong oligoset loaded"
 
     def test_write_ready_to_order_yaml(self) -> None:
         self.oligo_database.load_database_from_table(
@@ -399,7 +399,7 @@ class TestOligoDatabase(unittest.TestCase):
         assert os.path.exists(file_yaml), f"error: YAML file {file_yaml} was not created"
 
         # Load and verify YAML structure
-        with open(file_yaml, "r") as handle:
+        with open(file_yaml) as handle:
             yaml_order = yaml.safe_load(handle)
 
         # Verify structure: region_id -> oligoset_id -> oligo_id -> properties
@@ -448,15 +448,15 @@ class TestOligoDatabase(unittest.TestCase):
 
         # Verify TSV file exists and has correct format
         assert os.path.exists(file_oligosets_tsv), f"error: TSV file {file_oligosets_tsv} was not created"
-        assert (
-            check_tsv_format(file=file_oligosets_tsv) == True
-        ), f"error: incorrect file format of {file_oligosets_tsv}"
+        assert check_tsv_format(file=file_oligosets_tsv) == True, (
+            f"error: incorrect file format of {file_oligosets_tsv}"
+        )
 
         # Verify Excel file exists (same directory, .xlsx extension)
         file_oligosets_excel = file_oligosets_tsv.replace(".tsv", ".xlsx")
-        assert os.path.exists(
-            file_oligosets_excel
-        ), f"error: Excel file {file_oligosets_excel} was not created"
+        assert os.path.exists(file_oligosets_excel), (
+            f"error: Excel file {file_oligosets_excel} was not created"
+        )
 
         # Verify Excel file structure (one sheet per region_id)
         try:
@@ -464,14 +464,14 @@ class TestOligoDatabase(unittest.TestCase):
             # Check that at least one sheet exists (should be one for region_1)
             assert len(excel_data) > 0, "error: Excel file should contain at least one sheet"
             # Verify the sheet doesn't have region_id column (it should be removed)
-            region_sheet = list(excel_data.values())[0]
-            assert (
-                "region_id" not in region_sheet.columns
-            ), "error: region_id column should not be in individual Excel sheets"
+            region_sheet = list(excel_data.values())[0]  # noqa: RUF015
+            assert "region_id" not in region_sheet.columns, (
+                "error: region_id column should not be in individual Excel sheets"
+            )
             # Verify the sheet contains expected columns
-            assert (
-                "oligoset_id" in region_sheet.columns
-            ), "error: Excel sheet should contain oligoset_id column"
+            assert "oligoset_id" in region_sheet.columns, (
+                "error: Excel sheet should contain oligoset_id column"
+            )
             assert "oligo_id" in region_sheet.columns, "error: Excel sheet should contain oligo_id column"
             # Verify that specified properties are included
             assert "oligo" in region_sheet.columns, "error: Excel sheet should contain oligo property"
@@ -575,9 +575,9 @@ class TestOligoDatabase(unittest.TestCase):
             properties="test_property", flatten=True
         )
 
-        assert (
-            len(property_table.explode("test_property")["test_property"].unique()) == 2
-        ), "error: wrong property returned"
+        assert len(property_table.explode("test_property")["test_property"].unique()) == 2, (
+            "error: wrong property returned"
+        )
 
     def test_get_oligo_property_value(self) -> None:
         self.oligo_database.load_database_from_table(
@@ -693,24 +693,24 @@ class TestOligoDatabase(unittest.TestCase):
     def test_set_database_sequence_types(self) -> None:
         """Test that set_database_sequence_types correctly adds sequence types."""
         self.oligo_database.set_database_sequence_types("oligo")
-        assert (
-            "oligo" in self.oligo_database.database_sequence_types
-        ), "error: 'oligo' should be added to database_sequence_types"
+        assert "oligo" in self.oligo_database.database_sequence_types, (
+            "error: 'oligo' should be added to database_sequence_types"
+        )
 
         self.oligo_database.set_database_sequence_types(["target", "oligo_pair_L"])
-        assert (
-            "target" in self.oligo_database.database_sequence_types
-        ), "error: 'target' should be added to database_sequence_types"
-        assert (
-            "oligo_pair_L" in self.oligo_database.database_sequence_types
-        ), "error: 'oligo_pair_L' should be added to database_sequence_types"
-        assert (
-            "oligo" in self.oligo_database.database_sequence_types
-        ), "error: 'oligo' should still be in database_sequence_types"
+        assert "target" in self.oligo_database.database_sequence_types, (
+            "error: 'target' should be added to database_sequence_types"
+        )
+        assert "oligo_pair_L" in self.oligo_database.database_sequence_types, (
+            "error: 'oligo_pair_L' should be added to database_sequence_types"
+        )
+        assert "oligo" in self.oligo_database.database_sequence_types, (
+            "error: 'oligo' should still be in database_sequence_types"
+        )
 
         # Test that duplicates are not added
         initial_length = len(self.oligo_database.database_sequence_types)
         self.oligo_database.set_database_sequence_types("oligo")
-        assert (
-            len(self.oligo_database.database_sequence_types) == initial_length
-        ), "error: duplicate sequence types should not be added"
+        assert len(self.oligo_database.database_sequence_types) == initial_length, (
+            "error: duplicate sequence types should not be added"
+        )

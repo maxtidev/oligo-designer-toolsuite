@@ -1,11 +1,11 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
 import copy
 import os
 import random
-from typing import Callable, Iterable
+from collections.abc import Callable, Iterable
 
 import numpy as np
 import pandas as pd
@@ -218,8 +218,7 @@ class CustomGenomicRegionGenerator:
 
             file_chromosome_length = os.path.join(self.dir_output, "annotation.genome")
             with open(file_chromosome_length, "w") as handle:
-                for key, value in sorted(chromosome_lengths.items()):
-                    handle.write(f"{key}\t{value}\n")
+                handle.writelines(f"{key}\t{value}\n" for key, value in sorted(chromosome_lengths.items()))
 
             return file_chromosome_length
 
@@ -251,6 +250,7 @@ class CustomGenomicRegionGenerator:
 
                 intergenic_annotation.append(
                     _compute_intergenic_annotation_strand(
+                        # pyrefly: ignore [bad-argument-type]
                         seqid=seqid,
                         gene_annotatio=gene_annotation_plusstrand,
                         strand="+",
@@ -259,6 +259,7 @@ class CustomGenomicRegionGenerator:
                 )
                 intergenic_annotation.append(
                     _compute_intergenic_annotation_strand(
+                        # pyrefly: ignore [bad-argument-type]
                         seqid=seqid,
                         gene_annotatio=gene_annotation_minusstrand,
                         strand="-",
@@ -361,7 +362,7 @@ class CustomGenomicRegionGenerator:
             + f"species={self.species}{SEPARATOR_FASTA_HEADER_FIELDS_LIST}"
             + f"annotation_release={self.annotation_release}{SEPARATOR_FASTA_HEADER_FIELDS_LIST}"
             + f"genome_assembly={self.genome_assembly}{SEPARATOR_FASTA_HEADER_FIELDS_LIST}"
-            + f"regiontype=intergenic"
+            + "regiontype=intergenic"
         )
         annotation["region"] = self._get_annotation_region(annotation)
 
@@ -792,7 +793,7 @@ class CustomGenomicRegionGenerator:
             + f"species={self.species}{SEPARATOR_FASTA_HEADER_FIELDS_LIST}"
             + f"annotation_release={self.annotation_release}{SEPARATOR_FASTA_HEADER_FIELDS_LIST}"
             + f"genome_assembly={self.genome_assembly}{SEPARATOR_FASTA_HEADER_FIELDS_LIST}"
-            + f"regiontype="
+            + "regiontype="
             + annotation["type"]
             + SEPARATOR_FASTA_HEADER_FIELDS_LIST
             + annotation["add_inf"]
@@ -930,8 +931,8 @@ class CustomGenomicRegionGenerator:
                                 ]
                             )
                         # return region in 1-base offset
-                        region_up = f"{seqid}:{start_up + 1}-{start_up+block_size_up}({strand})"
-                        region_down = f"{seqid}:{(end_down-block_size_down) + 1}-{end_down}({strand})"
+                        region_up = f"{seqid}:{start_up + 1}-{start_up + block_size_up}({strand})"
+                        region_down = f"{seqid}:{(end_down - block_size_down) + 1}-{end_down}({strand})"
                         junction_list.append(
                             [
                                 gene_id,
@@ -1050,7 +1051,9 @@ class CustomGenomicRegionGenerator:
         annotation: pd.DataFrame = self.gff_parser.load_annotation_from_pickle(self.parsed_annotation_file)
 
         # required to ensure that sorting is done correctly
+        # pyrefly: ignore [missing-attribute]
         annotation.start = annotation.start.astype("int")
+        # pyrefly: ignore [missing-attribute]
         annotation.end = annotation.end.astype("int")
 
         # add both annotations to dataframe: GFF 1-base offset and BED 0-base offset
@@ -1220,7 +1223,7 @@ class CustomGenomicRegionGenerator:
             logger.warning("Could not calculate the number of total transcripts.")
             number_total_transcripts_df = None
         finally:
-            return number_total_transcripts_df
+            return number_total_transcripts_df  # noqa: B012
 
     def _add_transcript_counts(self, annotation: pd.DataFrame) -> tuple[pd.DataFrame, str | pd.Series]:
         """
@@ -1291,10 +1294,10 @@ class NcbiGenomicRegionGenerator(CustomGenomicRegionGenerator):
 
         if mode == "species":
             if taxon is None:
-                raise ConfigurationError(f"No taxon defined.")
+                raise ConfigurationError("No taxon defined.")
 
             if species is None:
-                raise ConfigurationError(f"No species defined.")
+                raise ConfigurationError("No species defined.")
 
             if annotation_release is None:
                 annotation_release = "current"

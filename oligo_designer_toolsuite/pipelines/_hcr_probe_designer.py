@@ -232,7 +232,7 @@ class HcrProbeDesigner:
             codebook = initiator_designer.load_codebook(file_codebook=file_codebook)
         else:
             raise FeatureNotImplementedError(
-                "Generation of codebook is not yet implemented. " "Please provide a file_codebook parameter."
+                "Generation of codebook is not yet implemented. Please provide a file_codebook parameter."
             )
 
         # Check if all region_ids are in the codebook
@@ -393,7 +393,6 @@ class HcrProbeDesigner:
 
 
 class TargetProbeDesigner:
-
     def __init__(self, dir_output: str, n_jobs: int) -> None:
         """Constructor for the TargetProbeDesigner class."""
 
@@ -544,6 +543,7 @@ class TargetProbeDesigner:
         ]
 
         # initialize the preoperty filter class
+        # pyrefly: ignore [bad-argument-type]
         property_filter = PropertyFilter(filters=filters)
 
         # filter the database
@@ -732,7 +732,6 @@ class TargetProbeDesigner:
 
 
 class InitiatorDesigner:
-
     def __init__(
         self,
         dir_output: str,
@@ -804,7 +803,7 @@ def main() -> None:
     args = base_parser()
 
     ##### read the config file #####
-    with open(args["config"], "r") as handle:
+    with open(args["config"]) as handle:
         config = yaml.safe_load(handle)
 
     ##### read the genes file #####
@@ -817,7 +816,7 @@ def main() -> None:
         with open(config["file_regions"]) as handle:
             lines = handle.readlines()
             # ensure that the list contains unique gene ids
-            gene_ids = list(set([line.rstrip() for line in lines]))
+            gene_ids = list(set([line.rstrip() for line in lines]))  # noqa: C403
 
     # preprocess melting temperature params
     target_probe_Tm_parameters = config["target_probe_Tm_parameters"]

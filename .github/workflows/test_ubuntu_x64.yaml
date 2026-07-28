@@ -1,15 +1,15 @@
 name: Ubuntu x64
 
 on:
-  schedule:
-    - cron: "0 0 1 * *"
+  # schedule:
+  #   - cron: "0 0 1 * *"
 
   push:
-    branches: [main, dev]
+    branches: [main, dev, bachelor-thesis]
     paths-ignore: ['.gitignore', '.pre-commit-config.yaml', '.readthedocs.yaml', 'CONTRIBUTION.md', 'LICENSE', 'MANIFEST.in', 'README.md', 'data/**', 'docs/**', 'tutorials/**']
 
   pull_request:
-    branches: [main, dev]
+    branches: [main, dev, bachelor-thesis]
     paths-ignore: ['.gitignore', '.pre-commit-config.yaml', '.readthedocs.yaml', 'CONTRIBUTION.md', 'LICENSE', 'MANIFEST.in', 'README.md', 'data/**', 'docs/**', 'tutorials/**']
 
   workflow_dispatch:
@@ -92,7 +92,7 @@ jobs:
           conda activate test-env
 
           python -m pip install --upgrade pip
-          pip install -e .[dev]
+          pip install --group dev -e .
 
       - name: Verify installation
         run: |

@@ -149,7 +149,7 @@ class IsoformConsensusScorer(BaseScorer):
     :type property_name_transcript_id: str, optional
     :param property_name_number_total_transcripts: Name of the property to use for scoring the number of total transcripts.
     :type property_name_number_total_transcripts: str, optional
-    """
+    """  # noqa: RUF002
 
     def __init__(
         self,
@@ -202,7 +202,7 @@ class IsoformConsensusScorer(BaseScorer):
                 transcript_id=cast_to_list(transcript_id),
                 number_total_transcripts=cast_to_list(number_transcripts),
             )
-            # isoform consensus is given in % (0–100); use 1 - consensus/100 so higher
+            # isoform consensus is given in % (0–100); use 1 - consensus/100 so higher  # noqa: RUF003
             # consensus leads to a lower score (better oligo).
             isoform_consensus = 1 - (isoform_consensus / 100)
         else:

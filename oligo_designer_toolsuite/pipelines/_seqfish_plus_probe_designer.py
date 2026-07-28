@@ -154,7 +154,7 @@ class SeqFishPlusProbeDesigner:
         values for parallel processing. This affects the parallelization of filtering, property calculation,
         and set generation operations.
     :type n_jobs: int
-    """
+    """  # noqa: RUF002
 
     def __init__(
         self,
@@ -631,7 +631,6 @@ class SeqFishPlusProbeDesigner:
             new_properties: dict[str, dict[str, str]] = {probe_id: {} for probe_id in probe_ids}
 
             for probe_id in probe_ids:
-
                 new_properties[probe_id]["sequence_target"] = format_sequence(
                     database=target_probe_database,
                     property="target",
@@ -807,7 +806,7 @@ class SeqFishPlusProbeDesigner:
         :rtype: tuple[str, str]
         """
         file_fasta_hybridization_probes_database = hybridization_probe_database.write_database_to_fasta(
-            filename=f"db_reference_hybridization_probes",
+            filename="db_reference_hybridization_probes",
             save_description=False,
             region_ids=None,
             sequence_type="sequence_hybridization_probe",
@@ -1189,6 +1188,7 @@ class TargetProbeDesigner:
             ReverseComplementSequenceProperty(sequence_type_reverse_complement="oligo"),
             IsoformConsensusProperty(),
         ]
+        # pyrefly: ignore [bad-argument-type]
         calculator = PropertyCalculator(properties=properties)
         oligo_database = calculator.apply(
             oligo_database=oligo_database, sequence_type="target", n_jobs=self.n_jobs
@@ -1282,6 +1282,7 @@ class TargetProbeDesigner:
         ]
 
         # initialize the preoperty filter class
+        # pyrefly: ignore [bad-argument-type]
         property_filter = PropertyFilter(filters=filters)
 
         # filter the database
@@ -1673,6 +1674,7 @@ class ReadoutProbeDesigner:
         ]
 
         # initialize the preoperty filter class
+        # pyrefly: ignore [bad-argument-type]
         property_filter = PropertyFilter(filters=filters)
 
         # filter the database
@@ -1845,13 +1847,13 @@ class ReadoutProbeDesigner:
         def _generate_barcode(
             pseudocolors: list, channel: int, n_pseudocolors: int, n_channels: int
         ) -> np.ndarray:
-            pseudocolors = pseudocolors + [sum(pseudocolors) % n_pseudocolors]
-            assert n_pseudocolors > max(
-                pseudocolors
-            ), f"The number of pseudocolor is {n_pseudocolors}, while the barcode contains {max(pseudocolors)} pseudocolors."
-            assert (
-                n_channels > channel
-            ), f"The number of channles is {n_channels}, while the barcode contains {channel} channels."
+            pseudocolors = pseudocolors + [sum(pseudocolors) % n_pseudocolors]  # noqa: RUF005
+            assert n_pseudocolors > max(pseudocolors), (
+                f"The number of pseudocolor is {n_pseudocolors}, while the barcode contains {max(pseudocolors)} pseudocolors."
+            )
+            assert n_channels > channel, (
+                f"The number of channles is {n_channels}, while the barcode contains {channel} channels."
+            )
             n_barcode_rounds = len(pseudocolors)
             barcode = np.zeros(n_channels * n_pseudocolors * n_barcode_rounds, dtype=np.int8)
             for i, pseudocolor in enumerate(pseudocolors):
@@ -1880,7 +1882,9 @@ class ReadoutProbeDesigner:
                 codebook_list.append(barcode)
 
         codebook: pd.DataFrame = pd.DataFrame(
-            codebook_list[0:n_regions], index=region_ids, columns=[f"bit_{i+1}" for i in range(barcode_size)]
+            codebook_list[0:n_regions],
+            index=region_ids,
+            columns=[f"bit_{i + 1}" for i in range(barcode_size)],
         )
 
         # Remove columns where all values are 0
@@ -1943,9 +1947,9 @@ class ReadoutProbeDesigner:
         readout_probes = readout_probe_database.get_oligoid_sequence_mapping(
             sequence_type="oligo", sequence_to_upper=False
         )
-        assert (
-            len(readout_probes) >= n_bits
-        ), f"There are less readout probes ({len(readout_probes)}) than bits ({n_bits})."
+        assert len(readout_probes) >= n_bits, (
+            f"There are less readout probes ({len(readout_probes)}) than bits ({n_bits})."
+        )
         readout_probe_table = pd.DataFrame(
             columns=[
                 "bit",
@@ -2233,6 +2237,7 @@ class PrimerDesigner:
         ]
 
         # initialize the preoperty filter class
+        # pyrefly: ignore [bad-argument-type]
         property_filter = PropertyFilter(filters=filters)
 
         # filter the database
@@ -2394,7 +2399,7 @@ def main() -> None:
     args = base_parser()
 
     ##### read the config file #####
-    with open(args["config"], "r") as handle:
+    with open(args["config"]) as handle:
         config = yaml.safe_load(handle)
 
     ##### read the genes file #####
@@ -2407,7 +2412,7 @@ def main() -> None:
         with open(config["file_regions"]) as handle:
             lines = handle.readlines()
             # ensure that the list contains unique gene ids
-            region_ids = list(set([line.rstrip() for line in lines]))
+            region_ids = list(set([line.rstrip() for line in lines]))  # noqa: C403
 
     ##### initialize probe designer pipeline #####
     pipeline = SeqFishPlusProbeDesigner(

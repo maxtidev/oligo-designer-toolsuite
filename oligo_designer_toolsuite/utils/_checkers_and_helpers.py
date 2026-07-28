@@ -1,12 +1,13 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
 import csv
 import time
 import uuid
+from collections.abc import Iterable
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterable
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from _typeshed import SupportsItems  # only available to type checkers
@@ -37,7 +38,7 @@ class CustomYamlDumper(yaml.SafeDumper):
 
     def increase_indent(self, flow: bool = False, indentless: bool = False) -> Any:
         indentless = False
-        return super(CustomYamlDumper, self).increase_indent(flow, indentless)
+        return super().increase_indent(flow, indentless)
 
     def represent_list(self, data: Iterable[Any]) -> Any:
         return self.represent_sequence("tag:yaml.org,2002:seq", data, flow_style=True)
@@ -85,13 +86,13 @@ def check_if_key_exists(nested_dict: dict[str, Any], key: str) -> bool:
     :rtype: bool
     """
     try:
-        if key in nested_dict.keys():
+        if key in nested_dict:
             return True
         else:
             for value in nested_dict.values():
                 if check_if_key_exists(value, key):
                     return True
-    except:
+    except:  # noqa: E722
         return False
     return False
 
@@ -182,7 +183,7 @@ def check_tsv_format(file: str) -> bool:
     :return: `True` if the file is in valid TSV format, `False` otherwise.
     :rtype: bool
     """
-    with open(file, "r") as tsv:
+    with open(file) as tsv:
         read_tsv = csv.reader(tsv, delimiter="\t")
         return any(read_tsv)
 

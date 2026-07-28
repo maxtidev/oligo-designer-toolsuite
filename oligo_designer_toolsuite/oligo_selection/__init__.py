@@ -8,6 +8,6 @@ from ._oligo_selection_independent_sets import IndependentSetsOligoSelection
 
 __all__ = [
     "BaseOligoSelection",
-    "IndependentSetsOligoSelection",
     "HomogeneousPropertyOligoSelection",
+    "IndependentSetsOligoSelection",
 ]

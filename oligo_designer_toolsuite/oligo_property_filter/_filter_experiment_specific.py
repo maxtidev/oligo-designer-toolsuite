@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -85,7 +85,7 @@ class PadlockArmsFilter(BasePropertyFilter):
             self.Tm_chem_correction_parameters,
         )
 
-        if ligation_site:
+        if ligation_site:  # noqa: SIM103
             return True
         else:
             return False
@@ -186,7 +186,7 @@ class DetectionOligoFilter(BasePropertyFilter):
             detect_oligo_length_max=self.detect_oligo_length_max,
             min_thymines=self.min_thymines,
         )
-        if detect_oligo_even:
+        if detect_oligo_even:  # noqa: SIM103
             return True
         else:
             return False
