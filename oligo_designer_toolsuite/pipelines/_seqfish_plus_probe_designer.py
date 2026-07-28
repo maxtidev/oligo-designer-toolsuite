@@ -631,7 +631,6 @@ class SeqFishPlusProbeDesigner:
             new_properties: dict[str, dict[str, str]] = {probe_id: {} for probe_id in probe_ids}
 
             for probe_id in probe_ids:
-
                 new_properties[probe_id]["sequence_target"] = format_sequence(
                     database=target_probe_database,
                     property="target",
@@ -1846,12 +1845,12 @@ class ReadoutProbeDesigner:
             pseudocolors: list, channel: int, n_pseudocolors: int, n_channels: int
         ) -> np.ndarray:
             pseudocolors = pseudocolors + [sum(pseudocolors) % n_pseudocolors]
-            assert n_pseudocolors > max(
-                pseudocolors
-            ), f"The number of pseudocolor is {n_pseudocolors}, while the barcode contains {max(pseudocolors)} pseudocolors."
-            assert (
-                n_channels > channel
-            ), f"The number of channles is {n_channels}, while the barcode contains {channel} channels."
+            assert n_pseudocolors > max(pseudocolors), (
+                f"The number of pseudocolor is {n_pseudocolors}, while the barcode contains {max(pseudocolors)} pseudocolors."
+            )
+            assert n_channels > channel, (
+                f"The number of channles is {n_channels}, while the barcode contains {channel} channels."
+            )
             n_barcode_rounds = len(pseudocolors)
             barcode = np.zeros(n_channels * n_pseudocolors * n_barcode_rounds, dtype=np.int8)
             for i, pseudocolor in enumerate(pseudocolors):
@@ -1880,7 +1879,9 @@ class ReadoutProbeDesigner:
                 codebook_list.append(barcode)
 
         codebook: pd.DataFrame = pd.DataFrame(
-            codebook_list[0:n_regions], index=region_ids, columns=[f"bit_{i+1}" for i in range(barcode_size)]
+            codebook_list[0:n_regions],
+            index=region_ids,
+            columns=[f"bit_{i + 1}" for i in range(barcode_size)],
         )
 
         # Remove columns where all values are 0
@@ -1943,9 +1944,9 @@ class ReadoutProbeDesigner:
         readout_probes = readout_probe_database.get_oligoid_sequence_mapping(
             sequence_type="oligo", sequence_to_upper=False
         )
-        assert (
-            len(readout_probes) >= n_bits
-        ), f"There are less readout probes ({len(readout_probes)}) than bits ({n_bits})."
+        assert len(readout_probes) >= n_bits, (
+            f"There are less readout probes ({len(readout_probes)}) than bits ({n_bits})."
+        )
         readout_probe_table = pd.DataFrame(
             columns=[
                 "bit",

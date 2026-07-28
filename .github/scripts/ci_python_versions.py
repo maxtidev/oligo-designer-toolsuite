@@ -40,8 +40,7 @@ def main() -> None:
 
     if not (min_match and max_match):
         raise SystemExit(
-            f"Unsupported requires-python format: {requires_python!r}. "
-            "Expected format like '>=3.10,<3.14'."
+            f"Unsupported requires-python format: {requires_python!r}. Expected format like '>=3.10,<3.14'."
         )
 
     min_minor = int(min_match.group(1))

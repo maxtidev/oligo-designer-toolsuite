@@ -91,24 +91,24 @@ class TestExactMatchFilter(unittest.TestCase):
         filter = ExactMatchFilter(policy=policy)
         res = filter.apply(oligo_database=self.oligo_database, sequence_type="oligo", n_jobs=2)
 
-        assert (
-            "WASH7P::2" not in res.database["WASH7P"].keys()
-        ), "A matching oligo has not been filtered from exact matches!"
-        assert (
-            "AGRN::1" not in res.database["AGRN"].keys()
-        ), "A non-matching oligo has been filtered from exact mathces!"
+        assert "WASH7P::2" not in res.database["WASH7P"].keys(), (
+            "A matching oligo has not been filtered from exact matches!"
+        )
+        assert "AGRN::1" not in res.database["AGRN"].keys(), (
+            "A non-matching oligo has been filtered from exact mathces!"
+        )
 
     def test_exact_match_filter_policy(self) -> None:
         policy = RemoveByLargerRegionFilterPolicy()
         filter = ExactMatchFilter(policy=policy)
         res = filter.apply(oligo_database=self.oligo_database, sequence_type="oligo", n_jobs=2)
 
-        assert (
-            "WASH7P::2" not in res.database["WASH7P"].keys()
-        ), "A matching oligo has not been filtered from exact matches!"
-        assert (
-            "AGRN::1" in res.database["AGRN"].keys()
-        ), "A non-matching oligo has been filtered from exact mathces!"
+        assert "WASH7P::2" not in res.database["WASH7P"].keys(), (
+            "A matching oligo has not been filtered from exact matches!"
+        )
+        assert "AGRN::1" in res.database["AGRN"].keys(), (
+            "A non-matching oligo has been filtered from exact mathces!"
+        )
 
 
 class AlignmentFilterTestBase:
@@ -342,9 +342,9 @@ class TestCrossHybridizationFilter(unittest.TestCase):
             sequence_type="oligo",
             n_jobs=2,
         )
-        assert (
-            res.database in expected_oligos
-        ), f"The cross-hybridization filter didn't return the expected oligos."
+        assert res.database in expected_oligos, (
+            f"The cross-hybridization filter didn't return the expected oligos."
+        )
 
     def test_crosshyb_filter_blast_larger_region_policy(self) -> None:
         filter_instance = BlastNFilter(
@@ -567,9 +567,9 @@ class TestHybridizationProbabilityBalstn(unittest.TestCase):
         returned_oligos = set(filtered_database.database["region"].keys())
         expected_oligos = set(f"region::{i}" for i in range(2, 20))
 
-        assert (
-            returned_oligos == expected_oligos
-        ), f"The Blast ai filter didn't return the expected oligos. \n\nExpected:\n{expected_oligos}\n\nGot:\n{returned_oligos}"
+        assert returned_oligos == expected_oligos, (
+            f"The Blast ai filter didn't return the expected oligos. \n\nExpected:\n{expected_oligos}\n\nGot:\n{returned_oligos}"
+        )
 
     def test_get_queries(self) -> None:
         self.alignment_filter.sequence_type = "target"
@@ -604,9 +604,9 @@ class TestHybridizationProbabilityBalstn(unittest.TestCase):
                 Seq("CGGTAAACAACCCAATATTTTAAAGTGTGCAAAATATATA"),
             ]
         )
-        assert (
-            returned_queries == expected_queries
-        ), f"The Blast ai filter didn't return the expected queries. \n\nExpected:\n{expected_queries}\n\nGot:\n{returned_queries}"
+        assert returned_queries == expected_queries, (
+            f"The Blast ai filter didn't return the expected queries. \n\nExpected:\n{expected_queries}\n\nGot:\n{returned_queries}"
+        )
 
     def test_get_target_blastn(self) -> None:
         self.alignment_filter.sequence_type = "target"
@@ -639,9 +639,9 @@ class TestHybridizationProbabilityBalstn(unittest.TestCase):
                 Seq("----AAACAACCCAATATTTTAAAGTGTGCAAAATATATA"),
             ]
         )
-        assert (
-            returned_references == expected_references
-        ), f"The Blast ai filter didn't return the expected references. \n\nExpected:\n{expected_references}\n\nGot:\n{returned_references}"
+        assert returned_references == expected_references, (
+            f"The Blast ai filter didn't return the expected references. \n\nExpected:\n{expected_references}\n\nGot:\n{returned_references}"
+        )
 
     def test_add_alignment_gaps_queries(self) -> None:
         self.alignment_filter.sequence_type = "target"
@@ -683,9 +683,9 @@ class TestHybridizationProbabilityBalstn(unittest.TestCase):
                 Seq("CGGTAAACAACCCAATATTTTAAAGTGTGCAAAATATATA"),
             ]
         )
-        assert (
-            gapped_queries == expected_gapped_queries
-        ), f"The Blast ai filter didn't return the expected gapped queries. \n\nExpected:\n{expected_gapped_queries}\n\nGot:\n{gapped_queries}"
+        assert gapped_queries == expected_gapped_queries, (
+            f"The Blast ai filter didn't return the expected gapped queries. \n\nExpected:\n{expected_gapped_queries}\n\nGot:\n{gapped_queries}"
+        )
 
     def test_add_alignment_gaps_references(self) -> None:
         self.alignment_filter.sequence_type = "target"
@@ -727,9 +727,9 @@ class TestHybridizationProbabilityBalstn(unittest.TestCase):
                 Seq("----AAACAACCCAATATTTTAAAGTGTGCAAAATATATA"),
             ]
         )
-        assert (
-            gapped_references == expected_gapped_references
-        ), f"The Blast ai filter didn't return the expected gapped references. \n\nExpected:\n{expected_gapped_references}\n\nGot:\n{gapped_references}"
+        assert gapped_references == expected_gapped_references, (
+            f"The Blast ai filter didn't return the expected gapped references. \n\nExpected:\n{expected_gapped_references}\n\nGot:\n{gapped_references}"
+        )
 
 
 class TestHybridizationProbabilityBowtie(unittest.TestCase):
@@ -776,9 +776,9 @@ class TestHybridizationProbabilityBowtie(unittest.TestCase):
         returned_oligos = set(filtered_database.database["region"].keys())
         expected_oligos = set(f"region::{i}" for i in range(2, 20))
 
-        assert (
-            returned_oligos == expected_oligos
-        ), f"The Bowtie ai filter didn't return the expected oligos. \n\nExpected:\n{expected_oligos}\n\nGot:\n{returned_oligos}"
+        assert returned_oligos == expected_oligos, (
+            f"The Bowtie ai filter didn't return the expected oligos. \n\nExpected:\n{expected_oligos}\n\nGot:\n{returned_oligos}"
+        )
 
     def test_get_queries(self) -> None:
         self.alignment_filter.sequence_type = "target"
@@ -797,9 +797,9 @@ class TestHybridizationProbabilityBowtie(unittest.TestCase):
                 Seq("AAAAATGTAAGTTGGCCAGGCATGGTGGGTCATGCCTGTA"),
             ]
         )
-        assert (
-            returned_queries == expected_queries
-        ), f"The Bowtie ai filter didn't return the expected queries. \n\nExpected:\n{expected_queries}\n\nGot:\n{returned_queries}"
+        assert returned_queries == expected_queries, (
+            f"The Bowtie ai filter didn't return the expected queries. \n\nExpected:\n{expected_queries}\n\nGot:\n{returned_queries}"
+        )
 
     def test_get_target_bowtie(self) -> None:
         returned_references = set(
@@ -815,6 +815,6 @@ class TestHybridizationProbabilityBowtie(unittest.TestCase):
                 Seq("AAAAATGTGAGTTGGCCAGGCATGGTGGCTCATGCCTGTA"),
             ]
         )
-        assert (
-            returned_references == expected_references
-        ), f"The Bowtie ai filter didn't return the expected references. \n\nExpected:\n{expected_references}\n\nGot:\n{returned_references}"
+        assert returned_references == expected_references, (
+            f"The Bowtie ai filter didn't return the expected references. \n\nExpected:\n{expected_references}\n\nGot:\n{returned_references}"
+        )

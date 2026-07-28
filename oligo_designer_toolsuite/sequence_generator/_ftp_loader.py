@@ -120,9 +120,9 @@ class BaseFtpLoader:
         :type sequence_nature: _TYPES_FILE_SEQ["dna", "ncrna"]
         """
         options = get_args(_TYPES_FILE_SEQ)
-        assert (
-            sequence_nature in options
-        ), f"Sequence nature type not supported! '{sequence_nature}' is not in {options}."
+        assert sequence_nature in options, (
+            f"Sequence nature type not supported! '{sequence_nature}' is not in {options}."
+        )
 
 
 class FtpLoaderEnsembl(BaseFtpLoader):
@@ -464,7 +464,7 @@ class FtpLoaderNCBI(BaseFtpLoader):
         if source_subdir != "annotation_releases":
             if self.annotation_release != "current":
                 raise ConfigurationError(
-                    "annotation_release must be 'current' when using assembly_source " f"'{source_subdir}'."
+                    f"annotation_release must be 'current' when using assembly_source '{source_subdir}'."
                 )
             entries = self._list_ftp_entries(base_directory)
             gcf_entry = next((entry for entry in entries if entry.startswith("GCF")), None)

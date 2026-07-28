@@ -737,9 +737,9 @@ class TestOligoSequenceGenerator(unittest.TestCase):
             name_sequences="random_sequences1",
             base_alphabet_with_probability={"A": 0.1, "C": 0.3, "G": 0.4, "T": 0.2},
         )
-        assert (
-            self.fasta_parser.check_fasta_format(file_fasta_random_seqs1) == True
-        ), f"error: wrong file format for file: {file_fasta_random_seqs1}"
+        assert self.fasta_parser.check_fasta_format(file_fasta_random_seqs1) == True, (
+            f"error: wrong file format for file: {file_fasta_random_seqs1}"
+        )
 
         self.oligo_database_1.load_database_from_fasta(
             files_fasta=file_fasta_random_seqs1,
@@ -848,9 +848,9 @@ class TestOligoSequenceGenerator(unittest.TestCase):
 
         assert num_start == 2
 
-        assert check_if_dna_sequence(
-            self.oligo_database_1.database["AARS1"]["AARS1::50"]["oligo"]
-        ), "error: the craeted sequence is not a DNA seuqnece"
+        assert check_if_dna_sequence(self.oligo_database_1.database["AARS1"]["AARS1::50"]["oligo"]), (
+            "error: the craeted sequence is not a DNA seuqnece"
+        )
 
         # test sliding window with strides
         file_fasta_exons_stride = self.oligo_sequence_generator.create_sequences_sliding_window(

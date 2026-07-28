@@ -930,8 +930,8 @@ class CustomGenomicRegionGenerator:
                                 ]
                             )
                         # return region in 1-base offset
-                        region_up = f"{seqid}:{start_up + 1}-{start_up+block_size_up}({strand})"
-                        region_down = f"{seqid}:{(end_down-block_size_down) + 1}-{end_down}({strand})"
+                        region_up = f"{seqid}:{start_up + 1}-{start_up + block_size_up}({strand})"
+                        region_down = f"{seqid}:{(end_down - block_size_down) + 1}-{end_down}({strand})"
                         junction_list.append(
                             [
                                 gene_id,

@@ -741,7 +741,6 @@ class MerfishProbeDesigner:
             new_properties: dict[str, dict[str, str]] = {probe_id: {} for probe_id in probe_ids}
 
             for probe_id in probe_ids:
-
                 new_properties[probe_id]["sequence_target"] = format_sequence(
                     database=target_probe_database,
                     property="target",
@@ -2160,7 +2159,7 @@ class ReadoutProbeDesigner:
             )
 
         codebook: pd.DataFrame = pd.DataFrame(
-            codebook_list[0:n_regions], index=region_ids, columns=[f"bit_{i+1}" for i in range(n_bits)]
+            codebook_list[0:n_regions], index=region_ids, columns=[f"bit_{i + 1}" for i in range(n_bits)]
         )
 
         # Remove columns where all values are 0
@@ -2210,9 +2209,9 @@ class ReadoutProbeDesigner:
         readout_probes = readout_probe_database.get_oligoid_sequence_mapping(
             sequence_type="oligo", sequence_to_upper=False
         )
-        assert (
-            len(readout_probes) >= n_bits
-        ), f"There are less readout probes ({len(readout_probes)}) than bits ({n_bits})."
+        assert len(readout_probes) >= n_bits, (
+            f"There are less readout probes ({len(readout_probes)}) than bits ({n_bits})."
+        )
         readout_probe_table = pd.DataFrame(
             columns=["bit", "channel", "readout_probe_id", "readout_probe_sequence"],
             index=list(range(n_bits)),
@@ -2222,7 +2221,7 @@ class ReadoutProbeDesigner:
         for i, (readout_probe_id, readout_probe_sequence) in enumerate(readout_probes.items()):
             readout_probe_table.iloc[i] = pd.Series(
                 [
-                    f"bit_{i+1}",
+                    f"bit_{i + 1}",
                     channels_ids[channel],
                     readout_probe_id,
                     readout_probe_sequence,

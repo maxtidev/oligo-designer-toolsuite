@@ -397,14 +397,11 @@ def calc_detect_oligo(
         # 1.2 if the maximal length is odd -> return three different oligos: even, longer left, longer right
         if detect_oligo_length_max % 2 == 1:
             detect_oligo_long_left = sequence[
-                ligation_site
-                - detect_oligo_length_max_half
-                - 1 : ligation_site
+                ligation_site - detect_oligo_length_max_half - 1 : ligation_site
                 + detect_oligo_length_max_half
             ]
             detect_oligo_long_right = sequence[
-                ligation_site
-                - detect_oligo_length_max_half : ligation_site
+                ligation_site - detect_oligo_length_max_half : ligation_site
                 + detect_oligo_length_max_half
                 + 1
             ]

@@ -232,7 +232,7 @@ class HcrProbeDesigner:
             codebook = initiator_designer.load_codebook(file_codebook=file_codebook)
         else:
             raise FeatureNotImplementedError(
-                "Generation of codebook is not yet implemented. " "Please provide a file_codebook parameter."
+                "Generation of codebook is not yet implemented. Please provide a file_codebook parameter."
             )
 
         # Check if all region_ids are in the codebook
@@ -393,7 +393,6 @@ class HcrProbeDesigner:
 
 
 class TargetProbeDesigner:
-
     def __init__(self, dir_output: str, n_jobs: int) -> None:
         """Constructor for the TargetProbeDesigner class."""
 
@@ -732,7 +731,6 @@ class TargetProbeDesigner:
 
 
 class InitiatorDesigner:
-
     def __init__(
         self,
         dir_output: str,

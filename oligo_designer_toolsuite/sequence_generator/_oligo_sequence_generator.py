@@ -253,7 +253,7 @@ class OligoSequenceGenerator:
 
                                 # Build the header strings, pairing adjacent coordinates
                                 header_coordinates = [
-                                    f"{chromosome}:{all_coordinates[i]}-{all_coordinates[i+1]}({strand})"
+                                    f"{chromosome}:{all_coordinates[i]}-{all_coordinates[i + 1]}({strand})"
                                     for i in range(0, len(all_coordinates), 2)
                                 ]
                                 header = f"{region}{SEPARATOR_FASTA_HEADER_FIELDS}{additional_info}{SEPARATOR_FASTA_HEADER_FIELDS}{SEPARATOR_FASTA_HEADER_FIELDS_LIST.join(header_coordinates)})"
@@ -316,7 +316,7 @@ class OligoSequenceGenerator:
         for one_file in list(file_fasta_out):
             if os.path.getsize(one_file) == 0:
                 logger.warning(
-                    f"No oligos were created for region {os.path.basename(one_file).replace('.fna','')}. "
+                    f"No oligos were created for region {os.path.basename(one_file).replace('.fna', '')}. "
                     "This can happen if the input sequences are shorter than the specified minimum oligo length."
                 )
                 file_fasta_out.remove(one_file)

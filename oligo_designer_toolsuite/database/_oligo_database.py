@@ -499,9 +499,9 @@ class OligoDatabase:
         :rtype: str
         """
         # Check if sequence type exists in database
-        assert check_if_key_in_database(
-            self.database, sequence_type
-        ), f"Sequence type '{sequence_type}' not found in database."
+        assert check_if_key_in_database(self.database, sequence_type), (
+            f"Sequence type '{sequence_type}' not found in database."
+        )
 
         # Check formatting
         region_ids = cast_to_list(region_ids) if region_ids else self.database.keys()
@@ -936,9 +936,9 @@ class OligoDatabase:
         :return: A list of sequences corresponding to the specified sequence type from all regions in the database.
         :rtype: list[str]
         """
-        assert check_if_key_in_database(
-            self.database, sequence_type
-        ), f"Sequence type '{sequence_type}' not found in database."
+        assert check_if_key_in_database(self.database, sequence_type), (
+            f"Sequence type '{sequence_type}' not found in database."
+        )
         sequences = [
             str(oligo_properties[sequence_type])
             for region_id, database_region in self.database.items()
@@ -959,9 +959,9 @@ class OligoDatabase:
         :return: A dictionary mapping oligo IDs to their corresponding sequences.
         :rtype: dict
         """
-        assert check_if_key_in_database(
-            self.database, sequence_type
-        ), f"Sequence type '{sequence_type}' not found in database."
+        assert check_if_key_in_database(self.database, sequence_type), (
+            f"Sequence type '{sequence_type}' not found in database."
+        )
 
         oligoid_sequence_mapping = {}
 
@@ -988,9 +988,9 @@ class OligoDatabase:
         :return: A dictionary mapping sequences to their corresponding oligo IDs.
         :rtype: dict
         """
-        assert check_if_key_in_database(
-            self.database, sequence_type
-        ), f"Sequence type '{sequence_type}' not found in database."
+        assert check_if_key_in_database(self.database, sequence_type), (
+            f"Sequence type '{sequence_type}' not found in database."
+        )
 
         sequence_oligoids_mapping = {}
 

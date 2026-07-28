@@ -1659,7 +1659,7 @@ class ReadoutProbeDesigner:
             codebook_list.append(barcode)
 
         codebook: pd.DataFrame = pd.DataFrame(
-            codebook_list, index=region_ids, columns=[f"bit_{i+1}" for i in range(codebook_size)]
+            codebook_list, index=region_ids, columns=[f"bit_{i + 1}" for i in range(codebook_size)]
         )
 
         # Remove columns where all values are 0

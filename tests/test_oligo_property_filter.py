@@ -78,7 +78,6 @@ TM_PARAMETERS_SALT_CORRECTION = {
 
 
 class TestMaskedSequenceFilters(unittest.TestCase):
-
     def setUp(self) -> None:
         self.softmasked_sequence_filter = SoftMaskedSequenceFilter()
         self.hardmasked_sequence_filter_N = HardMaskedSequenceFilter(mask="N")
@@ -87,45 +86,44 @@ class TestMaskedSequenceFilters(unittest.TestCase):
     def test_softmasked_filter(self) -> None:
         seq_remove = Seq("TGTCGGATCTCcTCAACAAGCTGGTCtTGA")
         res = self.softmasked_sequence_filter.apply(seq_remove)
-        assert (
-            res == False
-        ), f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [SoftMaskedSequenceFilter]"
+        assert res == False, (
+            f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [SoftMaskedSequenceFilter]"
+        )
 
         seq_keep = Seq("TGTCGGATCTCTTCAACAAGCTGGTCATGA")
         res = self.softmasked_sequence_filter.apply(seq_keep)
-        assert (
-            res == True
-        ), f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [SoftMaskedSequenceFilter]"
+        assert res == True, (
+            f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [SoftMaskedSequenceFilter]"
+        )
 
     def test_hardmasked_filter_N(self) -> None:
         seq_remove = Seq("TGTCGGATCTCNTCAACAAGCTGGTCNTGA")
         res = self.hardmasked_sequence_filter_N.apply(seq_remove)
-        assert (
-            res == False
-        ), f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [HardMaskedSequenceFilter]"
+        assert res == False, (
+            f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [HardMaskedSequenceFilter]"
+        )
 
         seq_keep = Seq("TGTCGGATCTCTTCAACAAGCTGGTCATGA")
         res = self.hardmasked_sequence_filter_N.apply(seq_keep)
-        assert (
-            res == True
-        ), f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [HardMaskedSequenceFilter]"
+        assert res == True, (
+            f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [HardMaskedSequenceFilter]"
+        )
 
     def test_hardmasked_filter_Q(self) -> None:
         seq_remove = Seq("TGTCGGATCTCQTCAACAAGCTGGTCQTGA")
         res = self.hardmasked_sequence_filter_Q.apply(seq_remove)
-        assert (
-            res == False
-        ), f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [HardMaskedSequenceFilter]"
+        assert res == False, (
+            f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [HardMaskedSequenceFilter]"
+        )
 
         seq_keep = Seq("TGTCGGATCTCTNNAACAAGCTGGTCATGA")
         res = self.hardmasked_sequence_filter_Q.apply(seq_keep)
-        assert (
-            res == True
-        ), f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [HardMaskedSequenceFilter]"
+        assert res == True, (
+            f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [HardMaskedSequenceFilter]"
+        )
 
 
 class TestSequenceContentFilters(unittest.TestCase):
-
     def setUp(self) -> None:
         self.prohibited_sequence_filter_str = ProhibitedSequenceFilter(prohibited_sequences="ACT")
         self.prohibited_sequence_filter_list = ProhibitedSequenceFilter(prohibited_sequences=["ACT", "CCGC"])
@@ -136,41 +134,41 @@ class TestSequenceContentFilters(unittest.TestCase):
     def test_prohibites_sequence_filter_str(self) -> None:
         seq_remove = Seq("GGGGGGGGGGGGGGACT")
         res = self.prohibited_sequence_filter_str.apply(seq_remove)
-        assert (
-            res == False
-        ), f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [ProhibitedSequenceFilter]"
+        assert res == False, (
+            f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [ProhibitedSequenceFilter]"
+        )
 
         seq_keep = Seq("GGGGGGGGGGGGGGATC")
         res = self.prohibited_sequence_filter_str.apply(seq_keep)
-        assert (
-            res == True
-        ), f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [ProhibitedSequenceFilter]"
+        assert res == True, (
+            f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [ProhibitedSequenceFilter]"
+        )
 
     def test_prohibites_sequence_filter_list(self) -> None:
         seq_remove = Seq("GGGGGGGGGGGGGGACT")
         res = self.prohibited_sequence_filter_list.apply(seq_remove)
-        assert (
-            res == False
-        ), f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [ProhibitedSequenceFilter]"
+        assert res == False, (
+            f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [ProhibitedSequenceFilter]"
+        )
 
         seq_remove = Seq("GGGGGGGGGGGGGGCCGC")
         res = self.prohibited_sequence_filter_list.apply(seq_remove)
-        assert (
-            res == False
-        ), f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [ProhibitedSequenceFilter]"
+        assert res == False, (
+            f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [ProhibitedSequenceFilter]"
+        )
 
         seq_keep = Seq("GGGGGGGGGGGGGGATC")
         res = self.prohibited_sequence_filter_list.apply(seq_keep)
-        assert (
-            res == True
-        ), f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [ProhibitedSequenceFilter]"
+        assert res == True, (
+            f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [ProhibitedSequenceFilter]"
+        )
 
     def test_homopolymeric_run_filter(self) -> None:
         seq_remove = Seq("GGGGGGGGGGGGGGAAAAA")
         res = self.homopolymeric_run_filter.apply(seq_remove)
-        assert (
-            res == False
-        ), f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted!"
+        assert res == False, (
+            f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted!"
+        )
 
         seq_keep = Seq("GGGGGGGGGGGGGGAAA")
         res = self.homopolymeric_run_filter.apply(seq_keep)
@@ -179,32 +177,31 @@ class TestSequenceContentFilters(unittest.TestCase):
     def test_three_prime_filter(self) -> None:
         seq_remove = Seq("GGGGGGGGGGGGGGAAAAA")
         res = self.three_prime_filter.apply(seq_remove)
-        assert (
-            res == False
-        ), f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [ThreePrimeSequenceFilter]"
+        assert res == False, (
+            f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [ThreePrimeSequenceFilter]"
+        )
 
         seq_keep = Seq("GGGGGGGGGGGGGGAAATT")
         res = self.three_prime_filter.apply(seq_keep)
-        assert (
-            res == True
-        ), f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [ThreePrimeSequenceFilter]"
+        assert res == True, (
+            f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [ThreePrimeSequenceFilter]"
+        )
 
     def test_five_prime_filter(self) -> None:
         seq_remove = Seq("TTGGGGGGGGGGGGGGAAAAA")
         res = self.five_prime_filter.apply(seq_remove)
-        assert (
-            res == False
-        ), f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [FivePrimeSequenceFilter]"
+        assert res == False, (
+            f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [FivePrimeSequenceFilter]"
+        )
 
         seq_keep = Seq("GGGGGGGGGGGGGGAAATT")
         res = self.five_prime_filter.apply(seq_keep)
-        assert (
-            res == True
-        ), f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [FivePrimeSequenceFilter]"
+        assert res == True, (
+            f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [FivePrimeSequenceFilter]"
+        )
 
 
 class TestGCContentFilters(unittest.TestCase):
-
     def setUp(self) -> None:
         self.GC_content_filter = GCContentFilter(GC_content_min=40, GC_content_max=60)
         self.GC_clamp_filter = GCClampFilter(n_bases=3, n_GC=1)
@@ -212,32 +209,31 @@ class TestGCContentFilters(unittest.TestCase):
     def test_GC_content_filter(self) -> None:
         seq_remove = Seq("TCGGGCGGGAGATCCAGGTGGCGCGCAAAG")
         res = self.GC_content_filter.apply(seq_remove)
-        assert (
-            res == False
-        ), f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [GCContentFilter]"
+        assert res == False, (
+            f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [GCContentFilter]"
+        )
 
         seq_keep = Seq("TGTCGGATCTCTTCAACAAGCTGGTCATGA")
         res = self.GC_content_filter.apply(seq_keep)
-        assert (
-            res == True
-        ), f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [GCContentFilter]"
+        assert res == True, (
+            f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [GCContentFilter]"
+        )
 
     def test_GC_clamp_filter(self) -> None:
         seq_remove = Seq("TCGGGCGGGAGATCCAGGTGGCGCGCAAAAA")
         res = self.GC_clamp_filter.apply(seq_remove)
-        assert (
-            res == False
-        ), f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [GCClampFilter]"
+        assert res == False, (
+            f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [GCClampFilter]"
+        )
 
         seq_keep = Seq("TGTCGGATCTCTTCAACAAGCTGGTCATGAA")
         res = self.GC_clamp_filter.apply(seq_keep)
-        assert (
-            res == True
-        ), f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [GCClampFilter]"
+        assert res == True, (
+            f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [GCClampFilter]"
+        )
 
 
 class TestSequenceStructureFilters(unittest.TestCase):
-
     def setUp(self) -> None:
         self.Tm_filter_default = MeltingTemperatureNNFilter(Tm_min=52, Tm_max=67, Tm_parameters={})
         self.Tm_filter_user = MeltingTemperatureNNFilter(
@@ -256,48 +252,48 @@ class TestSequenceStructureFilters(unittest.TestCase):
     def test_Tm_filter_default(self) -> None:
         seq_remove = Seq("TGGCTTGGGCCTTTCCAAGCCCCCATTTGAGCT")
         res = self.Tm_filter_default.apply(seq_remove)
-        assert (
-            res == False
-        ), f"error: A sequence ({seq_remove}) not fulfilling the condition with has been accepted! [MeltingTemperatureNNFilter]"
+        assert res == False, (
+            f"error: A sequence ({seq_remove}) not fulfilling the condition with has been accepted! [MeltingTemperatureNNFilter]"
+        )
 
         seq_keep = Seq("TGTCGGATCTCTTCAACAAGCTGGTCATGA")
         res = self.Tm_filter_default.apply(seq_keep)
-        assert (
-            res == True
-        ), f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [MeltingTemperatureNNFilter]"
+        assert res == True, (
+            f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [MeltingTemperatureNNFilter]"
+        )
 
     def test_Tm_filter_user(self) -> None:
         seq_remove = Seq("TGGCTTGGGCCTTTCCAAGCCCCCATTTGAGCT")
         res = self.Tm_filter_user.apply(seq_remove)
-        assert (
-            res == False
-        ), f"error: A sequence ({seq_remove}) not fulfilling the condition with user-defined parameters has been accepted! [MeltingTemperatureNNFilter]"
+        assert res == False, (
+            f"error: A sequence ({seq_remove}) not fulfilling the condition with user-defined parameters has been accepted! [MeltingTemperatureNNFilter]"
+        )
 
         seq_keep = Seq("TGGCTTGGGCCTTTCCAAGCCCCCATTTAAAAA")
         res = self.Tm_filter_user.apply(seq_keep)
-        assert (
-            res == True
-        ), f"error: A sequence ({seq_keep}) fulfilling the conditions with user-defined parameters has not been accepted! [MeltingTemperatureNNFilter]"
+        assert res == True, (
+            f"error: A sequence ({seq_keep}) fulfilling the conditions with user-defined parameters has not been accepted! [MeltingTemperatureNNFilter]"
+        )
 
     def tes_secondary_structure_filter(self) -> None:
         seq_remove = Seq("TGGCTTGGGCCTTTCCAAGCCCCCATTTGAGCT")
         res = self.secondary_structure_filter.apply(seq_remove)
-        assert (
-            res == False
-        ), f"error: A sequence ({seq_remove}) not fulfilling the condition with has been accepted! [SecondaryStructureFilter]"
+        assert res == False, (
+            f"error: A sequence ({seq_remove}) not fulfilling the condition with has been accepted! [SecondaryStructureFilter]"
+        )
 
         seq_keep = Seq("TGTCGGATCTCTTCAACAAGCTGGTCATGA")
         res = self.secondary_structure_filter.apply(seq_keep)
-        assert (
-            res == True
-        ), f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [SecondaryStructureFilter]"
+        assert res == True, (
+            f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [SecondaryStructureFilter]"
+        )
 
     def test_self_complement_filter(self) -> None:
         seq_remove = Seq("TAACAATATATATTGTTA")
         res = self.self_comp_filter.apply(seq_remove)
-        assert (
-            res == False
-        ), f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted!"
+        assert res == False, (
+            f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted!"
+        )
 
         seq_keep = Seq("TGTCGGATCTCTTCAACAAGCTGGTCATGA")
         res = self.self_comp_filter.apply(seq_keep)
@@ -306,9 +302,9 @@ class TestSequenceStructureFilters(unittest.TestCase):
     def test_complement_filter(self) -> None:
         seq_remove = Seq("TAACAATATATATTGTTA")
         res = self.complement_filter.apply(seq_remove)
-        assert (
-            res == False
-        ), f"error: A sequence ({seq_remove}) not fulfilling the condition with ({seq_remove.complement()}) has been accepted!"
+        assert res == False, (
+            f"error: A sequence ({seq_remove}) not fulfilling the condition with ({seq_remove.complement()}) has been accepted!"
+        )
 
         seq_keep = Seq("TGTCGGATCTCTTCAACAAGCTGGTCATGA")
         res = self.complement_filter.apply(seq_keep)
@@ -316,7 +312,6 @@ class TestSequenceStructureFilters(unittest.TestCase):
 
 
 class TestExperimentSpecificFilters(unittest.TestCase):
-
     def setUp(self) -> None:
         self.padlock_arms_filter = PadlockArmsFilter(
             arm_length_min=5,
@@ -344,32 +339,31 @@ class TestExperimentSpecificFilters(unittest.TestCase):
     def test_padlock_filter(self) -> None:
         seq_remove = Seq("TGTCGGATCTCTTCAACAAGCTGGTCAT")
         res = self.padlock_arms_filter.apply(seq_remove)
-        assert (
-            res == False
-        ), f"error: A sequence ({seq_remove}) not fulfilling the condition with has been accepted! [PadlockArmsFilter]"
+        assert res == False, (
+            f"error: A sequence ({seq_remove}) not fulfilling the condition with has been accepted! [PadlockArmsFilter]"
+        )
 
         seq_keep = Seq("TGGCTTGGGCCTTTCCAAGCCCCCATTTGAGCT")
         res = self.padlock_arms_filter.apply(seq_keep)
-        assert (
-            res == True
-        ), f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [PadlockArmsFilter]"
+        assert res == True, (
+            f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [PadlockArmsFilter]"
+        )
 
     def test_detection_oligo_filter(self) -> None:
         seq_remove = Seq("TGTCGGATCTCTTCAACAAGCTGGTCAT")
         res = self.detection_oligo_filter.apply(seq_remove)
-        assert (
-            res == False
-        ), f"error: A sequence ({seq_remove}) not fulfilling the condition with has been accepted! [PadlockArmsFilter]"
+        assert res == False, (
+            f"error: A sequence ({seq_remove}) not fulfilling the condition with has been accepted! [PadlockArmsFilter]"
+        )
 
         seq_keep = Seq("TGGCTTGGGCCTTTCCAAGCCCCCATTTGAGCT")
         res = self.detection_oligo_filter.apply(seq_keep)
-        assert (
-            res == True
-        ), f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [PadlockArmsFilter]"
+        assert res == True, (
+            f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [PadlockArmsFilter]"
+        )
 
 
 class TestPropertyFilter(unittest.TestCase):
-
     def setUp(self) -> None:
         self.tmp_path = os.path.join(os.getcwd(), "tmp_property_filters")
 

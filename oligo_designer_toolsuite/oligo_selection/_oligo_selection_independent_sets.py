@@ -333,7 +333,6 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
         )
 
         for attempt in range(self.n_attempts_graph):
-
             # --- Diversification: remove nodes (except first attempt) ---
             if attempt > 0 and n_nodes_removed > 0:
                 # Weight node removal by oligo scores to bias diversification.
