@@ -64,13 +64,26 @@ dependencies = [
   "seqfold>=0.9,<1",
 ]
 
-[project.optional-dependencies]
-dev = [
-  "pytest>=7,<9",
-  "coverage[toml]>=7,<8",
+[dependency-groups]
+test = ["pytest>=7,<9", "coverage[toml]>=7,<8"]
+lint = [
   "pre-commit>=3,<5",
   "black>=24,<26",
   "mypy>=1,<2",
+  "ruff==0.16.0",
+  "pyrefly==1.1.1",
+]
+types = [
+  "types-PyYAML",
+  "types-setuptools",
+  "types-networkx",
+  "pandas-stubs",
+  "scipy-stubs",
+]
+dev = [
+  { include-group = "test" },
+  { include-group = "lint" },
+  { include-group = "types" },
 ]
 
 [project.scripts]

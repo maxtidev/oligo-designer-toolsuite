@@ -1,0 +1,20 @@
+name: odt-thesis
+channels:
+  - nodefaults
+  - conda-forge
+  - bioconda
+dependencies:
+  # Core runtime
+  - python=3.12
+  - pip>=25.1 # min version supporting dependency groups
+
+  # Oligo Designer Toolsuite AI filters dependencies
+  - pytorch # conda chooses PyTorch backend, avoids CUDA if not available
+
+  # Oligo Designer Toolsuite non-Python dependencies
+  - bcftools>=1.22
+  - bedtools>=2.30
+  - blast>=2.15.0
+  - bowtie>=1.3.1
+  - bowtie2>=2.5
+  - samtools>=1.22

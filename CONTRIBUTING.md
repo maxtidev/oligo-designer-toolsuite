@@ -27,7 +27,7 @@ Thank you for your interest in contributing to Oligo Designer Toolsuite! This gu
      ```
 4. **Install the project (editable) and dev tools**:
    ```bash
-   pip install -e .[dev]
+   pip install --group dev -e .
    ```
 5. **Install pre-commit hooks**:
    ```bash

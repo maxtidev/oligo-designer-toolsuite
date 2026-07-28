@@ -70,60 +70,46 @@ For stable installation, we recommend to first setup a conda environment.
 
 *Note: if your institution does not support anaconda, you can use [miniforge](https://github.com/conda-forge/miniforge) instead to run the conda installations.*
 
-First create a conda environment:
+First create the conda environment with all additional tools:
 
 ```
-conda create -n odt python=3.12
-conda activate odt
+conda env create https://raw.githubusercontent.com/maxtidev/oligo-designer-toolsuite/refs/heads/bachelor-thesis/environment.yml
 ```
 
-To install the additional required tools via conda, please activate the *bioconda* and *conda-forge* channels in your conda environment and update conda and all packages in your environment:
-
-```
-conda config --add channels bioconda
-conda config --add channels conda-forge
-conda update --all
-```
-
-The additional tools need to be installed independently:
-
-```
-conda install "blast>=2.15.0"
-conda install "bedtools>=2.30"
-conda install "bowtie>=1.3.1"
-conda install "bowtie2>=2.5"
-conda install "bcftools>=1.22"
-conda install "samtools>=1.22"
-```
+You can also directly take a look at [`environment.yml`](environment.yml) to see the required conda dependencies.
 
 All other required packages are automatically installed if installation is done via ```pip``` (see below).
 
-### Install Options
+### Installation from PyPi
 
-The installation of the package is done via pip. Note: if you are using conda, first install pip with: ```conda install pip```.
-
-PyPI install:
+The installation of the package is done via pip:
 
 ```
 pip install oligo-designer-toolsuite
 ```
 
+### Installation from source
 
-Installation from source:
+To install from source, clone the repo and initialize the conda environment like this:
 
 ```
 git clone https://github.com/HelmholtzAI-Consultants-Munich/oligo-designer-toolsuite.git
 cd oligo-designer-toolsuite
+conda env create
 ```
 
-- Installation as python package (run inside directory):
+- Regular installation:
 
-		pip install .
+	```
+	pip install .
+	```
 
 
-- Development installation as python package (run inside directory):
+- Editable installation with development dependencies:
 
-		pip install -e .[dev]
+	```
+	pip install --group dev -e .
+	```
 
 
 <!-- LINK INSTALLATION END -->
