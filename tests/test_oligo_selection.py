@@ -171,6 +171,7 @@ class TestIndependentSetsOligoSelection(unittest.TestCase):
     def test_nonoverlapping_matrix_overlapping_oligos(self) -> None:
         """Overlapping oligos should yield 0 (non-compatible) in the non-overlap matrix."""
         oligo_database = OligoDatabase(dir_output=self.tmp_path)
+        # pyrefly: ignore [bad-assignment]
         oligo_database.database = {
             "region_1": {
                 "A_0": {"start": [[10], [50]], "end": [[15], [55]]},
@@ -195,6 +196,7 @@ class TestIndependentSetsOligoSelection(unittest.TestCase):
     def test_nonoverlapping_matrix_for_nonoverlapping_oligos(self) -> None:
         """Non-overlapping oligos should yield gap distance in the non-overlap matrix."""
         oligo_database = OligoDatabase(dir_output=self.tmp_path)
+        # pyrefly: ignore [bad-assignment]
         oligo_database.database = {
             "region_1": {
                 "A_0": {"start": [[10], [50]], "end": [[15], [55]]},
@@ -219,6 +221,7 @@ class TestIndependentSetsOligoSelection(unittest.TestCase):
     def test_non_overlap_matrix_distance_boundary(self) -> None:
         """Gap > distance_between_oligos gives stored distance; gap <= gives 0."""
         oligo_database = OligoDatabase(dir_output=self.tmp_path)
+        # pyrefly: ignore [bad-assignment]
         oligo_database.database = {
             "r1": {
                 "a": {"oligo": "A" * 10, "start": [[1]], "end": [[10]]},
@@ -246,6 +249,7 @@ class TestIndependentSetsOligoSelection(unittest.TestCase):
     def test_non_overlapping_sets(self) -> None:
         """Apply on a small synthetic database and check output structure."""
         oligo_database = OligoDatabase(dir_output=self.tmp_path)
+        # pyrefly: ignore [bad-assignment]
         oligo_database.database = {
             "region_1": {
                 "A_0": {
@@ -267,6 +271,7 @@ class TestIndependentSetsOligoSelection(unittest.TestCase):
                 "A_4": {"oligo": "AAAGCTGTTGCGCCCCCACATCC", "start": [[50], [80]], "end": [[55], [85]]},
             }
         }
+        # pyrefly: ignore [bad-assignment]
         oligo_database.oligosets = {}
 
         result = self.oligoset_generator.apply(
@@ -288,12 +293,14 @@ class TestIndependentSetsOligoSelection(unittest.TestCase):
     def test_region_insufficient_oligos_does_not_crash(self) -> None:
         """Region with fewer oligos than set_size_min should not crash (empty oligosets)."""
         oligo_database = OligoDatabase(dir_output=self.tmp_path)
+        # pyrefly: ignore [bad-assignment]
         oligo_database.database = {
             "small_region": {
                 "o1": {"oligo": "A" * 30, "start": [[1]], "end": [[30]]},
                 "o2": {"oligo": "T" * 30, "start": [[50]], "end": [[79]]},
             }
         }
+        # pyrefly: ignore [bad-assignment]
         oligo_database.oligosets = {}
         generator = IndependentSetsOligoSelection(
             oligos_scoring=self.oligo_scoring,
@@ -319,6 +326,7 @@ class TestIndependentSetsOligoSelection(unittest.TestCase):
     def test_request_more_sets_than_candidates_returns_available(self) -> None:
         """Requesting n_sets larger than possible should return as many as found without error."""
         oligo_database = OligoDatabase(dir_output=self.tmp_path)
+        # pyrefly: ignore [bad-assignment]
         oligo_database.database = {
             "tiny": {
                 "x": {"oligo": "A" * 30, "start": [[1]], "end": [[30]]},
@@ -326,6 +334,7 @@ class TestIndependentSetsOligoSelection(unittest.TestCase):
                 "z": {"oligo": "G" * 30, "start": [[80]], "end": [[109]]},
             }
         }
+        # pyrefly: ignore [bad-assignment]
         oligo_database.oligosets = {}
         generator = IndependentSetsOligoSelection(
             oligos_scoring=self.oligo_scoring,
@@ -414,6 +423,7 @@ class TestHomogeneousPropertyOligoSelection(unittest.TestCase):
             FILE_DATABASE, database_overwrite=True, merge_databases_on_sequence_type="oligo"
         )
         properties = [GCContentProperty(), TmNNProperty(Tm_parameters=TM_PARAMETERS)]
+        # pyrefly: ignore [bad-argument-type]
         calculator = PropertyCalculator(properties=properties)
         self.oligo_database = calculator.apply(
             oligo_database=self.oligo_database, sequence_type="oligo", n_jobs=1
@@ -431,11 +441,13 @@ class TestHomogeneousPropertyOligoSelection(unittest.TestCase):
     def test_missing_property_raises_database_error(self) -> None:
         """Region missing a required property should raise DatabaseError."""
         oligo_database = OligoDatabase(dir_output=self.tmp_path)
+        # pyrefly: ignore [bad-assignment]
         oligo_database.database = {
             "r1": {
                 "o1": {"oligo": "ACGT" * 10, "GC_content_oligo": 0.5},
             }
         }
+        # pyrefly: ignore [bad-assignment]
         oligo_database.oligosets = {}
         generator = HomogeneousPropertyOligoSelection(
             set_size=1,
@@ -453,12 +465,14 @@ class TestHomogeneousPropertyOligoSelection(unittest.TestCase):
     def test_region_fewer_oligos_than_set_size_handled(self) -> None:
         """Region with fewer oligos than set_size should not crash (empty or no sets)."""
         oligo_database = OligoDatabase(dir_output=self.tmp_path)
+        # pyrefly: ignore [bad-assignment]
         oligo_database.database = {
             "small": {
                 "a": {"oligo": "A" * 20, "GC_content_oligo": 0.5, "TmNN_oligo": 60.0},
                 "b": {"oligo": "T" * 20, "GC_content_oligo": 0.5, "TmNN_oligo": 60.0},
             }
         }
+        # pyrefly: ignore [bad-assignment]
         oligo_database.oligosets = {}
         generator = HomogeneousPropertyOligoSelection(
             set_size=5,

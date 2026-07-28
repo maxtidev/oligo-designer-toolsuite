@@ -637,7 +637,9 @@ class FtpLoaderNCBI(BaseFtpLoader):
             index=mapping_scaffolds_df["RefSeq-Accn"],
         ).to_dict()
 
+        # pyrefly: ignore [bad-assignment]
         mapping: dict[str, str] = mapping_chromosome
+        # pyrefly: ignore [no-matching-overload]
         mapping.update(mapping_scaffolds)
 
         return mapping

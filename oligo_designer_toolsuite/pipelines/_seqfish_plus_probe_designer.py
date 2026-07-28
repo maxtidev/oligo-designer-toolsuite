@@ -1188,6 +1188,7 @@ class TargetProbeDesigner:
             ReverseComplementSequenceProperty(sequence_type_reverse_complement="oligo"),
             IsoformConsensusProperty(),
         ]
+        # pyrefly: ignore [bad-argument-type]
         calculator = PropertyCalculator(properties=properties)
         oligo_database = calculator.apply(
             oligo_database=oligo_database, sequence_type="target", n_jobs=self.n_jobs
@@ -1281,6 +1282,7 @@ class TargetProbeDesigner:
         ]
 
         # initialize the preoperty filter class
+        # pyrefly: ignore [bad-argument-type]
         property_filter = PropertyFilter(filters=filters)
 
         # filter the database
@@ -1672,6 +1674,7 @@ class ReadoutProbeDesigner:
         ]
 
         # initialize the preoperty filter class
+        # pyrefly: ignore [bad-argument-type]
         property_filter = PropertyFilter(filters=filters)
 
         # filter the database
@@ -2234,6 +2237,7 @@ class PrimerDesigner:
         ]
 
         # initialize the preoperty filter class
+        # pyrefly: ignore [bad-argument-type]
         property_filter = PropertyFilter(filters=filters)
 
         # filter the database

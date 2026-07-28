@@ -909,6 +909,7 @@ class CycleHCRProbeDesigner:
         for region_id, barcode in codebook.iterrows():
             bits = barcode[barcode == 1].index
             readout_probe_info = readout_probe_table.loc[bits, :]
+            # pyrefly: ignore [unsupported-operation]
             readout_probe_info["region_id"] = region_id
             readout_probe_table_regions.append(readout_probe_info)
         readout_probe_table_regions_df = pd.concat(readout_probe_table_regions, axis=0)
@@ -1229,6 +1230,7 @@ class TargetProbeDesigner:
         ]
 
         # initialize the preoperty filter class
+        # pyrefly: ignore [bad-argument-type]
         property_filter = PropertyFilter(filters=filters)
 
         # filter the database

@@ -119,6 +119,7 @@ class TestCheckers(unittest.TestCase):
     def test_check_if_key_exists_empty(self) -> None:
         """Test the check_if_key_exists function with an empty cache."""
         empty_dict = EffiDict(disk_backend=self.backend, replacement_strategy=self.strategy)
+        # pyrefly: ignore [bad-argument-type]
         assert not check_if_key_exists(empty_dict, "a"), "Failed: Should return False for empty dictionary"
 
     def test_check_if_key_exists_flat(self) -> None:
@@ -126,7 +127,9 @@ class TestCheckers(unittest.TestCase):
         flat_database = EffiDict(disk_backend=self.backend, replacement_strategy=self.strategy)
         flat_database.load_from_dict({"a": 1, "b": 2})
 
+        # pyrefly: ignore [bad-argument-type]
         assert check_if_key_exists(flat_database, "a"), "Failed: Key 'a' should exist in flat_database"
+        # pyrefly: ignore [bad-argument-type]
         assert not check_if_key_exists(flat_database, "z"), (
             "Failed: Key 'z' should not exist in flat_database"
         )
@@ -137,10 +140,13 @@ class TestCheckers(unittest.TestCase):
         nested_database = EffiDict(disk_backend=self.backend, replacement_strategy=self.strategy)
         nested_database.load_from_dict({"a": {"b": {"c": 1}}, "d": 2, "e": {"f": {"g": {"h": 3}}}})
 
+        # pyrefly: ignore [bad-argument-type]
         assert check_if_key_exists(nested_database, "c"), "Failed: Key 'c' should exist in nested_database"
+        # pyrefly: ignore [bad-argument-type]
         assert not check_if_key_exists(nested_database, "z"), (
             "Failed: Key 'z' should not exist in nested_database"
         )
+        # pyrefly: ignore [bad-argument-type]
         assert check_if_key_exists(nested_database, "h"), (
             "Failed: Key 'h' should exist deep within nested_database"
         )
@@ -342,6 +348,7 @@ class TestDatabaseProcessor(unittest.TestCase):
     def test_check_if_region_in_database(self) -> None:
         file_removed_regions = os.path.join(self.tmp_path, "removed_regions.tsv")
         check_if_region_in_database(
+            # pyrefly: ignore [bad-argument-type]
             database=self.oligo_database1.database,
             region_ids=["no_region1", "no_region2"],
             write_regions_with_insufficient_oligos=True,
@@ -395,16 +402,19 @@ class TestGffParser(unittest.TestCase):
 
     def test_parse_annotation_from_gff(self) -> None:
         """Test parsing GFF annotation."""
+        # pyrefly: ignore [bad-assignment]
         result: pd.DataFrame = self.parser.parse_annotation_from_gff(FILE_GFF, target_lines=10)
         assert result.shape[1] == 23, "error: GFF3 dataframe not correctly loaded"
 
     def test_parse_annotation_from_gtf(self) -> None:
         """Test parsing GTF annotation."""
+        # pyrefly: ignore [bad-assignment]
         result: pd.DataFrame = self.parser.parse_annotation_from_gff(FILE_GTF, target_lines=10)
         assert result.shape[1] == 20, "error: GTF dataframe not correctly loaded"
 
     def test_parse_annotation_from_gtf_no_duplicates(self) -> None:
         """Test when parsing GTF annotation chromosomes are not read in as both integers and strings."""
+        # pyrefly: ignore [bad-assignment]
         result: pd.DataFrame = self.parser.parse_annotation_from_gff(FILE_GTF_COMPLEX)
         self.assertListEqual(
             result["seqid"].unique().tolist(),

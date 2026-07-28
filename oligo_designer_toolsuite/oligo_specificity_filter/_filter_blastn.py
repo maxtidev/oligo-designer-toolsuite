@@ -456,11 +456,13 @@ class BlastNFilter(AlignmentSpecificityFilter):
             return seq
 
         table_hits["query_gaps"] = (
+            # pyrefly: ignore [no-matching-overload]
             table_hits["query_sequence"].apply(lambda x: np.where(np.array(list(x)) == "-")[0])
             + table_hits["query_start"]
             - 1  # blastn has 1-based indices
         )
         table_hits["reference_gaps"] = (
+            # pyrefly: ignore [no-matching-overload]
             table_hits["reference_sequence"].apply(lambda x: np.where(np.array(list(x)) == "-")[0])
             + table_hits["query_start"]
             - 1

@@ -198,6 +198,7 @@ class OligoDatabase:
                 if len(set(self.database) & set(database_region)) > 0:
                     self.database = merge_databases(
                         database1=self.database,
+                        # pyrefly: ignore [bad-argument-type]
                         database2=database_region,
                         sequence_type=sequence_type,
                         database_sequence_types=self.database_sequence_types,
@@ -230,6 +231,7 @@ class OligoDatabase:
         # add this step to log regions which are not available in database
         if region_ids:
             check_if_region_in_database(
+                # pyrefly: ignore [bad-argument-type]
                 database=self.database,
                 region_ids=region_ids,
                 write_regions_with_insufficient_oligos=self.write_regions_with_insufficient_oligos,
@@ -327,6 +329,7 @@ class OligoDatabase:
         # Filter for region ids
         if region_ids:
             check_if_region_in_database(
+                # pyrefly: ignore [bad-argument-type]
                 database=database_tmp2,
                 region_ids=region_ids,
                 write_regions_with_insufficient_oligos=self.write_regions_with_insufficient_oligos,
@@ -383,6 +386,7 @@ class OligoDatabase:
                 if region_id in self.database.keys():  # noqa: SIM118
                     self.database = merge_databases(
                         database1=self.database,
+                        # pyrefly: ignore [bad-argument-type]
                         database2={region_id: database_region},
                         sequence_type=merge_databases_on_sequence_type,
                         database_sequence_types=self.database_sequence_types,
@@ -418,6 +422,7 @@ class OligoDatabase:
         # add this step to log regions which are not available in database
         if region_ids:
             check_if_region_in_database(
+                # pyrefly: ignore [bad-argument-type]
                 database=self.database,
                 region_ids=region_ids,
                 write_regions_with_insufficient_oligos=self.write_regions_with_insufficient_oligos,
@@ -1180,7 +1185,9 @@ class OligoDatabase:
         region_ids = cast_to_list(region_ids)
         if self.database:
             for region_id in self.database.keys():  # noqa: SIM118
-                if (remove_region and (region_id in region_ids)) or (not remove_region and (region_id not in region_ids)):
+                if (remove_region and (region_id in region_ids)) or (
+                    not remove_region and (region_id not in region_ids)
+                ):
                     del self.database[region_id]
         else:
             raise DatabaseError(
@@ -1204,7 +1211,9 @@ class OligoDatabase:
             for region_id in self.database.keys():  # noqa: SIM118
                 oligo_ids_region = list(self.database[region_id].keys())
                 for oligo_id in oligo_ids_region:
-                    if (remove_region and (oligo_id in oligo_ids)) or (not remove_region and (oligo_id not in oligo_ids)):
+                    if (remove_region and (oligo_id in oligo_ids)) or (
+                        not remove_region and (oligo_id not in oligo_ids)
+                    ):
                         del self.database[region_id][oligo_id]
         else:
             raise DatabaseError(
@@ -1273,11 +1282,13 @@ class OligoDatabase:
                 )
                 if property_values:  # noqa: SIM102
                     # remove if any of the items match category
-                    if (remove_if_equals_category and any(
-                        item in property_category for item in property_values
-                    )) or (not remove_if_equals_category and all(
-                        item not in property_category for item in property_values
-                    )):
+                    if (
+                        remove_if_equals_category
+                        and any(item in property_category for item in property_values)
+                    ) or (
+                        not remove_if_equals_category
+                        and all(item not in property_category for item in property_values)
+                    ):
                         oligos_to_delete.append((region_id, oligo_id))
 
         for region_id, oligo_id in oligos_to_delete:

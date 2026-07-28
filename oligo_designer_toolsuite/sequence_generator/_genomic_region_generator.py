@@ -250,6 +250,7 @@ class CustomGenomicRegionGenerator:
 
                 intergenic_annotation.append(
                     _compute_intergenic_annotation_strand(
+                        # pyrefly: ignore [bad-argument-type]
                         seqid=seqid,
                         gene_annotatio=gene_annotation_plusstrand,
                         strand="+",
@@ -258,6 +259,7 @@ class CustomGenomicRegionGenerator:
                 )
                 intergenic_annotation.append(
                     _compute_intergenic_annotation_strand(
+                        # pyrefly: ignore [bad-argument-type]
                         seqid=seqid,
                         gene_annotatio=gene_annotation_minusstrand,
                         strand="-",
@@ -1049,7 +1051,9 @@ class CustomGenomicRegionGenerator:
         annotation: pd.DataFrame = self.gff_parser.load_annotation_from_pickle(self.parsed_annotation_file)
 
         # required to ensure that sorting is done correctly
+        # pyrefly: ignore [missing-attribute]
         annotation.start = annotation.start.astype("int")
+        # pyrefly: ignore [missing-attribute]
         annotation.end = annotation.end.astype("int")
 
         # add both annotations to dataframe: GFF 1-base offset and BED 0-base offset

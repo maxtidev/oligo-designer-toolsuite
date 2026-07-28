@@ -85,12 +85,14 @@ class TestMaskedSequenceFilters(unittest.TestCase):
 
     def test_softmasked_filter(self) -> None:
         seq_remove = Seq("TGTCGGATCTCcTCAACAAGCTGGTCtTGA")
+        # pyrefly: ignore [bad-argument-type]
         res = self.softmasked_sequence_filter.apply(seq_remove)
         assert res == False, (
             f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [SoftMaskedSequenceFilter]"
         )
 
         seq_keep = Seq("TGTCGGATCTCTTCAACAAGCTGGTCATGA")
+        # pyrefly: ignore [bad-argument-type]
         res = self.softmasked_sequence_filter.apply(seq_keep)
         assert res == True, (
             f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [SoftMaskedSequenceFilter]"
@@ -98,12 +100,14 @@ class TestMaskedSequenceFilters(unittest.TestCase):
 
     def test_hardmasked_filter_N(self) -> None:
         seq_remove = Seq("TGTCGGATCTCNTCAACAAGCTGGTCNTGA")
+        # pyrefly: ignore [bad-argument-type]
         res = self.hardmasked_sequence_filter_N.apply(seq_remove)
         assert res == False, (
             f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [HardMaskedSequenceFilter]"
         )
 
         seq_keep = Seq("TGTCGGATCTCTTCAACAAGCTGGTCATGA")
+        # pyrefly: ignore [bad-argument-type]
         res = self.hardmasked_sequence_filter_N.apply(seq_keep)
         assert res == True, (
             f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [HardMaskedSequenceFilter]"
@@ -111,12 +115,14 @@ class TestMaskedSequenceFilters(unittest.TestCase):
 
     def test_hardmasked_filter_Q(self) -> None:
         seq_remove = Seq("TGTCGGATCTCQTCAACAAGCTGGTCQTGA")
+        # pyrefly: ignore [bad-argument-type]
         res = self.hardmasked_sequence_filter_Q.apply(seq_remove)
         assert res == False, (
             f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [HardMaskedSequenceFilter]"
         )
 
         seq_keep = Seq("TGTCGGATCTCTNNAACAAGCTGGTCATGA")
+        # pyrefly: ignore [bad-argument-type]
         res = self.hardmasked_sequence_filter_Q.apply(seq_keep)
         assert res == True, (
             f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [HardMaskedSequenceFilter]"
@@ -133,12 +139,14 @@ class TestSequenceContentFilters(unittest.TestCase):
 
     def test_prohibites_sequence_filter_str(self) -> None:
         seq_remove = Seq("GGGGGGGGGGGGGGACT")
+        # pyrefly: ignore [bad-argument-type]
         res = self.prohibited_sequence_filter_str.apply(seq_remove)
         assert res == False, (
             f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [ProhibitedSequenceFilter]"
         )
 
         seq_keep = Seq("GGGGGGGGGGGGGGATC")
+        # pyrefly: ignore [bad-argument-type]
         res = self.prohibited_sequence_filter_str.apply(seq_keep)
         assert res == True, (
             f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [ProhibitedSequenceFilter]"
@@ -146,18 +154,21 @@ class TestSequenceContentFilters(unittest.TestCase):
 
     def test_prohibites_sequence_filter_list(self) -> None:
         seq_remove = Seq("GGGGGGGGGGGGGGACT")
+        # pyrefly: ignore [bad-argument-type]
         res = self.prohibited_sequence_filter_list.apply(seq_remove)
         assert res == False, (
             f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [ProhibitedSequenceFilter]"
         )
 
         seq_remove = Seq("GGGGGGGGGGGGGGCCGC")
+        # pyrefly: ignore [bad-argument-type]
         res = self.prohibited_sequence_filter_list.apply(seq_remove)
         assert res == False, (
             f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [ProhibitedSequenceFilter]"
         )
 
         seq_keep = Seq("GGGGGGGGGGGGGGATC")
+        # pyrefly: ignore [bad-argument-type]
         res = self.prohibited_sequence_filter_list.apply(seq_keep)
         assert res == True, (
             f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [ProhibitedSequenceFilter]"
@@ -165,23 +176,27 @@ class TestSequenceContentFilters(unittest.TestCase):
 
     def test_homopolymeric_run_filter(self) -> None:
         seq_remove = Seq("GGGGGGGGGGGGGGAAAAA")
+        # pyrefly: ignore [bad-argument-type]
         res = self.homopolymeric_run_filter.apply(seq_remove)
         assert res == False, (
             f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted!"
         )
 
         seq_keep = Seq("GGGGGGGGGGGGGGAAA")
+        # pyrefly: ignore [bad-argument-type]
         res = self.homopolymeric_run_filter.apply(seq_keep)
         assert res == True, f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted!"
 
     def test_three_prime_filter(self) -> None:
         seq_remove = Seq("GGGGGGGGGGGGGGAAAAA")
+        # pyrefly: ignore [bad-argument-type]
         res = self.three_prime_filter.apply(seq_remove)
         assert res == False, (
             f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [ThreePrimeSequenceFilter]"
         )
 
         seq_keep = Seq("GGGGGGGGGGGGGGAAATT")
+        # pyrefly: ignore [bad-argument-type]
         res = self.three_prime_filter.apply(seq_keep)
         assert res == True, (
             f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [ThreePrimeSequenceFilter]"
@@ -189,12 +204,14 @@ class TestSequenceContentFilters(unittest.TestCase):
 
     def test_five_prime_filter(self) -> None:
         seq_remove = Seq("TTGGGGGGGGGGGGGGAAAAA")
+        # pyrefly: ignore [bad-argument-type]
         res = self.five_prime_filter.apply(seq_remove)
         assert res == False, (
             f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [FivePrimeSequenceFilter]"
         )
 
         seq_keep = Seq("GGGGGGGGGGGGGGAAATT")
+        # pyrefly: ignore [bad-argument-type]
         res = self.five_prime_filter.apply(seq_keep)
         assert res == True, (
             f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [FivePrimeSequenceFilter]"
@@ -208,12 +225,14 @@ class TestGCContentFilters(unittest.TestCase):
 
     def test_GC_content_filter(self) -> None:
         seq_remove = Seq("TCGGGCGGGAGATCCAGGTGGCGCGCAAAG")
+        # pyrefly: ignore [bad-argument-type]
         res = self.GC_content_filter.apply(seq_remove)
         assert res == False, (
             f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [GCContentFilter]"
         )
 
         seq_keep = Seq("TGTCGGATCTCTTCAACAAGCTGGTCATGA")
+        # pyrefly: ignore [bad-argument-type]
         res = self.GC_content_filter.apply(seq_keep)
         assert res == True, (
             f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [GCContentFilter]"
@@ -221,12 +240,14 @@ class TestGCContentFilters(unittest.TestCase):
 
     def test_GC_clamp_filter(self) -> None:
         seq_remove = Seq("TCGGGCGGGAGATCCAGGTGGCGCGCAAAAA")
+        # pyrefly: ignore [bad-argument-type]
         res = self.GC_clamp_filter.apply(seq_remove)
         assert res == False, (
             f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted! [GCClampFilter]"
         )
 
         seq_keep = Seq("TGTCGGATCTCTTCAACAAGCTGGTCATGAA")
+        # pyrefly: ignore [bad-argument-type]
         res = self.GC_clamp_filter.apply(seq_keep)
         assert res == True, (
             f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [GCClampFilter]"
@@ -246,17 +267,21 @@ class TestSequenceStructureFilters(unittest.TestCase):
         self.secondary_structure_filter = SecondaryStructureFilter(T=37, thr_DG=0)
         self.self_comp_filter = SelfComplementFilter(max_len_selfcomplement=6)
         self.complement_filter = ComplementFilter(
-            comparison_sequence=Seq("ATTGTTATATATAACAAT"), max_len_complement=6
+            # pyrefly: ignore [bad-argument-type]
+            comparison_sequence=Seq("ATTGTTATATATAACAAT"),
+            max_len_complement=6,
         )
 
     def test_Tm_filter_default(self) -> None:
         seq_remove = Seq("TGGCTTGGGCCTTTCCAAGCCCCCATTTGAGCT")
+        # pyrefly: ignore [bad-argument-type]
         res = self.Tm_filter_default.apply(seq_remove)
         assert res == False, (
             f"error: A sequence ({seq_remove}) not fulfilling the condition with has been accepted! [MeltingTemperatureNNFilter]"
         )
 
         seq_keep = Seq("TGTCGGATCTCTTCAACAAGCTGGTCATGA")
+        # pyrefly: ignore [bad-argument-type]
         res = self.Tm_filter_default.apply(seq_keep)
         assert res == True, (
             f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [MeltingTemperatureNNFilter]"
@@ -264,12 +289,14 @@ class TestSequenceStructureFilters(unittest.TestCase):
 
     def test_Tm_filter_user(self) -> None:
         seq_remove = Seq("TGGCTTGGGCCTTTCCAAGCCCCCATTTGAGCT")
+        # pyrefly: ignore [bad-argument-type]
         res = self.Tm_filter_user.apply(seq_remove)
         assert res == False, (
             f"error: A sequence ({seq_remove}) not fulfilling the condition with user-defined parameters has been accepted! [MeltingTemperatureNNFilter]"
         )
 
         seq_keep = Seq("TGGCTTGGGCCTTTCCAAGCCCCCATTTAAAAA")
+        # pyrefly: ignore [bad-argument-type]
         res = self.Tm_filter_user.apply(seq_keep)
         assert res == True, (
             f"error: A sequence ({seq_keep}) fulfilling the conditions with user-defined parameters has not been accepted! [MeltingTemperatureNNFilter]"
@@ -277,12 +304,14 @@ class TestSequenceStructureFilters(unittest.TestCase):
 
     def tes_secondary_structure_filter(self) -> None:
         seq_remove = Seq("TGGCTTGGGCCTTTCCAAGCCCCCATTTGAGCT")
+        # pyrefly: ignore [bad-argument-type]
         res = self.secondary_structure_filter.apply(seq_remove)
         assert res == False, (
             f"error: A sequence ({seq_remove}) not fulfilling the condition with has been accepted! [SecondaryStructureFilter]"
         )
 
         seq_keep = Seq("TGTCGGATCTCTTCAACAAGCTGGTCATGA")
+        # pyrefly: ignore [bad-argument-type]
         res = self.secondary_structure_filter.apply(seq_keep)
         assert res == True, (
             f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [SecondaryStructureFilter]"
@@ -290,23 +319,27 @@ class TestSequenceStructureFilters(unittest.TestCase):
 
     def test_self_complement_filter(self) -> None:
         seq_remove = Seq("TAACAATATATATTGTTA")
+        # pyrefly: ignore [bad-argument-type]
         res = self.self_comp_filter.apply(seq_remove)
         assert res == False, (
             f"error: A sequence ({seq_remove}) not fulfilling the condition has been accepted!"
         )
 
         seq_keep = Seq("TGTCGGATCTCTTCAACAAGCTGGTCATGA")
+        # pyrefly: ignore [bad-argument-type]
         res = self.self_comp_filter.apply(seq_keep)
         assert res == True, f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted!"
 
     def test_complement_filter(self) -> None:
         seq_remove = Seq("TAACAATATATATTGTTA")
+        # pyrefly: ignore [bad-argument-type]
         res = self.complement_filter.apply(seq_remove)
         assert res == False, (
             f"error: A sequence ({seq_remove}) not fulfilling the condition with ({seq_remove.complement()}) has been accepted!"
         )
 
         seq_keep = Seq("TGTCGGATCTCTTCAACAAGCTGGTCATGA")
+        # pyrefly: ignore [bad-argument-type]
         res = self.complement_filter.apply(seq_keep)
         assert res == True, f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted!"
 
@@ -338,12 +371,14 @@ class TestExperimentSpecificFilters(unittest.TestCase):
 
     def test_padlock_filter(self) -> None:
         seq_remove = Seq("TGTCGGATCTCTTCAACAAGCTGGTCAT")
+        # pyrefly: ignore [bad-argument-type]
         res = self.padlock_arms_filter.apply(seq_remove)
         assert res == False, (
             f"error: A sequence ({seq_remove}) not fulfilling the condition with has been accepted! [PadlockArmsFilter]"
         )
 
         seq_keep = Seq("TGGCTTGGGCCTTTCCAAGCCCCCATTTGAGCT")
+        # pyrefly: ignore [bad-argument-type]
         res = self.padlock_arms_filter.apply(seq_keep)
         assert res == True, (
             f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [PadlockArmsFilter]"
@@ -351,12 +386,14 @@ class TestExperimentSpecificFilters(unittest.TestCase):
 
     def test_detection_oligo_filter(self) -> None:
         seq_remove = Seq("TGTCGGATCTCTTCAACAAGCTGGTCAT")
+        # pyrefly: ignore [bad-argument-type]
         res = self.detection_oligo_filter.apply(seq_remove)
         assert res == False, (
             f"error: A sequence ({seq_remove}) not fulfilling the condition with has been accepted! [PadlockArmsFilter]"
         )
 
         seq_keep = Seq("TGGCTTGGGCCTTTCCAAGCCCCCATTTGAGCT")
+        # pyrefly: ignore [bad-argument-type]
         res = self.detection_oligo_filter.apply(seq_keep)
         assert res == True, (
             f"error: A sequence ({seq_keep}) fulfilling the conditions has not been accepted! [PadlockArmsFilter]"
@@ -403,6 +440,7 @@ class TestPropertyFilter(unittest.TestCase):
 
     def test_property_filter(self) -> None:
         os.makedirs(self.tmp_path, exist_ok=True)
+        # pyrefly: ignore [bad-argument-type]
         property_filter = PropertyFilter(filters=self.filters)
 
         seq_keep = Seq("TGTCGGATCTCTTCAACAAGCTGGTCATGA")
@@ -410,6 +448,7 @@ class TestPropertyFilter(unittest.TestCase):
         assert res == True, f"error: A sequence ({seq_keep}) fulfilling all conditions has not been accepted!"
 
     def test_property_filter_on_database(self) -> None:
+        # pyrefly: ignore [bad-argument-type]
         property_filter = PropertyFilter(filters=self.filters)
         # check if apply function for property filter works
         oligo_sequence_generator = OligoSequenceGenerator(dir_output=self.tmp_path)

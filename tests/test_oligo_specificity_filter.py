@@ -501,6 +501,7 @@ class TestVariantsFilter(unittest.TestCase):
 
 class DummyAPI(APIBase):
     # Class that considers real hits all the hits that have a 100% match
+    # pyrefly: ignore [bad-override]
     def predict(
         self,
         queries: list[str],
@@ -553,6 +554,7 @@ class TestHybridizationProbabilityBalstn(unittest.TestCase):
             threshold=0.1,
             dir_output=self.tmp_path,
         )
+        # pyrefly: ignore [bad-assignment]
         self.filter.model = DummyAPI()
 
     def tearDown(self) -> None:
@@ -762,6 +764,7 @@ class TestHybridizationProbabilityBowtie(unittest.TestCase):
             threshold=0.1,
             dir_output=self.tmp_path,
         )
+        # pyrefly: ignore [bad-assignment]
         self.filter.model = DummyAPI()
 
     def tearDown(self) -> None:

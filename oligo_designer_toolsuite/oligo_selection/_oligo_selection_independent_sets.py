@@ -378,6 +378,7 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
                 if len(clique) < oligoset_size:
                     continue
 
+                # pyrefly: ignore [bad-argument-type]
                 _add_clique_to_oligosets(clique, oligoset_size)
 
         return oligosets

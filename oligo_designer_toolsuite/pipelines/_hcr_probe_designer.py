@@ -543,6 +543,7 @@ class TargetProbeDesigner:
         ]
 
         # initialize the preoperty filter class
+        # pyrefly: ignore [bad-argument-type]
         property_filter = PropertyFilter(filters=filters)
 
         # filter the database
