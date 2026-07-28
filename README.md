@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> This is a fork of https://github.com/HelmholtzAI-Consultants-Munich/oligo-designer-toolsuite. See [`FORK.md`](FORK.md) for more details.
+
 <div align="center">
 
 # *Oligo Designer Toolsuite* - Lightweight Development of Custom Oligo Design Pipelines
