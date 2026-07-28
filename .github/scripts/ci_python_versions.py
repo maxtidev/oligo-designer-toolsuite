@@ -51,6 +51,9 @@ def main() -> None:
 
     versions = [f"3.{minor}" for minor in range(min_minor, max_minor)]
 
+    # Only test with Python 3.12 on this fork - because it's just a fork
+    versions = ["3.12"]
+
     # Print pure JSON for GitHub Actions consumption
     print(json.dumps(versions))
 
