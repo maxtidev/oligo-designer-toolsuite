@@ -39,10 +39,10 @@ Thank you for your interest in contributing to Oligo Designer Toolsuite! This gu
 
 We use the following tools (configured in `pyproject.toml` and `.pre-commit-config.yaml`):
 
-- **Black**: code formatting (line length 110)
-- **isort**: import sorting (Black profile)
-- **autoflake**: remove unused imports/variables
-- **pre-commit**: runs the above hooks automatically
+- **ruff format**: code formatting (line length 110)
+- **ruff check**: linting, import sorting, removing unused imports/variables
+- **Pyrefly**: type checking
+- **pre-commit**: running the above hooks automatically
 
 Before committing, run:
 ```bash
@@ -100,7 +100,7 @@ The HTML will be generated in `docs/_build/html`.
 
 ## Pull Request Checklist
 
-- [ ] Code formatted with Black and imports sorted with isort
+- [ ] Code linted with `ruff check` and formatted with `ruff format`
 - [ ] `pre-commit run --all-files` passes with no changes
 - [ ] Tests added/updated and `pytest` passes locally
 - [ ] Documentation added/updated (docstrings and, if relevant, Sphinx pages)
