@@ -154,7 +154,7 @@ class SeqFishPlusProbeDesigner:
         values for parallel processing. This affects the parallelization of filtering, property calculation,
         and set generation operations.
     :type n_jobs: int
-    """
+    """  # noqa: RUF002
 
     def __init__(
         self,
@@ -1844,7 +1844,7 @@ class ReadoutProbeDesigner:
         def _generate_barcode(
             pseudocolors: list, channel: int, n_pseudocolors: int, n_channels: int
         ) -> np.ndarray:
-            pseudocolors = pseudocolors + [sum(pseudocolors) % n_pseudocolors]
+            pseudocolors = pseudocolors + [sum(pseudocolors) % n_pseudocolors]  # noqa: RUF005
             assert n_pseudocolors > max(pseudocolors), (
                 f"The number of pseudocolor is {n_pseudocolors}, while the barcode contains {max(pseudocolors)} pseudocolors."
             )
@@ -2408,7 +2408,7 @@ def main() -> None:
         with open(config["file_regions"]) as handle:
             lines = handle.readlines()
             # ensure that the list contains unique gene ids
-            region_ids = list(set([line.rstrip() for line in lines]))
+            region_ids = list(set([line.rstrip() for line in lines]))  # noqa: C403
 
     ##### initialize probe designer pipeline #####
     pipeline = SeqFishPlusProbeDesigner(

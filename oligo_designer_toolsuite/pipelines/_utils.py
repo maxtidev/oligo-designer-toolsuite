@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -215,7 +215,7 @@ def format_sequence(database: OligoDatabase, property: str, region_id: str, olig
         flatten=True,
     )
     if not isinstance(value, str):
-        raise ValueError(f"Expected string for {property}, got {type(value)}")
+        raise ValueError(f"Expected string for {property}, got {type(value)}")  # noqa: TRY004
     return value
 
 

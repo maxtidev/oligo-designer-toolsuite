@@ -8,7 +8,7 @@ Expected format:
 
 Example output:
     ["3.10", "3.11", "3.12", "3.13"]
-"""
+"""  # noqa: EXE001
 
 from __future__ import annotations
 

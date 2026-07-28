@@ -91,10 +91,10 @@ class TestExactMatchFilter(unittest.TestCase):
         filter = ExactMatchFilter(policy=policy)
         res = filter.apply(oligo_database=self.oligo_database, sequence_type="oligo", n_jobs=2)
 
-        assert "WASH7P::2" not in res.database["WASH7P"].keys(), (
+        assert "WASH7P::2" not in res.database["WASH7P"].keys(), (  # noqa: SIM118
             "A matching oligo has not been filtered from exact matches!"
         )
-        assert "AGRN::1" not in res.database["AGRN"].keys(), (
+        assert "AGRN::1" not in res.database["AGRN"].keys(), (  # noqa: SIM118
             "A non-matching oligo has been filtered from exact mathces!"
         )
 
@@ -103,10 +103,10 @@ class TestExactMatchFilter(unittest.TestCase):
         filter = ExactMatchFilter(policy=policy)
         res = filter.apply(oligo_database=self.oligo_database, sequence_type="oligo", n_jobs=2)
 
-        assert "WASH7P::2" not in res.database["WASH7P"].keys(), (
+        assert "WASH7P::2" not in res.database["WASH7P"].keys(), (  # noqa: SIM118
             "A matching oligo has not been filtered from exact matches!"
         )
-        assert "AGRN::1" in res.database["AGRN"].keys(), (
+        assert "AGRN::1" in res.database["AGRN"].keys(), (  # noqa: SIM118
             "A non-matching oligo has been filtered from exact mathces!"
         )
 
@@ -565,7 +565,7 @@ class TestHybridizationProbabilityBalstn(unittest.TestCase):
             n_jobs=2,
         )
         returned_oligos = set(filtered_database.database["region"].keys())
-        expected_oligos = set(f"region::{i}" for i in range(2, 20))
+        expected_oligos = set(f"region::{i}" for i in range(2, 20))  # noqa: C401
 
         assert returned_oligos == expected_oligos, (
             f"The Blast ai filter didn't return the expected oligos. \n\nExpected:\n{expected_oligos}\n\nGot:\n{returned_oligos}"
@@ -580,7 +580,7 @@ class TestHybridizationProbabilityBalstn(unittest.TestCase):
                 region_id=self.region_id,
             )
         )
-        expected_queries = set(
+        expected_queries = set(  # noqa: C405
             [
                 Seq("GCTCGGGCTTGTCCACAGGATGGACCCAGCTGAGCAAGCT"),
                 Seq("AGCTTGCTCAGCTGGGTCCATCCTGTGGACAAGCCCGAGC"),
@@ -615,7 +615,7 @@ class TestHybridizationProbabilityBalstn(unittest.TestCase):
                 table_hits=self.table_hits, file_reference=self.file_reference, region_id=self.region_id
             )
         )
-        expected_references = set(
+        expected_references = set(  # noqa: C405
             [
                 Seq("GCTCGGGCTTGTCCACAGGATGGACCCAGCTGAGCAAGCT"),
                 Seq("AGCTTGCTCAGCTGGGTCCATCCTGTGGACAAGCCCGAGC"),
@@ -659,7 +659,7 @@ class TestHybridizationProbabilityBalstn(unittest.TestCase):
             references=references,
         )
         gapped_queries = set(gapped_queries_list)
-        expected_gapped_queries = set(
+        expected_gapped_queries = set(  # noqa: C405
             [
                 Seq("GCTCGGGCTTGTCCACAGGATGGACCCAGCTGAGCAAGCT"),
                 Seq("AGCTTGCTCAGCTGGGTCCATCCTGTGGACAAGCCCGAGC"),
@@ -703,7 +703,7 @@ class TestHybridizationProbabilityBalstn(unittest.TestCase):
             references=references,
         )
         gapped_references = set(gapped_references_list)
-        expected_gapped_references = set(
+        expected_gapped_references = set(  # noqa: C405
             [
                 Seq("GCTCGGGCTTGTCCACAGGATGGACCCAGCTGAGCAAGCT"),
                 Seq("AGCTTGCTCAGCTGGGTCCATCCTGTGGACAAGCCCGAGC"),
@@ -774,7 +774,7 @@ class TestHybridizationProbabilityBowtie(unittest.TestCase):
             n_jobs=2,
         )
         returned_oligos = set(filtered_database.database["region"].keys())
-        expected_oligos = set(f"region::{i}" for i in range(2, 20))
+        expected_oligos = set(f"region::{i}" for i in range(2, 20))  # noqa: C401
 
         assert returned_oligos == expected_oligos, (
             f"The Bowtie ai filter didn't return the expected oligos. \n\nExpected:\n{expected_oligos}\n\nGot:\n{returned_oligos}"
@@ -789,7 +789,7 @@ class TestHybridizationProbabilityBowtie(unittest.TestCase):
                 region_id=self.region_id,
             )
         )
-        expected_queries = set(
+        expected_queries = set(  # noqa: C405
             [
                 Seq("GCTCGGGCTTGTCCACAGGATGGACCCAGCTGAGCAAGCT"),
                 Seq("AGCTTGCTCAGCTGGGTCCATCCTGTGGACAAGCCCGAGC"),
@@ -807,7 +807,7 @@ class TestHybridizationProbabilityBowtie(unittest.TestCase):
                 table_hits=self.table_hits, file_reference=self.file_reference, region_id=self.region_id
             )
         )
-        expected_references = set(
+        expected_references = set(  # noqa: C405
             [
                 Seq("GCTCGGGCTTGTCCACAGGATGGACCCAGCTGAGCAAGCT"),
                 Seq("AGCTTGCTCAGCTGGGTCCATCCTGTGGACAAGCCCGAGC"),

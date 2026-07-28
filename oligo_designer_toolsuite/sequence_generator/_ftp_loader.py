@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -58,7 +58,7 @@ class BaseFtpLoader:
         for file in files:
             if re.match(file_name, file):
                 file_output = os.path.join(self.dir_output, file)
-                ftp.retrbinary("RETR " + file, open(file_output, "wb").write)
+                ftp.retrbinary("RETR " + file, open(file_output, "wb").write)  # noqa: SIM115
 
         ftp.quit()
 
@@ -244,7 +244,7 @@ class FtpLoaderNCBI(BaseFtpLoader):
     :type assembly_name: str | None
     """
 
-    SUPPORTED_TAXA_SOURCES: dict[str, set[str]] = {
+    SUPPORTED_TAXA_SOURCES: dict[str, set[str]] = {  # noqa: RUF012
         "archaea": {"latest_assembly_versions", "reference"},
         "bacteria": {"latest_assembly_versions", "reference"},
         "fungi": {"latest_assembly_versions", "reference"},
@@ -258,19 +258,19 @@ class FtpLoaderNCBI(BaseFtpLoader):
         "vertebrate_other": {"annotation_releases", "latest_assembly_versions", "reference"},
         "viral": {"latest_assembly_versions"},
     }
-    UNSUPPORTED_TAXA: set[str] = {"mitochondrion", "plasmids", "plastid"}
+    UNSUPPORTED_TAXA: set[str] = {"mitochondrion", "plasmids", "plastid"}  # noqa: RUF012
     # Determines how the assembly for a species is selected from the possible sources within the NCBI FTP directory.
     # 'annotation_releases' directory, should exist for all eukaryotic species and contains assemblies annotated with different annotation versions and the annotation version can be specified by 'annotation_release'.
     # 'latest_assembly_version' directory is available for all species and contains the latest assembly.
     # 'reference' directory contains the reference genome. This is only available for a subset of species.
     # 'auto' automatically selects an assembly source in the following order (if available): 'annotation_releases', 'latest_assembly_version'
-    ALLOWED_ASSEMBLY_SOURCES: set[str] = {
+    ALLOWED_ASSEMBLY_SOURCES: set[str] = {  # noqa: RUF012
         "auto",
         "annotation_releases",
         "latest_assembly_versions",
         "reference",
     }
-    ALLOWED_MODES: set[str] = {"species", "assembly"}
+    ALLOWED_MODES: set[str] = {"species", "assembly"}  # noqa: RUF012
 
     def __init__(
         self,

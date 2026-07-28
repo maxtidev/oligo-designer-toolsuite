@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -92,7 +92,7 @@ def check_if_key_exists(nested_dict: dict[str, Any], key: str) -> bool:
             for value in nested_dict.values():
                 if check_if_key_exists(value, key):
                     return True
-    except:
+    except:  # noqa: E722
         return False
     return False
 

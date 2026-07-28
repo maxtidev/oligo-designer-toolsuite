@@ -38,7 +38,7 @@ def configure_root_logger(
     :param log_start_message: Whether to log a "START PIPELINE" message (default: False).
     :type log_start_message: bool
     """
-    timestamp = datetime.now()
+    timestamp = datetime.now()  # noqa: DTZ005
 
     # ensure output directory exists
     dir_output = os.path.abspath(dir_output)

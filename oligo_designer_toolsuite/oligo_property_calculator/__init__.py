@@ -40,7 +40,7 @@ from ._property_sequence import (
     TmNNProperty,
 )
 
-__all__ = [
+__all__ = [  # noqa: RUF022
     "BaseProperty",
     "PropertyCalculator",
     "LengthProperty",

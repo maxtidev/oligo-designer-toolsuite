@@ -125,7 +125,7 @@ class ScrinshotProbeDesigner:
     :type write_intermediate_steps: bool
     :ivar n_jobs: Number of parallel threads to use for sequence design and BLAST validation.
     :type n_jobs: int
-    """
+    """  # noqa: RUF002
 
     def __init__(self, write_intermediate_steps: bool, dir_output: str, n_jobs: int) -> None:
         """Constructor for the ScrinshotProbeDesigner class."""
@@ -1931,7 +1931,7 @@ def main() -> None:
         with open(config["file_regions"]) as handle:
             lines = handle.readlines()
             # ensure that the list contains unique gene ids
-            region_ids = list(set([line.rstrip() for line in lines]))
+            region_ids = list(set([line.rstrip() for line in lines]))  # noqa: C403
 
     ##### Preprocess Tm parameters #####
     target_probe_Tm_parameters = preprocess_tm_parameters(config["target_probe_Tm_parameters"])

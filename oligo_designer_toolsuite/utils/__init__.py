@@ -1,6 +1,6 @@
 """
 This module provides utilities for processing databases, parsing sequences, checking different file or object formats and logging.
-"""
+"""  # noqa: EXE002
 
 from ._checkers_and_helpers import (
     CustomYamlDumper,

@@ -1,6 +1,6 @@
 """
 The module provides a collection of comprehensive oligonucleotide design pipelines, each equipped with specific functionalities to facilitate efficient and targeted oligo synthesis for diverse applications.
-"""
+"""  # noqa: EXE002
 
 from ._cycle_hcr_probe_designer import CycleHCRProbeDesigner
 from ._genomic_region_generator import GenomicRegionGenerator

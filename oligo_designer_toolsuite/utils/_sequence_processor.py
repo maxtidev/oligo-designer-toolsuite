@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -234,7 +234,7 @@ def count_kmer_abundance(
             raise ValueError("List of k values cannot be empty")
         k_values = k
     else:
-        raise ValueError(f"k must be int, tuple[int, int], or list[int], got {type(k)}")
+        raise ValueError(f"k must be int, tuple[int, int], or list[int], got {type(k)}")  # noqa: TRY004
 
     if any(not isinstance(ki, int) or ki < 1 for ki in k_values):
         raise ValueError("All k values must be positive integers")

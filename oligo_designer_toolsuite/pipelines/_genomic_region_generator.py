@@ -208,7 +208,7 @@ def main() -> None:
         source_params=config["source_params"],
     )
 
-    files_fasta = pipeline.generate_genomic_regions(
+    files_fasta = pipeline.generate_genomic_regions(  # noqa: F841
         region_generator=region_generator,
         genomic_regions=config["genomic_regions"],
         block_size=config["exon_exon_junction_block_size"],

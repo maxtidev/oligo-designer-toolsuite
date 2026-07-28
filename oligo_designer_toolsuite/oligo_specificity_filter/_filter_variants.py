@@ -45,8 +45,8 @@ class VariantsFilter(ReferenceSpecificityFilter):
         remove_hits: bool = True,
         filter_name: str = "variants_filter",
         dir_output: str = "output",
-        usecols_search_output: list[int] = [3, 8],
-        names_search_output: list[str] = [
+        usecols_search_output: list[int] = [3, 8],  # noqa: B006
+        names_search_output: list[str] = [  # noqa: B006
             "query",
             "reference",
         ],

@@ -327,7 +327,7 @@ class TestFTPLoaderNCBIUnitBehavior(unittest.TestCase):
             annotation_release="current",
             assembly_source="latest_assembly_versions",
         )
-        with patch.object(loader, "_list_ftp_entries", return_value=["README.txt", "GCA_123456789.1_OTHER"]):
+        with patch.object(loader, "_list_ftp_entries", return_value=["README.txt", "GCA_123456789.1_OTHER"]):  # noqa: SIM117
             with self.assertRaises(ConfigurationError):
                 loader._resolve_base_directory("latest_assembly_versions")
 
@@ -367,7 +367,7 @@ class FTPLoaderFilesBase:
     def tearDown(self) -> None:
         try:
             shutil.rmtree(self.tmp_path)
-        except:
+        except:  # noqa: E722, S110
             pass
 
     @abstractmethod
@@ -535,8 +535,8 @@ class TestFTPLoaderEnsemblOldAnnotations(FTPLoaderFilesBase, unittest.TestCase):
 
 
 class GenomicRegionGeneratorBase(unittest.TestCase, ABC):
-    expected_generation_behavior: dict[str, str] = {}
-    expected_header_values: dict[str, RegionHeaderSpec] = {}
+    expected_generation_behavior: dict[str, str] = {}  # noqa: RUF012
+    expected_header_values: dict[str, RegionHeaderSpec] = {}  # noqa: RUF012
 
     def setUp(self) -> None:
         self.tmp_path = os.path.join(os.getcwd(), "tmp_genomic_region_generator")
@@ -546,7 +546,7 @@ class GenomicRegionGeneratorBase(unittest.TestCase, ABC):
     def tearDown(self) -> None:
         try:
             shutil.rmtree(self.tmp_path)
-        except:
+        except:  # noqa: E722, S110
             pass
 
     @abstractmethod
@@ -617,7 +617,7 @@ class GenomicRegionGeneratorBase(unittest.TestCase, ABC):
 
 
 class TestGenomicRegionGeneratorNCBI(GenomicRegionGeneratorBase):
-    expected_generation_behavior = {
+    expected_generation_behavior = {  # noqa: RUF012
         "gene": "pass",
         "exon": "pass",
         "exon_exon_junction": "pass",
@@ -642,7 +642,7 @@ class TestGenomicRegionGeneratorNCBI(GenomicRegionGeneratorBase):
 
 
 class TestGenomicRegionGeneratorEnsembl(GenomicRegionGeneratorBase):
-    expected_generation_behavior = {
+    expected_generation_behavior = {  # noqa: RUF012
         "gene": "pass",
         "exon": "pass",
         "exon_exon_junction": "pass",
@@ -667,7 +667,7 @@ class TestGenomicRegionGeneratorEnsembl(GenomicRegionGeneratorBase):
 
 
 class TestGenomicRegionGeneratorMouseNCBI(GenomicRegionGeneratorBase):
-    expected_generation_behavior = {
+    expected_generation_behavior = {  # noqa: RUF012
         "gene": "pass",
         "exon": "warning",
         "exon_exon_junction": "warning",
@@ -692,7 +692,7 @@ class TestGenomicRegionGeneratorMouseNCBI(GenomicRegionGeneratorBase):
 
 
 class TestGenomicRegionGeneratorBacteriaNCBI(GenomicRegionGeneratorBase):
-    expected_generation_behavior = {
+    expected_generation_behavior = {  # noqa: RUF012
         "gene": "pass",
         "exon": "warning",
         "exon_exon_junction": "error",
@@ -775,7 +775,7 @@ class TestOligoSequenceGenerator(unittest.TestCase):
         # test if warning is raised if no oligos can be created because of too short
         # exon-exon-junction sequences
         with self.assertWarns(Warning):
-            file_fasta_exon_exon_junctions_short = (
+            file_fasta_exon_exon_junctions_short = (  # noqa: F841
                 self.oligo_sequence_generator.create_sequences_sliding_window(
                     files_fasta_in=FILE_NCBI_EXON_EXON_JUNCTIONS_SHORT,
                     length_interval_sequences=(30, 31),
@@ -841,7 +841,7 @@ class TestOligoSequenceGenerator(unittest.TestCase):
         assert isinstance(num_start_value, list), "error: start property is not a list"
         num_start = len(num_start_value)
 
-        assert "AARS1" in self.oligo_database_1.database.keys(), "error: region missing"
+        assert "AARS1" in self.oligo_database_1.database.keys(), "error: region missing"  # noqa: SIM118
 
         assert length_sequence == 30, "error: wrong sequence length"
 

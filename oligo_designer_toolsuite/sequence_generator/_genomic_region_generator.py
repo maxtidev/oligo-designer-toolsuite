@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -1219,7 +1219,7 @@ class CustomGenomicRegionGenerator:
             logger.warning("Could not calculate the number of total transcripts.")
             number_total_transcripts_df = None
         finally:
-            return number_total_transcripts_df
+            return number_total_transcripts_df  # noqa: B012
 
     def _add_transcript_counts(self, annotation: pd.DataFrame) -> tuple[pd.DataFrame, str | pd.Series]:
         """

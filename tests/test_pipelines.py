@@ -69,7 +69,7 @@ class PipelinesBase(unittest.TestCase, ABC):
 
     def test_main_function(self) -> None:
         # Run the script using subprocess
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: PLW1510
             [
                 sys.executable,
                 self.script,

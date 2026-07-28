@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -181,7 +181,7 @@ class TestCheckers(unittest.TestCase):
         """Test if the parser extracts fasta header correctly."""
         try:
             check_tsv_format(FILE_TSV)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             assert False, f"error: checker: check_tsv_format raised an exception: {e}, with file {FILE_TSV}"
 
     def test_generate_unique_filename(self) -> None:
@@ -383,14 +383,14 @@ class TestGffParser(unittest.TestCase):
         """Test parsing GFF annotation data."""
         try:
             self.parser.check_gff_format(FILE_GFF)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             assert False, f"error: checker: check_gff_format raised an exception: {e}, with file {FILE_GFF}"
 
     def test_check_gtf_format(self) -> None:
         """Test parsing GTF annotation data."""
         try:
             self.parser.check_gff_format(FILE_GTF)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             assert False, f"error: checker: check_gff_format raised an exception: {e}, with file {FILE_GTF}"
 
     def test_parse_annotation_from_gff(self) -> None:
@@ -435,7 +435,7 @@ class TestFastaParser(unittest.TestCase):
             assert out == True, (
                 f"error: checker: check_fasta_format should have passed with file {FILE_FASTA}"
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             assert False, (
                 f"error: checker: check_fasta_format raised an exception: {e}, with file {FILE_FASTA}"
             )
@@ -445,7 +445,7 @@ class TestFastaParser(unittest.TestCase):
             assert out == False, (
                 f"error: checker: check_fasta_format did not raise an exception with file {FILE_GFF}"
             )
-        except Exception:
+        except Exception:  # noqa: BLE001, S110
             pass  # should go into this case
 
     def test_is_coordinate(self) -> None:
@@ -513,7 +513,7 @@ class TestFastaParser(unittest.TestCase):
 
         try:
             self.parser.check_fasta_format(file=file_out)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             assert False, f"error: raised an exception: {e}, with written file."
 
     def test_merge_fasta_files(self) -> None:
@@ -526,7 +526,7 @@ class TestFastaParser(unittest.TestCase):
 
         try:
             self.parser.check_fasta_format(file=file_out)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             assert False, f"error: raised an exception: {e}, with merged files."
 
     def test_index_fasta_file_creates_index(self) -> None:
@@ -588,7 +588,7 @@ class TestVCFParser(unittest.TestCase):
         try:
             out = self.parser.check_vcf_format(FILE_VCF)
             assert out == True, f"error: checker: check_fasta_format should have passed with file {FILE_VCF}"
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             assert False, f"error: checker: check_fasta_format raised an exception: {e}, with file {FILE_VCF}"
 
         try:
@@ -596,11 +596,11 @@ class TestVCFParser(unittest.TestCase):
             assert out == False, (
                 f"error: checker: check_fasta_format did not raise an exception with file {FILE_GFF}"
             )
-        except Exception:
+        except Exception:  # noqa: BLE001, S110
             pass  # should go into this case
 
     def test_read_vcf_variants(self) -> None:
-        variants, vcf_in = self.parser.read_vcf_variants(FILE_VCF)
+        variants, vcf_in = self.parser.read_vcf_variants(FILE_VCF)  # noqa: RUF059
 
         variant_type = variants[0].INFO.get("VC")
         variant_id = variants[0].ID
@@ -747,7 +747,7 @@ class TestCountKmerAbundance(unittest.TestCase):
         result = count_kmer_abundance(files_fasta=self.file_lowercase, k=4)
 
         # Check that all k-mers are uppercase
-        for kmer in result[4].keys():
+        for kmer in result[4].keys():  # noqa: SIM118
             assert kmer.isupper(), f"error: k-mer {kmer} should be uppercase"
         # Check that lowercase k-mer is not present, but uppercase version is
         assert "atcg" not in result[4], "error: lowercase k-mer should not be present"

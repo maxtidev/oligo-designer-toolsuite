@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -69,7 +69,7 @@ def merge_databases(
         for region in regions:
             database_modified[region] = {}
             database_region = database[region]
-            for oligo_id, oligo_properties in database_region.items():
+            for oligo_id, oligo_properties in database_region.items():  # noqa: PERF102
                 oligo_sequence = oligo_properties[sequence_type]
                 oligo_properties.pop(sequence_type)
                 database_modified[region][oligo_sequence] = oligo_properties
@@ -230,7 +230,7 @@ def check_if_key_in_database(database: EffiDict, key: str, region_ids: str | lis
                     return True
                 return any(recursive_contains(v, target) for v in d.values())
             return False
-        except Exception:
+        except Exception:  # noqa: BLE001
             return False
 
     # --- Case: region restriction ---

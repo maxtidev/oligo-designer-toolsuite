@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -42,7 +42,7 @@ class SoftMaskedSequenceFilter(BasePropertyFilter):
         :return: `True` if the sequence has no lowercase characters, `False` otherwise.
         :rtype: bool
         """
-        if any(c.islower() for c in sequence):
+        if any(c.islower() for c in sequence):  # noqa: SIM103
             return False
         return True
 
@@ -75,7 +75,7 @@ class HardMaskedSequenceFilter(BasePropertyFilter):
         :return: `True` if the sequence does not contain the mask character, `False` otherwise.
         :rtype: bool
         """
-        if self.mask in sequence:
+        if self.mask in sequence:  # noqa: SIM103
             return False
         return True
 
@@ -199,11 +199,11 @@ class FivePrimeSequenceFilter(BasePropertyFilter):
         """
 
         if self.remove:
-            if sequence.upper().startswith(self.five_prime_sequence):
+            if sequence.upper().startswith(self.five_prime_sequence):  # noqa: SIM103
                 return False
             return True
         else:
-            if sequence.upper().startswith(self.five_prime_sequence):
+            if sequence.upper().startswith(self.five_prime_sequence):  # noqa: SIM103
                 return True
             return False
 
@@ -240,11 +240,11 @@ class ThreePrimeSequenceFilter(BasePropertyFilter):
         :rtype: bool
         """
         if self.remove:
-            if sequence.upper().endswith(self.three_prime_sequence):
+            if sequence.upper().endswith(self.three_prime_sequence):  # noqa: SIM103
                 return False
             return True
         else:
-            if sequence.upper().endswith(self.three_prime_sequence):
+            if sequence.upper().endswith(self.three_prime_sequence):  # noqa: SIM103
                 return True
             return False
 
@@ -284,7 +284,7 @@ class GCContentFilter(BasePropertyFilter):
         :rtype: bool
         """
         GC_content = calc_gc_content(sequence)
-        if self.GC_content_min < GC_content < self.GC_content_max:
+        if self.GC_content_min < GC_content < self.GC_content_max:  # noqa: SIM103
             return True
         return False
 
@@ -388,7 +388,7 @@ class MeltingTemperatureNNFilter(BasePropertyFilter):
             self.Tm_salt_correction_parameters,
             self.Tm_chem_correction_parameters,
         )
-        if self.Tm_min < Tm < self.Tm_max:
+        if self.Tm_min < Tm < self.Tm_max:  # noqa: SIM103
             return True
         return False
 
@@ -421,7 +421,7 @@ class SelfComplementFilter(BasePropertyFilter):
         :rtype: bool
         """
         len_selfcomp = calc_length_complement(sequence1=sequence, sequence2=sequence[::-1])
-        if len_selfcomp <= self.max_len_selfcomplement:
+        if len_selfcomp <= self.max_len_selfcomplement:  # noqa: SIM103
             return True
         return False
 
@@ -457,7 +457,7 @@ class ComplementFilter(BasePropertyFilter):
         :rtype: bool
         """
         len_complement = calc_length_complement(sequence1=sequence, sequence2=self.comparison_sequence)
-        if len_complement <= self.max_len_complement:
+        if len_complement <= self.max_len_complement:  # noqa: SIM103
             return True
         return False
 
@@ -493,6 +493,6 @@ class SecondaryStructureFilter(BasePropertyFilter):
         :rtype: bool
         """
         DG_secondary_structure = calc_dg_secondary_structure(sequence, self.T)
-        if DG_secondary_structure > self.thr_DG:
+        if DG_secondary_structure > self.thr_DG:  # noqa: SIM103
             return True
         return False

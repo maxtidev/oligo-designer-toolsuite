@@ -1,6 +1,6 @@
 """
 This module provides a comprehensive set of filters designed to evaluate the sequence properties of oligonucleotides, ensuring their suitability for various applications.
-"""
+"""  # noqa: EXE002
 
 from ._filter_base import BasePropertyFilter
 from ._filter_experiment_specific import DetectionOligoFilter, PadlockArmsFilter

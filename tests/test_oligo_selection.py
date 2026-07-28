@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -365,7 +365,7 @@ class TestIndependentSetsOligoSelection(unittest.TestCase):
         # so we cannot test based on "true sets" anymore
 
         expected_score_cols = ["set_score_worst", "set_score_sum"]
-        for gene in oligos_database.oligosets.keys():
+        for gene in oligos_database.oligosets.keys():  # noqa: SIM118
             computed = oligos_database.oligosets[gene]
             region_oligos = set(oligos_database.database[gene].keys())
 
@@ -488,7 +488,7 @@ class TestHomogeneousPropertyOligoSelection(unittest.TestCase):
             set(oligos_database.oligosets.keys()),
             "The calculated oligosets regions are not correct!",
         )
-        for gene in oligos_database.oligosets.keys():
+        for gene in oligos_database.oligosets.keys():  # noqa: SIM118
             self.assertEqual(
                 len(oligos_database.oligosets[gene]), 2, f"The number of oligosets for {gene} is not correct!"
             )

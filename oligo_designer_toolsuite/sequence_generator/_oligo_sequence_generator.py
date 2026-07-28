@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -43,7 +43,7 @@ class OligoSequenceGenerator:
         length_sequences: int,
         num_sequences: int,
         name_sequences: str = "randomsequence",
-        base_alphabet_with_probability: dict = {
+        base_alphabet_with_probability: dict = {  # noqa: B006
             "A": 0.25,
             "C": 0.25,
             "G": 0.25,
@@ -319,4 +319,4 @@ class OligoSequenceGenerator:
                 file_fasta_out.remove(one_file)
                 os.remove(one_file)
 
-        return sorted(list(file_fasta_out))
+        return sorted(list(file_fasta_out))  # noqa: C414

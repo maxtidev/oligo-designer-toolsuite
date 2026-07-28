@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -126,7 +126,7 @@ class GffParser:
         :return: The loaded DataFrame containing the GFF annotation.
         :rtype: pd.DataFrame
         """
-        dataframe_gff: pd.DataFrame = pickle.load(open(file_pickel, "rb"))
+        dataframe_gff: pd.DataFrame = pickle.load(open(file_pickel, "rb"))  # noqa: SIM115
 
         return dataframe_gff
 
@@ -150,7 +150,7 @@ class GffParser:
         lines_read = 0
 
         fn_open: Any = gzip.open if annotation_file.endswith(".gz") else open
-        with fn_open(annotation_file, "r") as input_file, open(csv_file, "w") as out_csv:
+        with fn_open(annotation_file, "r") as input_file, open(csv_file, "w") as out_csv:  # noqa: SIM117
             with open(extra_info_file, "w") as out_extra_info:
                 while not finished and lines_read < target_lines:
                     csv_content_chunck = ""
@@ -164,7 +164,7 @@ class GffParser:
                             if not line.startswith("#"):
                                 csv_content_chunck += "\t".join(line.split("\t")[:8]) + "\n"
                                 extra_info_content_chunck += "\t".join(line.split("\t")[8:])
-                        except:
+                        except:  # noqa: E722
                             finished = True
 
                     out_csv.write(csv_content_chunck)
@@ -527,7 +527,7 @@ class FastaParser:
 
         # Use samtools faidx to create the index (same tool that bedtools getfasta uses)
         args = ["samtools", "faidx", file_fasta]
-        process = subprocess.run(args)
+        process = subprocess.run(args)  # noqa: PLW1510
 
         if process.returncode != 0:
             raise FileFormatError(

@@ -98,7 +98,7 @@ class HomogeneousPropertyOligoSelection(BaseOligoSelection):
         sorted_combinations = sorted(scored_combinations, key=lambda x: x[1], reverse=False)
         best_combinations = [combination for combination in sorted_combinations[:n_sets]]
 
-        rows = [[idx] + oligos + [score] for idx, (oligos, score) in enumerate(best_combinations)]
+        rows = [[idx] + oligos + [score] for idx, (oligos, score) in enumerate(best_combinations)]  # noqa: RUF005
         columns = ["oligoset_id"] + [f"oligo_{i}" for i in range(self.set_size)] + ["set_score"]
 
         oligo_database.oligosets[region_id] = pd.DataFrame(rows, columns=columns)

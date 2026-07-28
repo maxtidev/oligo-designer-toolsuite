@@ -153,7 +153,7 @@ class CycleHCRProbeDesigner:
     :param n_jobs: Number of parallel jobs to use for processing. Set to 1 for serial processing or higher
         values for parallel processing.
     :type n_jobs: int
-    """
+    """  # noqa: RUF002
 
     def __init__(
         self,
@@ -1896,7 +1896,7 @@ def main() -> None:
         with open(config["file_regions"]) as handle:
             lines = handle.readlines()
             # ensure that the list contains unique gene ids
-            region_ids = list(set([line.rstrip() for line in lines]))
+            region_ids = list(set([line.rstrip() for line in lines]))  # noqa: C403
 
     ##### initialize probe designer pipeline #####
     pipeline = CycleHCRProbeDesigner(

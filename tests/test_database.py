@@ -63,7 +63,7 @@ class TestReferenceDatabase(unittest.TestCase):
     def tearDown(self) -> None:
         try:
             shutil.rmtree(self.tmp_path)
-        except:
+        except:  # noqa: E722, S110
             pass
 
     def test_write_database(self) -> None:
@@ -464,7 +464,7 @@ class TestOligoDatabase(unittest.TestCase):
             # Check that at least one sheet exists (should be one for region_1)
             assert len(excel_data) > 0, "error: Excel file should contain at least one sheet"
             # Verify the sheet doesn't have region_id column (it should be removed)
-            region_sheet = list(excel_data.values())[0]
+            region_sheet = list(excel_data.values())[0]  # noqa: RUF015
             assert "region_id" not in region_sheet.columns, (
                 "error: region_id column should not be in individual Excel sheets"
             )

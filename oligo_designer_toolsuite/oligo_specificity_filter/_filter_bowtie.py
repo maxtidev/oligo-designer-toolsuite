@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # Imports
 ############################################
 
@@ -66,8 +66,8 @@ class BowtieFilter(AlignmentSpecificityFilter):
     def __init__(
         self,
         remove_hits: bool = True,
-        search_parameters: dict = {},
-        names_search_output: list = [
+        search_parameters: dict = {},  # noqa: B006
+        names_search_output: list = [  # noqa: B006
             "query",
             "strand",
             "reference",
@@ -163,7 +163,7 @@ class BowtieFilter(AlignmentSpecificityFilter):
         ]
 
         # return all alignments only if the number of alignments is not specified
-        if "-k" not in self.search_parameters.keys():
+        if "-k" not in self.search_parameters.keys():  # noqa: SIM118
             args.append("-a")
 
         for parameter, value in self.search_parameters.items():
@@ -346,8 +346,8 @@ class Bowtie2Filter(AlignmentSpecificityFilter):
     def __init__(
         self,
         remove_hits: bool = True,
-        search_parameters: dict = {},
-        names_search_output: list = [
+        search_parameters: dict = {},  # noqa: B006
+        names_search_output: list = [  # noqa: B006
             "query",
             "flags",
             "reference",
@@ -449,7 +449,7 @@ class Bowtie2Filter(AlignmentSpecificityFilter):
         ]
 
         # return all alignments only if the number of alignments is not specified
-        if "-k" not in self.search_parameters.keys():
+        if "-k" not in self.search_parameters.keys():  # noqa: SIM118
             args.append("-a")
 
         for parameter, value in self.search_parameters.items():

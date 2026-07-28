@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -98,7 +98,7 @@ class ReferenceDatabase:
             files_in = files
             self.database_type = file_type
         elif self.database_file is not None and self.database_type == file_type:
-            files_in = files + [self.database_file]
+            files_in = files + [self.database_file]  # noqa: RUF005
         else:
             raise DatabaseError(
                 f"Cannot mix {file_type} and {self.database_type} databases. "

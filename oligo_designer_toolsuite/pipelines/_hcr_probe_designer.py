@@ -815,7 +815,7 @@ def main() -> None:
         with open(config["file_regions"]) as handle:
             lines = handle.readlines()
             # ensure that the list contains unique gene ids
-            gene_ids = list(set([line.rstrip() for line in lines]))
+            gene_ids = list(set([line.rstrip() for line in lines]))  # noqa: C403
 
     # preprocess melting temperature params
     target_probe_Tm_parameters = config["target_probe_Tm_parameters"]

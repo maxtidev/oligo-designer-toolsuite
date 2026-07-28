@@ -237,8 +237,8 @@ def calc_seedregion(sequence: str, start: float, end: float) -> tuple[int, int]:
                 f"Start and end positions must be in the interval [0,1] for float type. "
                 f"Received: start={start}, end={end}."
             )
-        seedregion_start = int(round(start * length))
-        seedregion_end = int(round(end * length))
+        seedregion_start = int(round(start * length))  # noqa: RUF046
+        seedregion_end = int(round(end * length))  # noqa: RUF046
     else:
         raise ConfigurationError(
             f"Start and end parameters must be both integers or both floats. "

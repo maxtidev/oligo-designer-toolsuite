@@ -1,4 +1,4 @@
-############################################
+############################################  # noqa: EXE002
 # imports
 ############################################
 
@@ -205,7 +205,7 @@ class OligoDatabase:
                         max_entries_in_memory=self._max_entries_in_memory,
                     )
                 else:
-                    for region in database_region:
+                    for region in database_region:  # noqa: PLC0206
                         self.database[region] = database_region[region]
 
         # Check formatting
@@ -380,7 +380,7 @@ class OligoDatabase:
             # Only process selected regions
             if not region_ids or region_id in region_ids:
                 # only merge if there are common keys
-                if region_id in self.database.keys():
+                if region_id in self.database.keys():  # noqa: SIM118
                     self.database = merge_databases(
                         database1=self.database,
                         database2={region_id: database_region},
@@ -616,7 +616,7 @@ class OligoDatabase:
         first_entry = True
         for region_id in region_ids:
             file_tsv_content = []
-            for oligo_id in self.database[region_id].keys():
+            for oligo_id in self.database[region_id].keys():  # noqa: SIM118
                 entry = {"region_id": region_id, "oligo_id": oligo_id}
                 for property in properties:
                     if property in self.database[region_id][oligo_id]:
@@ -693,7 +693,7 @@ class OligoDatabase:
                         if property in self.database[region_id][oligo_id]:
                             oligo_property = self.database[region_id][oligo_id][property]
                             # format oligo properties: flatten lists of lists, join string lists with comma, keep strings as-is, None -> empty list
-                            if oligo_property:
+                            if oligo_property:  # noqa: SIM102
                                 if (
                                     sum(len(sublist) for sublist in cast_to_list_of_lists(oligo_property))
                                     == 1
@@ -722,7 +722,7 @@ class OligoDatabase:
         properties = cast_to_list(properties)
         region_ids = cast_to_list(region_ids) if region_ids else self.database.keys()
 
-        csv_table = list()
+        csv_table = list()  # noqa: C408
 
         for region_id in region_ids:
             oligosets_region = self.oligosets[region_id]
@@ -749,7 +749,7 @@ class OligoDatabase:
                         if property in self.database[region_id][oligo_id]:
                             oligo_property = self.database[region_id][oligo_id][property]
                             # format oligo properties: flatten lists of lists, join string lists with comma, keep strings as-is, None -> empty list
-                            if oligo_property:
+                            if oligo_property:  # noqa: SIM102
                                 if (
                                     sum(len(sublist) for sublist in cast_to_list_of_lists(oligo_property))
                                     == 1
@@ -789,7 +789,7 @@ class OligoDatabase:
                 "openpyxl is not installed. Excel file generation skipped. "
                 "Install openpyxl to enable Excel export: pip install openpyxl",
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(
                 f"Failed to write Excel file: {e}. TSV file was written successfully.",
             )
@@ -838,7 +838,7 @@ class OligoDatabase:
                         if property in self.database[region_id][oligo_id]:
                             oligo_property = self.database[region_id][oligo_id][property]
                             # format oligo properties: flatten lists of lists, join string lists with comma, keep strings as-is, None -> empty list
-                            if oligo_property:
+                            if oligo_property:  # noqa: SIM102
                                 if (
                                     sum(len(sublist) for sublist in cast_to_list_of_lists(oligo_property))
                                     == 1
@@ -922,7 +922,7 @@ class OligoDatabase:
             oligo_id
             for region_id in region_ids
             if self.database[region_id]  # skip regions without any oligos
-            for oligo_id in self.database[region_id].keys()
+            for oligo_id in self.database[region_id].keys()  # noqa: SIM118
         ]
 
         return oligo_ids
@@ -965,7 +965,7 @@ class OligoDatabase:
 
         oligoid_sequence_mapping = {}
 
-        for region_id, database_region in self.database.items():
+        for region_id, database_region in self.database.items():  # noqa: PERF102
             if not database_region:
                 # Skip regions without any oligos
                 continue
@@ -994,7 +994,7 @@ class OligoDatabase:
 
         sequence_oligoids_mapping = {}
 
-        for region_id, database_region in self.database.items():
+        for region_id, database_region in self.database.items():  # noqa: PERF102
             if not database_region:
                 # Skip regions without any oligos
                 continue
@@ -1050,7 +1050,7 @@ class OligoDatabase:
         properties_dict = {}
 
         for region_id in region_ids:
-            if region_id in self.database.keys():
+            if region_id in self.database.keys():  # noqa: SIM118
                 region_db = self.database[region_id]
                 for oligo_id, oligo_properties in region_db.items():
                     key = (region_id, oligo_id)
@@ -1179,7 +1179,7 @@ class OligoDatabase:
         # Check formatting
         region_ids = cast_to_list(region_ids)
         if self.database:
-            for region_id in self.database.keys():
+            for region_id in self.database.keys():  # noqa: SIM118
                 if (remove_region and (region_id in region_ids)) or (not remove_region and (region_id not in region_ids)):
                     del self.database[region_id]
         else:
@@ -1201,7 +1201,7 @@ class OligoDatabase:
         # Check formatting
         oligo_ids = cast_to_list(oligo_ids)
         if self.database:
-            for region_id in self.database.keys():
+            for region_id in self.database.keys():  # noqa: SIM118
                 oligo_ids_region = list(self.database[region_id].keys())
                 for oligo_id in oligo_ids_region:
                     if (remove_region and (oligo_id in oligo_ids)) or (not remove_region and (oligo_id not in oligo_ids)):
@@ -1227,8 +1227,8 @@ class OligoDatabase:
         :type remove_if_smaller_threshold: bool
         """
         oligos_to_delete = []
-        for region_id in self.database.keys():
-            for oligo_id in self.database[region_id].keys():
+        for region_id in self.database.keys():  # noqa: SIM118
+            for oligo_id in self.database[region_id].keys():  # noqa: SIM118
                 property_values = self.get_oligo_property_value(
                     property=property_name, region_id=region_id, oligo_id=oligo_id, flatten=True
                 )
@@ -1264,14 +1264,14 @@ class OligoDatabase:
         property_category = cast_to_list(property_category)
         oligos_to_delete = []
 
-        for region_id in self.database.keys():
-            for oligo_id in self.database[region_id].keys():
+        for region_id in self.database.keys():  # noqa: SIM118
+            for oligo_id in self.database[region_id].keys():  # noqa: SIM118
                 property_values = cast_to_list(
                     self.get_oligo_property_value(
                         property=property_name, region_id=region_id, oligo_id=oligo_id, flatten=True
                     )
                 )
-                if property_values:
+                if property_values:  # noqa: SIM102
                     # remove if any of the items match category
                     if (remove_if_equals_category and any(
                         item in property_category for item in property_values

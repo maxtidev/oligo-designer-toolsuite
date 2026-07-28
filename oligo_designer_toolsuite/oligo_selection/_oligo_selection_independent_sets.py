@@ -175,7 +175,7 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
         :type region_id: str
         :return: A sparse distance matrix and the corresponding list of oligo IDs.
         :rtype: tuple[csr_matrix, list[str]]
-        """
+        """  # noqa: RUF002
 
         def _get_distance(seq1_intervals: list[list[int]], seq2_intervals: list[list[int]]) -> int:
             # Determine if two ligos do NOT overlap based on a distance value
