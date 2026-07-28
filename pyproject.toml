@@ -105,14 +105,14 @@ filterwarnings = ["ignore::pytest.PytestUnraisableExceptionWarning"]
 
 [tool.black]
 line-length = 110
-target-version = ['py310', 'py311', 'py312']
+target-version = ['py312']
 
 [tool.isort]
 profile = "black"
 line_length = 110
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -139,3 +139,32 @@ module = [
   "Bio.*",
 ]
 ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+extend-exclude = ["*.ipynb"]
+
+[tool.ruff.lint]
+# Extra rules that Ruff will apply
+# see https://docs.astral.sh/ruff/rules
+extend-select = [
+  "RUF", # ruff-specific rules
+  "UP",  # pyupgrade
+  "I",   # isort
+]
+
+[tool.pyrefly]
+python-version = "3.12.0"
+preset = "legacy"
+ignore-missing-imports = [
+  "effidict.*",
+  "joblib.*",
+  "cyvcf2.*",
+  "seqfold.*",
+  "joblib_progress.*",
+  "oligo_designer_toolsuite_ai_filters.*",
+  "biopython.*",
+  "bio.*",
+]
+project-excludes = ["*.ipynb"]
