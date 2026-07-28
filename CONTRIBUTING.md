@@ -11,14 +11,14 @@ Thank you for your interest in contributing to Oligo Designer Toolsuite! This gu
 
 ## Environment Setup
 
-1. **Supported Python and platforms**: Tested with Python 3.10–3.12 on Linux (x64) and macOS (x64, arm64).
+1. **Supported Python and platforms**: Tested with Python 3.10–3.12 on Linux (x64) and macOS (arm64).
 2. **Recommended**: Use a conda environment for a stable installation.
    - If your institution does not support Anaconda, use miniforge: `https://github.com/conda-forge/miniforge`.
 3. **Create and activate an environment** (choose one):
    - Using conda:
      ```bash
-     conda create -n odt python=3.12 -y
-     conda activate odt
+     conda env create
+     conda activate odt-thesis
      ```
    - Using `venv`:
      ```bash
