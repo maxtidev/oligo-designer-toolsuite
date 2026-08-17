@@ -653,6 +653,8 @@ class OligoDatabase:
                 }
 
                 for oligo_idx, oligo_id in enumerate(oligoset):
+                    if oligo_id is None:
+                        continue
                     oligo_id = str(oligo_id)
                     yaml_dict_oligo_entry = {"oligo_id": oligo_id}
                     oligo_properties = database_region.loc[oligo_id]
@@ -713,6 +715,8 @@ class OligoDatabase:
                 # pyrefly: ignore [unsupported-operation]
                 oligoset_id = f"oligoset_{oligoset_idx + 1}"
                 for oligo_id in oligoset:
+                    if oligo_id is None:
+                        continue
                     entry = {
                         "region_id": region_id,
                         "oligoset_id": oligoset_id,
@@ -813,6 +817,9 @@ class OligoDatabase:
                 oligoset_id = f"oligoset_{oligoset_idx + 1}"
                 yaml_dict[region_id][oligoset_id] = {}
                 for oligo_id in oligoset:
+                    if oligo_id is None:
+                        continue
+
                     entry = {}
                     oligo_properties = database_region.loc[oligo_id]
                     for property in properties:
