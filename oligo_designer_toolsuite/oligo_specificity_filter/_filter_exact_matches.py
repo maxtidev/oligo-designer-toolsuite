@@ -3,8 +3,6 @@
 ############################################
 
 import pandas as pd
-from joblib import Parallel, delayed
-from joblib_progress import joblib_progress
 
 from oligo_designer_toolsuite._exceptions import ConfigurationError
 from oligo_designer_toolsuite.database import OligoDatabase
@@ -85,24 +83,19 @@ class ExactMatchFilter(BaseSpecificityFilter):
             sequence_type=self.sequence_type, sequence_to_upper=True
         )
 
-        region_ids = list(oligo_database.database.keys())
         name = " ".join(string.capitalize() for string in self.filter_name.split("_"))
-        with joblib_progress(description=f"Specificity Filter: {name}", total=len(region_ids)):
-            table_hits = Parallel(n_jobs=n_jobs, prefer="threads", require="sharedmem")(
-                delayed(self._run_filter)(
-                    oligo_database=oligo_database,
-                    search_results=search_results,
-                    sequence_oligoids_mapping=sequence_oligoids_mapping,
-                    consider_hits_from_input_region=False,
-                    region_id=region_id,
-                )
-                for region_id in region_ids
-            )
+        table_hits = oligo_database.map_regions(
+            self._run_filter,
+            args=(search_results, sequence_oligoids_mapping, False),
+            description=f"Specificity Filter: {name}",
+            n_jobs=n_jobs,
+        )
 
         table_hits = pd.concat(table_hits, ignore_index=True)
         oligo_pair_hits = list(zip(table_hits["query"].values, table_hits["reference"].values))
         oligos_with_hits = self.policy.apply(oligo_pair_hits=oligo_pair_hits, oligo_database=oligo_database)
 
+        region_ids = oligo_database.get_regionid_list()
         self._filter_hits_from_database(
             oligo_database=oligo_database,
             region_ids=region_ids,
@@ -142,7 +135,7 @@ class ExactMatchFilter(BaseSpecificityFilter):
         ]
         calculator: PropertyCalculator = PropertyCalculator(properties=properties)
         oligo_database = calculator.apply(
-            oligo_database=oligo_database, sequence_type=self.sequence_type, n_jobs=1
+            oligo_database=oligo_database, sequence_type=self.sequence_type, n_jobs=n_jobs
         )
 
         # extract all the sequences
@@ -155,19 +148,13 @@ class ExactMatchFilter(BaseSpecificityFilter):
             sequence_type=sequence_type_reverse_complement, sequence_to_upper=True
         )
 
-        region_ids = list(oligo_database.database.keys())
         name = " ".join(string.capitalize() for string in self.filter_name.split("_"))
-        with joblib_progress(description=f"Specificity Filter: {name}", total=len(region_ids)):
-            table_hits = Parallel(n_jobs=n_jobs, prefer="threads", require="sharedmem")(
-                delayed(self._run_filter)(
-                    region_id=region_id,
-                    oligo_database=oligo_database,
-                    search_results=search_results,
-                    sequence_oligoids_mapping=sequence_oligoids_mapping,
-                    consider_hits_from_input_region=True,
-                )
-                for region_id in region_ids
-            )
+        table_hits = oligo_database.map_regions(
+            self._run_filter,
+            args=(search_results, sequence_oligoids_mapping, False),
+            description=f"Specificity Filter: {name}",
+            n_jobs=n_jobs,
+        )
 
         # Process results
         table_hits = pd.concat(table_hits, ignore_index=True)
@@ -207,10 +194,10 @@ class ExactMatchFilter(BaseSpecificityFilter):
     def _run_filter(
         self,
         oligo_database: OligoDatabase,
+        region_id: str,
         search_results: list,
         sequence_oligoids_mapping: dict,
         consider_hits_from_input_region: bool,
-        region_id: str,
     ) -> pd.DataFrame:
         """
         Runs a filter on the OligoDatabase to identify and record any matching sequences found in the provided search results.
@@ -231,7 +218,7 @@ class ExactMatchFilter(BaseSpecificityFilter):
         :return: A DataFrame containing the oligo ID pairs for sequences that matched the search results.
         :rtype: pd.DataFrame
         """
-        database_region = oligo_database.database[region_id]
+        database_region = oligo_database.load_region(region_id)
         hit_dict = {}
         for oligo_id in database_region.keys():  # noqa: SIM118
             oligo_seq = database_region[oligo_id][self.sequence_type].upper()

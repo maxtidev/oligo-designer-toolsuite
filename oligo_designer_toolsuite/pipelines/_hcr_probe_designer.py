@@ -253,7 +253,7 @@ class HcrProbeDesigner:
         linker_sequence: str,
     ) -> OligoDatabase:
 
-        region_ids = list(target_probe_database.database.keys())
+        region_ids = target_probe_database.get_regionid_list()
 
         target_probe_database.set_database_sequence_types(
             [
@@ -269,31 +269,31 @@ class HcrProbeDesigner:
         )
 
         for region_id in region_ids:
+            database_region = target_probe_database.load_region(region_id)
+
             barcode = codebook.loc[region_id]
+            # pyrefly: ignore [bad-index]
             bits = barcode[barcode == 1].index
             sequence_initiator_L = initiator_table.loc[bits, "initiator_L_sequence"].iloc[0]
             sequence_initiator_R = initiator_table.loc[bits, "initiator_R_sequence"].iloc[0]
 
-            probe_ids = list(target_probe_database.database[region_id].keys())
+            probe_ids = list(database_region.keys())
             new_properties: dict[str, dict[str, str]] = {probe_id: {} for probe_id in probe_ids}
 
             for probe_id in probe_ids:
                 new_properties[probe_id]["sequence_target"] = format_sequence(
-                    database=target_probe_database,
                     property="target",
-                    region_id=region_id,
+                    region=database_region,
                     oligo_id=probe_id,
                 )
                 new_properties[probe_id]["sequence_oligo_L"] = format_sequence(
-                    database=target_probe_database,
                     property="oligo_L",
-                    region_id=region_id,
+                    region=database_region,
                     oligo_id=probe_id,
                 )
                 new_properties[probe_id]["sequence_oligo_R"] = format_sequence(
-                    database=target_probe_database,
                     property="oligo_R",
-                    region_id=region_id,
+                    region=database_region,
                     oligo_id=probe_id,
                 )
                 new_properties[probe_id]["sequence_linker"] = linker_sequence
@@ -304,18 +304,16 @@ class HcrProbeDesigner:
                     sequence_initiator_L
                     + linker_sequence
                     + format_sequence(
-                        database=target_probe_database,
                         property="oligo_L",
-                        region_id=region_id,
+                        region=database_region,
                         oligo_id=probe_id,
                     )
                 )
 
                 new_properties[probe_id]["sequence_hybridization_probe_R"] = (
                     format_sequence(
-                        database=target_probe_database,
                         property="oligo_R",
-                        region_id=region_id,
+                        region=database_region,
                         oligo_id=probe_id,
                     )
                     + linker_sequence
@@ -885,7 +883,7 @@ def main() -> None:
     )
 
     codebook, initiator_table = pipeline.design_initiators(
-        region_ids=list(target_probe_database.database.keys()),
+        region_ids=target_probe_database.get_regionid_list(),
         file_initiator_table=config["file_initiator_table"],
         file_codebook=config["file_codebook"],
     )

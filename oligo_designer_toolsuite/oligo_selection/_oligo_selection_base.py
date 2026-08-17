@@ -4,9 +4,6 @@
 
 from abc import abstractmethod
 
-from joblib import Parallel, delayed
-from joblib_progress import joblib_progress
-
 from oligo_designer_toolsuite.database import OligoDatabase
 
 ############################################
@@ -56,25 +53,21 @@ class BaseOligoSelection:
         :return: The updated oligo database with generated oligo sets for each region.
         :rtype: OligoDatabase
         """
-        region_ids = list(oligo_database.database.keys())
-        with joblib_progress(description="Find Oligosets", total=len(region_ids)):
-            Parallel(n_jobs=n_jobs, prefer="threads", require="sharedmem")(
-                delayed(self._get_oligo_sets_for_region)(
-                    oligo_database=oligo_database,
-                    sequence_type=sequence_type,
-                    region_id=region_id,
-                    n_sets=n_sets,
-                )
-                for region_id in region_ids
-            )
+        oligo_database.map_regions(
+            self._get_oligo_sets_for_region,
+            args=(sequence_type, n_sets),
+            description="Find Oligosets",
+            n_jobs=n_jobs,
+        )
+
         return oligo_database
 
     @abstractmethod
     def _get_oligo_sets_for_region(
         self,
         oligo_database: OligoDatabase,
-        sequence_type: str,
         region_id: str,
+        sequence_type: str,
         n_sets: int,
     ) -> None:
         """

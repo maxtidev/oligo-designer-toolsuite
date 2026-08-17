@@ -6,9 +6,6 @@ from typing import Any
 
 import pandas as pd
 
-from oligo_designer_toolsuite.database import OligoDatabase
-from oligo_designer_toolsuite.utils import check_if_key_in_database
-
 from ._scorer_base import BaseScorer
 
 ############################################
@@ -34,8 +31,7 @@ class OligoScoring:
 
     def apply(
         self,
-        oligo_database: OligoDatabase,
-        region_id: str,
+        region: dict,
         oligo_ids: list[str],
         sequence_type: str,
         **kwargs: Any,
@@ -61,17 +57,16 @@ class OligoScoring:
         :rtype: pd.Series
         """
 
-        assert check_if_key_in_database(oligo_database.database, sequence_type), (
-            f"Sequence type '{sequence_type}' not found in database."
-        )
+        # assert check_if_key_in_database(oligo_database.database, sequence_type), (
+        #     f"Sequence type '{sequence_type}' not found in database."
+        # )
 
         oligos_scores = pd.Series(index=oligo_ids, dtype=float)
         for oligo_id in oligo_ids:
             score = 0.0
             for scorer in self.scorers:
                 score += scorer.apply(
-                    oligo_database=oligo_database,
-                    region_id=region_id,
+                    region=region,
                     oligo_id=oligo_id,
                     sequence_type=sequence_type,
                     **kwargs,

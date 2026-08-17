@@ -4,6 +4,7 @@
 
 import os
 import shutil
+import uuid
 from pathlib import Path
 from typing import Any, get_args
 
@@ -108,13 +109,17 @@ class ReferenceDatabase:
         if self.database_type == "fasta":
             for file in files_in:
                 self.fasta_parser.check_fasta_format(file)
-            self.database_file = safe_append_filename(self.dir_output, f"tmp_{self.database_name}.fna")
+            self.database_file = safe_append_filename(
+                self.dir_output, f"tmp_{uuid.uuid4().hex}_{self.database_name}.fna"
+            )
             self.fasta_parser.merge_fasta_files(
                 files_in=files_in, file_out=self.database_file, overwrite=True
             )
         elif self.database_type == "vcf":
             self.database_type = file_type
-            self.database_file = safe_append_filename(self.dir_output, f"tmp_{self.database_name}.vcf.gz")
+            self.database_file = safe_append_filename(
+                self.dir_output, f"tmp_{uuid.uuid4().hex}_{self.database_name}.vcf.gz"
+            )
             self.vcf_parser.merge_vcf_files(files_in=files_in, file_out=self.database_file)
         else:
             raise DatabaseError(f"Database type {self.database_type} not supported.")

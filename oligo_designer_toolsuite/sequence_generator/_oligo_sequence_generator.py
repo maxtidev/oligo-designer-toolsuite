@@ -287,7 +287,7 @@ class OligoSequenceGenerator:
         for file_fasta in files_fasta_in:
             self.fasta_parser.check_fasta_format(file_fasta)
             fasta_sequences = self.fasta_parser.read_fasta_sequences(file_fasta, region_ids)
-            files_fasta_oligos = Parallel(n_jobs=n_jobs, prefer="threads", require="sharedmem")(
+            files_fasta_oligos = Parallel(n_jobs=n_jobs, prefer="processes")(
                 delayed(get_sliding_window_sequence)(entry, length_interval_sequences, split_region, stride)
                 for entry in fasta_sequences
             )

@@ -12,6 +12,7 @@ from Bio.SeqUtils import MeltingTemp as mt
 
 from oligo_designer_toolsuite.database import OligoDatabase
 from oligo_designer_toolsuite.utils import count_kmer_abundance, logger
+from oligo_designer_toolsuite.utils._database_processor import get_oligo_property_value
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -105,12 +106,13 @@ def get_oligo_length_min_max_from_database(oligo_database: OligoDatabase) -> tup
     oligo_length_min = sys.maxsize
     oligo_length_max = 0
 
-    region_ids = oligo_database.database.keys()
+    region_ids = oligo_database.get_regionid_list()
 
     for region_id in region_ids:
-        oligo_ids = oligo_database.database[region_id].keys()
+        database_region = oligo_database.load_region(region_id)
+        oligo_ids = database_region.keys()
         for oligo_id in oligo_ids:
-            length = oligo_database.database[region_id][oligo_id]["length"]
+            length = database_region[oligo_id]["length"]
             oligo_length_min = min(oligo_length_min, length)
             oligo_length_max = max(oligo_length_max, length)
 
@@ -192,7 +194,7 @@ def check_content_oligo_database(oligo_database: OligoDatabase) -> None:
         sys.exit(1)  # Exit the program with a status code of 1
 
 
-def format_sequence(database: OligoDatabase, property: str, region_id: str, oligo_id: str) -> str:
+def format_sequence(property: str, region: dict, oligo_id: str) -> str:
     """
     Get a sequence property as a string from the database, raising an error if not available.
 
@@ -208,9 +210,9 @@ def format_sequence(database: OligoDatabase, property: str, region_id: str, olig
     :rtype: str
     :raises ValueError: If the property value is not a string.
     """
-    value = database.get_oligo_property_value(
+    value = get_oligo_property_value(
         property=property,
-        region_id=region_id,
+        region=region,
         oligo_id=oligo_id,
         flatten=True,
     )

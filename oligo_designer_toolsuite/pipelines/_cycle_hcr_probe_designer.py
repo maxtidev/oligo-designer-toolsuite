@@ -577,7 +577,7 @@ class CycleHCRProbeDesigner:
             stored as properties for each probe.
         :rtype: OligoDatabase
         """
-        region_ids = list(target_probe_database.database.keys())
+        region_ids = target_probe_database.get_regionid_list()
 
         target_probe_database.set_database_sequence_types(
             [
@@ -592,32 +592,32 @@ class CycleHCRProbeDesigner:
         )
 
         for region_id in region_ids:
+            database_region = target_probe_database.load_region(region_id)
+
             barcode = codebook.loc[region_id]
+            # pyrefly: ignore [bad-index]
             bits = barcode[barcode == 1].index
             readout_probe_sequences = readout_probe_table.loc[bits, "readout_probe_sequence"]
             sequence_readout_probe_L = readout_probe_sequences.iloc[0]
             sequence_readout_probe_R = readout_probe_sequences.iloc[1]
 
-            probe_ids = list(target_probe_database.database[region_id].keys())
+            probe_ids = list(database_region.keys())
             new_properties: dict[str, dict[str, str]] = {probe_id: {} for probe_id in probe_ids}
 
             for probe_id in probe_ids:
                 new_properties[probe_id]["sequence_target"] = format_sequence(
-                    database=target_probe_database,
                     property="target",
-                    region_id=region_id,
+                    region=database_region,
                     oligo_id=probe_id,
                 )
                 new_properties[probe_id]["sequence_oligo_L"] = format_sequence(
-                    database=target_probe_database,
                     property="oligo_L",
-                    region_id=region_id,
+                    region=database_region,
                     oligo_id=probe_id,
                 )
                 new_properties[probe_id]["sequence_oligo_R"] = format_sequence(
-                    database=target_probe_database,
                     property="oligo_R",
-                    region_id=region_id,
+                    region=database_region,
                     oligo_id=probe_id,
                 )
                 new_properties[probe_id]["sequence_readout_probe_L"] = sequence_readout_probe_L
@@ -627,18 +627,16 @@ class CycleHCRProbeDesigner:
                     sequence_readout_probe_L
                     + str(Seq(linker_sequence).reverse_complement())
                     + format_sequence(
-                        database=target_probe_database,
                         property="oligo_L",
-                        region_id=region_id,
+                        region=database_region,
                         oligo_id=probe_id,
                     )
                 )
 
                 new_properties[probe_id]["sequence_hybridization_probe_R"] = (
                     format_sequence(
-                        database=target_probe_database,
                         property="oligo_R",
-                        region_id=region_id,
+                        region=database_region,
                         oligo_id=probe_id,
                     )
                     + str(Seq(linker_sequence).reverse_complement())
@@ -750,7 +748,7 @@ class CycleHCRProbeDesigner:
             sequence_dna_template_probe_L, and sequence_dna_template_probe_R for each probe.
         :rtype: OligoDatabase
         """
-        region_ids = list(hybridization_probe_database.database.keys())
+        region_ids = hybridization_probe_database.get_regionid_list()
         hybridization_probe_database.set_database_sequence_types(
             [
                 "sequence_reverse_primer",
@@ -761,7 +759,9 @@ class CycleHCRProbeDesigner:
         )
 
         for region_id in region_ids:
-            probe_ids = list(hybridization_probe_database.database[region_id].keys())
+            database_region = hybridization_probe_database.load_region(region_id)
+
+            probe_ids = list(database_region.keys())
             new_properties: dict[str, dict[str, str]] = {probe_id: {} for probe_id in probe_ids}
 
             for probe_id in probe_ids:
@@ -773,9 +773,8 @@ class CycleHCRProbeDesigner:
                     + str(
                         Seq(
                             format_sequence(
-                                database=hybridization_probe_database,
                                 property="sequence_oligo_L",
-                                region_id=region_id,
+                                region=database_region,
                                 oligo_id=probe_id,
                             )
                         ).reverse_complement()
@@ -784,9 +783,8 @@ class CycleHCRProbeDesigner:
                     + str(
                         Seq(
                             format_sequence(
-                                database=hybridization_probe_database,
                                 property="sequence_readout_probe_L",
-                                region_id=region_id,
+                                region=database_region,
                                 oligo_id=probe_id,
                             )
                         ).reverse_complement()
@@ -798,9 +796,8 @@ class CycleHCRProbeDesigner:
                     + str(
                         Seq(
                             format_sequence(
-                                database=hybridization_probe_database,
                                 property="sequence_readout_probe_R",
-                                region_id=region_id,
+                                region=database_region,
                                 oligo_id=probe_id,
                             )
                         ).reverse_complement()
@@ -809,9 +806,8 @@ class CycleHCRProbeDesigner:
                     + str(
                         Seq(
                             format_sequence(
-                                database=hybridization_probe_database,
                                 property="sequence_oligo_R",
-                                region_id=region_id,
+                                region=database_region,
                                 oligo_id=probe_id,
                             )
                         ).reverse_complement()
@@ -1966,7 +1962,7 @@ def main() -> None:
     )
 
     codebook, readout_probe_table = pipeline.design_readout_probes(
-        region_ids=list(target_probe_database.database.keys()),
+        region_ids=target_probe_database.get_regionid_list(),
         file_readout_probe_table=config["file_readout_probe_table"],
         file_codebook=config["file_codebook"],
     )

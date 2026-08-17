@@ -2,19 +2,26 @@
 # imports
 ############################################
 
+# necessary for using the OligoDatabase type before its definition, needed for Python <3.14
+from __future__ import annotations
+
+import dbm.sqlite3
 import os
 import pickle
+import shelve
+from functools import wraps
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, Protocol
 
 import pandas as pd
 import yaml
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-from effidict import EffiDict, LRUReplacement, PickleBackend
+from filelock import FileLock
 from joblib import Parallel, delayed
 from joblib_progress import joblib_progress
+from pandas import DataFrame
 
 from oligo_designer_toolsuite._constants import SEPARATOR_OLIGO_ID
 from oligo_designer_toolsuite._exceptions import DatabaseError, FileFormatError
@@ -31,15 +38,22 @@ from oligo_designer_toolsuite.utils import (
     format_oligo_properties,
     logger,
     merge_databases,
+    retry,
 )
 from oligo_designer_toolsuite.utils._checkers_and_helpers import safe_append_filename
+from oligo_designer_toolsuite.utils._database_processor import get_oligo_property_value
 
 CustomYamlDumper.add_representer(list, CustomYamlDumper.represent_list)
 CustomYamlDumper.add_representer(dict, CustomYamlDumper.represent_dict)
 
+
 ############################################
 # Oligo Database Class
 ############################################
+
+
+class RegionProcessor[R](Protocol):
+    def __call__(self, oligo_database: OligoDatabase, region_id: str, *args, **kwargs) -> R: ...
 
 
 class OligoDatabase:
@@ -87,18 +101,16 @@ class OligoDatabase:
         Path(self.dir_output).mkdir(parents=True, exist_ok=True)
 
         self._dir_cache_files = safe_append_filename(self.dir_output, "cache_files")
+        Path(self._dir_cache_files).mkdir(parents=True, exist_ok=True)
 
         self.fasta_parser = FastaParser()
 
-        # Initialize databse object
-        backend = PickleBackend(storage_path=self._dir_cache_files)
-        strategy = LRUReplacement(disk_backend=backend, max_in_memory=self._max_entries_in_memory)
-        self.database = EffiDict(disk_backend=backend, replacement_strategy=strategy)
-
-        # will be used later in the generation of oligo sets
-        backend = PickleBackend(storage_path=self._dir_cache_files)
-        strategy = LRUReplacement(disk_backend=backend, max_in_memory=self._max_entries_in_memory)
-        self.oligosets = EffiDict(disk_backend=backend, replacement_strategy=strategy)
+        # Initialize database shelfs
+        self._database_shelf_path = safe_append_filename(self._dir_cache_files, "database.db")
+        self._database_lock_path = safe_append_filename(self._dir_cache_files, "database.lock")
+        self._oligosets_shelf_path = safe_append_filename(self._dir_cache_files, "oligosets.db")
+        self._oligosets_lock_path = safe_append_filename(self._dir_cache_files, "oligosets.lock")
+        self.open_shelfs(flag="n")
 
         # Database metadata
         self.database_sequence_types: list[str] = []
@@ -111,6 +123,11 @@ class OligoDatabase:
             )
             with open(self.file_removed_regions, "a") as handle:
                 handle.write("Region\tPipeline step\n")
+
+    def __del__(self) -> None:
+        self.close_shelfs()
+        # if os.path.exists(self._dir_cache_files):
+        #     shutil.rmtree(self._dir_cache_files, ignore_errors=True)
 
     ############################################
     # Load Functions
@@ -196,7 +213,7 @@ class OligoDatabase:
 
                 # only merge if there are common keys
                 if len(set(self.database) & set(database_region)) > 0:
-                    self.database = merge_databases(
+                    new_database = merge_databases(
                         database1=self.database,
                         # pyrefly: ignore [bad-argument-type]
                         database2=database_region,
@@ -205,9 +222,11 @@ class OligoDatabase:
                         dir_cache_files=self._dir_cache_files,
                         max_entries_in_memory=self._max_entries_in_memory,
                     )
+                    self.database.close()
+                    self.database = new_database
                 else:
-                    for region in database_region:  # noqa: PLC0206
-                        self.database[region] = database_region[region]
+                    for region_id, region_info in database_region.items():
+                        self.save_region(region_id, region_info)
 
         # Check formatting
         region_ids = cast_to_list(region_ids) if region_ids else None
@@ -218,13 +237,13 @@ class OligoDatabase:
 
         # Clear database if it should be overwritten
         if database_overwrite:
-            backend = PickleBackend(storage_path=self._dir_cache_files)
-            strategy = LRUReplacement(disk_backend=backend, max_in_memory=self._max_entries_in_memory)
-            self.database = EffiDict(disk_backend=backend, replacement_strategy=strategy)
+            self.database.clear()
 
-        # Load files parallel into database
+        # Load files into database
+        # NOTE: for multiprocessing safety and thread safety (database access in merge_databases), don't do parallel
+        # NOTE: sharedmem required because of self.database assign
         with joblib_progress(description="Database Loading", total=len(files_fasta)):
-            Parallel(n_jobs=self.n_jobs, prefer="threads", require="sharedmem")(
+            Parallel(n_jobs=1, prefer="threads", require="sharedmem")(
                 delayed(_load_fasta_file)(file_fasta) for file_fasta in files_fasta
             )
 
@@ -279,9 +298,9 @@ class OligoDatabase:
 
         # Clear database if it should be overwritten
         if database_overwrite:
-            backend = PickleBackend(storage_path=self._dir_cache_files)
-            strategy = LRUReplacement(disk_backend=backend, max_in_memory=self._max_entries_in_memory)
-            self.database = EffiDict(disk_backend=backend, replacement_strategy=strategy)
+            # backend = PickleBackend(storage_path=self._dir_cache_files)
+            # strategy = LRUReplacement(disk_backend=backend, max_in_memory=self._max_entries_in_memory)
+            self.database.clear()
 
         # Load file and process content
         file_tsv_content = pd.read_table(file_database, sep="\t")
@@ -303,9 +322,7 @@ class OligoDatabase:
         # Merge loaded database with existing one
         database_tmp1 = file_tsv_content.to_dict(orient="records")
 
-        backend = PickleBackend(storage_path=self._dir_cache_files)
-        strategy = LRUReplacement(disk_backend=backend, max_in_memory=self._max_entries_in_memory)
-        database_tmp2 = EffiDict(disk_backend=backend, replacement_strategy=strategy)
+        database_tmp2 = shelve.open(safe_append_filename(self._dir_cache_files, "database_tmp2"), flag="n")  # noqa: SIM115
 
         for entry in database_tmp1:
             region_id, oligo_id = entry.pop("region_id"), entry.pop("oligo_id")
@@ -317,7 +334,7 @@ class OligoDatabase:
                 )
 
         if not database_overwrite and self.database:
-            database_tmp2 = merge_databases(
+            new_database = merge_databases(
                 database1=self.database,
                 database2=database_tmp2,
                 sequence_type=merge_databases_on_sequence_type,
@@ -325,6 +342,8 @@ class OligoDatabase:
                 dir_cache_files=self._dir_cache_files,
                 max_entries_in_memory=self._max_entries_in_memory,
             )
+            database_tmp2.close()
+            database_tmp2 = new_database
 
         # Filter for region ids
         if region_ids:
@@ -336,6 +355,7 @@ class OligoDatabase:
                 file_removed_regions=self.file_removed_regions,
             )
 
+        self.database.close()
         self.database = database_tmp2
 
     def load_database(
@@ -393,10 +413,10 @@ class OligoDatabase:
                         dir_cache_files=self._dir_cache_files,
                         max_entries_in_memory=self._max_entries_in_memory,
                     )
-                    self.oligosets[region_id] = pd.concat([self.oligosets[region_id], oligoset_region])
+                    self.save_oligoset(region_id, pd.concat([self.load_oligoset(region_id), oligoset_region]))
                 else:
-                    self.database[region_id] = database_region
-                    self.oligosets[region_id] = oligoset_region
+                    self.save_region(region_id, database_region)
+                    self.save_oligoset(region_id, oligoset_region)
 
         # Check formatting
         region_ids = cast_to_list(region_ids) if region_ids else None
@@ -405,17 +425,16 @@ class OligoDatabase:
             raise DatabaseError(f"Database directory '{dir_database}' does not exist.")
 
         if database_overwrite:
-            backend = PickleBackend(storage_path=self._dir_cache_files)
-            strategy = LRUReplacement(disk_backend=backend, max_in_memory=self._max_entries_in_memory)
-            self.database = EffiDict(disk_backend=backend, replacement_strategy=strategy)
+            self.database.clear()
 
         # retrieve all files in the directory
         path = os.path.abspath(dir_database)
         files_database = [entry.path for entry in os.scandir(path) if entry.is_file()]
 
         # Load files parallel into database
+        # NOTE: for thread safety (database access in merge_databases), actually don't do parallel
         with joblib_progress(description="Database Loading", total=len(files_database)):
-            Parallel(n_jobs=self.n_jobs, prefer="threads", require="sharedmem")(
+            Parallel(n_jobs=1, prefer="threads", require="sharedmem")(
                 delayed(_load_database_file)(file_database) for file_database in files_database
             )
 
@@ -452,7 +471,7 @@ class OligoDatabase:
         :rtype: str
         """
         # Check formatting
-        region_ids = cast_to_list(region_ids) if region_ids else self.database.keys()
+        region_ids = cast_to_list(region_ids) if region_ids else list(self.database.keys())
 
         if dir_output:
             dir_database = safe_append_filename(dir_output, name_database)
@@ -461,9 +480,9 @@ class OligoDatabase:
         Path(dir_database).mkdir(parents=True, exist_ok=True)
 
         for region_id in region_ids:
-            database_region = self.database[region_id]
+            database_region = self.load_region(region_id)
             if self.oligosets and region_id in self.oligosets:
-                oligoset_region = self.oligosets[region_id]
+                oligoset_region = self.load_oligoset(region_id)
             else:
                 oligoset_region = None
             file_output = safe_append_filename(dir_database, region_id)
@@ -509,7 +528,7 @@ class OligoDatabase:
         )
 
         # Check formatting
-        region_ids = cast_to_list(region_ids) if region_ids else self.database.keys()
+        region_ids = cast_to_list(region_ids) if region_ids else list(self.database.keys())
 
         dir_output = dir_output if dir_output else self.dir_output
         file_fasta = safe_append_filename(dir_output, f"{filename}.fna")
@@ -517,7 +536,7 @@ class OligoDatabase:
 
         with open(file_fasta, "w") as handle_fasta:
             for region_id in region_ids:
-                database_region = self.database[region_id]
+                database_region = self.load_region(region_id)
                 for oligo_id, oligo_properties in database_region.items():
                     description = sequence_type if save_description else ""
                     seq_record = SeqRecord(
@@ -555,7 +574,7 @@ class OligoDatabase:
         :rtype: str
         """
         # Check formatting
-        region_ids = cast_to_list(region_ids) if region_ids else self.database.keys()
+        region_ids = cast_to_list(region_ids) if region_ids else list(self.database.keys())
 
         dir_output = dir_output if dir_output else self.dir_output
         file_bed = safe_append_filename(dir_output, f"{filename}.bed")
@@ -612,7 +631,7 @@ class OligoDatabase:
         :rtype: str
         """
         # Check formatting
-        region_ids = cast_to_list(region_ids) if region_ids else self.database.keys()
+        region_ids = cast_to_list(region_ids) if region_ids else list(self.database.keys())
         properties = cast_to_list(properties)
 
         dir_output = dir_output if dir_output else self.dir_output
@@ -620,12 +639,14 @@ class OligoDatabase:
 
         first_entry = True
         for region_id in region_ids:
+            database_region = self.load_region(region_id)
+
             file_tsv_content = []
-            for oligo_id in self.database[region_id].keys():  # noqa: SIM118
+            for oligo_id in database_region.keys():  # noqa: SIM118
                 entry = {"region_id": region_id, "oligo_id": oligo_id}
                 for property in properties:
-                    if property in self.database[region_id][oligo_id]:
-                        oligo_property = self.database[region_id][oligo_id][property]
+                    if property in database_region[oligo_id]:
+                        oligo_property = database_region[oligo_id][property]
                         if flatten_property:
                             oligo_property = flatten_property_list(oligo_property)
                             if oligo_property:
@@ -669,12 +690,14 @@ class OligoDatabase:
         """
         # Check formatting
         properties = cast_to_list(properties)
-        region_ids = cast_to_list(region_ids) if region_ids else self.database.keys()
+        region_ids = cast_to_list(region_ids) if region_ids else list(self.database.keys())
 
         yaml_dict: dict[str, dict[str, Any]] = {region_id: {} for region_id in region_ids}
 
         for region_id in region_ids:
-            oligosets_region = self.oligosets[region_id]
+            database_region = self.load_region(region_id)
+
+            oligosets_region = self.load_oligoset(region_id)
             oligosets_oligo_columns = [col for col in oligosets_region.columns if col.startswith("oligo_")]
             oligosets_score_columns = [
                 col for col in oligosets_region.columns if col.startswith("set_score_")
@@ -685,8 +708,10 @@ class OligoDatabase:
             oligosets_region_scores = oligosets_region[oligosets_score_columns]
 
             for idx, oligoset in oligosets_region_oligos.iterrows():
+                # pyrefly: ignore [unsupported-operation]
                 oligoset_id = f"Oligoset {idx + 1}"
                 yaml_dict[region_id][oligoset_id] = {
+                    # pyrefly: ignore [bad-index]
                     "Oligoset Score": oligosets_region_scores.loc[idx].to_dict(),
                 }
 
@@ -695,9 +720,10 @@ class OligoDatabase:
 
                     # iterate through all properties that should be written
                     for property in properties:
-                        if property in self.database[region_id][oligo_id]:
-                            oligo_property = self.database[region_id][oligo_id][property]
-                            # format oligo properties: flatten lists of lists, join string lists with comma, keep strings as-is, None -> empty list
+                        if property in database_region[oligo_id]:
+                            oligo_property = database_region[oligo_id][property]
+                            # format oligo properties: flatten lists of lists, join string lists with comma,
+                            # keep strings as-is, None -> empty list
                             if oligo_property:  # noqa: SIM102
                                 if (
                                     sum(len(sublist) for sublist in cast_to_list_of_lists(oligo_property))
@@ -725,12 +751,14 @@ class OligoDatabase:
     ) -> None:
         # Check formatting
         properties = cast_to_list(properties)
-        region_ids = cast_to_list(region_ids) if region_ids else self.database.keys()
+        region_ids = cast_to_list(region_ids) if region_ids else list(self.database.keys())
 
         csv_table = list()  # noqa: C408
 
         for region_id in region_ids:
-            oligosets_region = self.oligosets[region_id]
+            database_region = self.load_region(region_id)
+
+            oligosets_region = self.load_oligoset(region_id)
             oligosets_oligo_columns = [col for col in oligosets_region.columns if col.startswith("oligo_")]
             oligosets_score_columns = [
                 col for col in oligosets_region.columns if col.startswith("set_score_")
@@ -742,6 +770,7 @@ class OligoDatabase:
 
             # iterate through all oligo sets
             for oligoset_idx, oligoset in oligosets_region.iterrows():
+                # pyrefly: ignore [unsupported-operation]
                 oligoset_id = f"oligoset_{oligoset_idx + 1}"
                 for oligo_id in oligoset:
                     entry = {
@@ -751,8 +780,8 @@ class OligoDatabase:
                     }
 
                     for property in properties:
-                        if property in self.database[region_id][oligo_id]:
-                            oligo_property = self.database[region_id][oligo_id][property]
+                        if property in database_region[oligo_id]:
+                            oligo_property = database_region[oligo_id][property]
                             # format oligo properties: flatten lists of lists, join string lists with comma, keep strings as-is, None -> empty list
                             if oligo_property:  # noqa: SIM102
                                 if (
@@ -817,13 +846,15 @@ class OligoDatabase:
         :return: None
         """
         properties = cast_to_list(properties)
-        region_ids = cast_to_list(region_ids) if region_ids else self.database.keys()
+        region_ids = cast_to_list(region_ids) if region_ids else list(self.database.keys())
 
         yaml_dict: dict[str, dict] = {}
 
         for region_id in region_ids:
+            database_region = self.load_region(region_id)
+
             yaml_dict[region_id] = {}
-            oligosets_region = self.oligosets[region_id]
+            oligosets_region = self.load_oligoset(region_id)
             oligosets_oligo_columns = [col for col in oligosets_region.columns if col.startswith("oligo_")]
             oligosets_score_columns = [
                 col for col in oligosets_region.columns if col.startswith("set_score_")
@@ -835,13 +866,14 @@ class OligoDatabase:
 
             # iterate through all oligo sets
             for oligoset_idx, oligoset in oligosets_region.iterrows():
+                # pyrefly: ignore [unsupported-operation]
                 oligoset_id = f"oligoset_{oligoset_idx + 1}"
                 yaml_dict[region_id][oligoset_id] = {}
                 for oligo_id in oligoset:
                     entry = {}
                     for property in properties:
-                        if property in self.database[region_id][oligo_id]:
-                            oligo_property = self.database[region_id][oligo_id][property]
+                        if property in database_region[oligo_id]:
+                            oligo_property = database_region[oligo_id][property]
                             # format oligo properties: flatten lists of lists, join string lists with comma, keep strings as-is, None -> empty list
                             if oligo_property:  # noqa: SIM102
                                 if (
@@ -872,15 +904,12 @@ class OligoDatabase:
         regions_to_remove = [
             region_id
             for region_id in region_ids
-            if len(self.database[region_id]) < self.min_oligos_per_region
+            if len(self.load_region(region_id)) < self.min_oligos_per_region
         ]
 
         for region in regions_to_remove:
-            self.database[region] = None
-            del self.database[region]
-
-            self.oligosets[region] = None
-            del self.oligosets[region]
+            self.database.pop(region, None)
+            self.oligosets.pop(region, None)
 
         if self.write_regions_with_insufficient_oligos and regions_to_remove:
             with open(self.file_removed_regions, "a") as handle:
@@ -923,12 +952,7 @@ class OligoDatabase:
         :rtype: list[str]
         """
         region_ids = cast_to_list(region_ids) if region_ids else list(self.database.keys())
-        oligo_ids = [
-            oligo_id
-            for region_id in region_ids
-            if self.database[region_id]  # skip regions without any oligos
-            for oligo_id in self.database[region_id].keys()  # noqa: SIM118
-        ]
+        oligo_ids = [oligo_id for region_id in region_ids for oligo_id in self.load_region(region_id)]
 
         return oligo_ids
 
@@ -1049,15 +1073,15 @@ class OligoDatabase:
             return x
 
         # Check formatting
-        region_ids = cast_to_list(region_ids) if region_ids else self.database.keys()
+        region_ids = cast_to_list(region_ids) if region_ids else list(self.database.keys())
         properties = [properties] if isinstance(properties, str) else properties
 
         properties_dict = {}
 
         for region_id in region_ids:
             if region_id in self.database.keys():  # noqa: SIM118
-                region_db = self.database[region_id]
-                for oligo_id, oligo_properties in region_db.items():
+                database_region = self.load_region(region_id)
+                for oligo_id, oligo_properties in database_region.items():
                     key = (region_id, oligo_id)
                     if key not in properties_dict:
                         properties_dict[key] = {
@@ -1084,46 +1108,114 @@ class OligoDatabase:
 
         return properties_table
 
-    def get_oligo_property_value(
-        self, property: str, flatten: bool, region_id: str, oligo_id: str
-    ) -> Any | list[Any] | None:
+    ############################################
+    # Disk Access
+    ############################################
+
+    def open_shelfs(self, flag: Literal["r", "w", "c", "n"] = "w") -> None:
+        with (
+            FileLock(self._database_lock_path, is_singleton=True),
+            FileLock(self._oligosets_lock_path, is_singleton=True),
+        ):
+            self.database = shelve.open(self._database_shelf_path, flag=flag)  # noqa: SIM115
+            self.oligosets = shelve.open(self._oligosets_shelf_path, flag=flag)  # noqa: SIM115
+
+    def close_shelfs(self) -> None:
+        with (
+            FileLock(self._database_lock_path, is_singleton=True),
+            FileLock(self._oligosets_lock_path, is_singleton=True),
+        ):
+            self.database.close()
+            self.oligosets.close()
+
+    @retry(attempts=100, exception_type=dbm.sqlite3.error)
+    def load_region(self, region_id: str) -> dict:
+        """Loads region from database, sufficiently multi-processing safe.
+
+        Notes:
+            Instead of obtaining a lock on the database, retries incase the database is used by another process.
+            Locking would prevent parallel pickle serialization (main performance bottleneck).
+            Simultaneous access is rare enough that retrying upon failure is safe.
+
+            An alternative approach might be a ReadWriteLock that allows multiple readers but only a singler writer.
+            Both the compatability of SQLite3 and the performance of this approach would need to be investigated.
         """
-        Retrieve the value of a specified property for a given oligo and region ID,
-        optionally flattening nested or list properties to a unique set of values.
+        return self.database[region_id]
 
-        :param property: The name of the property to retrieve.
-        :type property: str
-        :param flatten: Whether to flatten list properties to a unique set of values in the table.
-        :type flatten: bool
-        :param region_id: The ID of the region where the oligo is located.
-        :type region_id: str
-        :param oligo_id: The ID of the oligo for which the property value is retrieved.
-        :type oligo_id: str
-        :return: The value of the specified property, possibly flattened. Can be any type (int, float, str, bool, etc.) or a list of values, or None if the property doesn't exist.
-        :rtype: Any | list[Any] | None
-        :raises ValueError: If the specified region or oligo does not exist in the database.
+    @retry(attempts=100, exception_type=dbm.sqlite3.error)
+    def save_region(self, region_id: str, region: dict) -> None:
+        """Writes region to database, sufficiently multi-processing safe.
+
+        Notes:
+            See `OligoDatabase.load_region()`.
         """
-        if not region_id in self.database:
-            raise DatabaseError(f"Region '{region_id}' does not exist in the database.")
+        self.database[region_id] = region
 
-        if not oligo_id in self.database[region_id]:
-            raise DatabaseError(f"Oligo '{oligo_id}' does not exist in region '{region_id}'.")
+    @retry(attempts=100, exception_type=dbm.sqlite3.error)
+    def load_oligoset(self, region_id: str) -> DataFrame:
+        """Loads oligoset from database, sufficiently multi-processing safe.
 
-        oligo_properties = self.database[region_id][oligo_id]
-        if property not in oligo_properties:
-            property_value = None
-        elif flatten:
-            property_value = flatten_property_list(self.database[region_id][oligo_id][property])
-            if property_value and len(property_value) == 1:
-                property_value = property_value[0]
-        else:
-            property_value = self.database[region_id][oligo_id][property]
+        Notes:
+            See `OligoDatabase.load_region()`.
+        """
+        return self.oligosets[region_id]
 
-        return property_value
+    @retry(attempts=100, exception_type=dbm.sqlite3.error)
+    def save_oligoset(self, region_id: str, oligoset: DataFrame) -> None:
+        """Writes oligoset to database, sufficiently multi-processing safe.
+
+        Notes:
+            See `OligoDatabase.load_region()`.
+        """
+        self.oligosets[region_id] = oligoset
 
     ############################################
     # Manipulation Functions
     ############################################
+
+    def map_regions[R](
+        self,
+        function: RegionProcessor[R],
+        args: tuple[Any, ...] = (),  # TODO: generic argument list, type checked
+        kwargs: dict[str, Any] | None = None,
+        description: str | None = None,
+        n_jobs: int = 1,
+    ) -> list[R]:
+        """Applies a function to all regions in the oligo database.
+
+        Joblib will run the function in the main process if n_jobs is 1.
+
+        Notes:
+            Closes the database and oligosets shelfs in the main process for the duration of the computation.
+            Wraps the function in a helper that opens and closes the shelfs in the executing process.
+        """
+        if kwargs is None:
+            kwargs = {}
+
+        @wraps(function)
+        def _run_with_database(oligo_database: OligoDatabase, region_id: str, *args, **kwargs) -> R:
+            oligo_database.open_shelfs()
+            try:
+                result = function(oligo_database, region_id, *args, **kwargs)
+            finally:
+                oligo_database.close_shelfs()
+            return result
+
+        region_ids = self.get_regionid_list()
+
+        # Close shelfs to hand over control to subprocesses
+        self.close_shelfs()
+
+        # Execute function over all regions in process pool
+        with joblib_progress(description=description, total=len(region_ids)):
+            results: list[R] = Parallel(n_jobs=n_jobs, prefer="processes")(
+                delayed(_run_with_database)(self, region_id, *args, **kwargs) for region_id in region_ids
+            )
+
+        # Re-open database after all subprocesses finished
+        self.open_shelfs()
+
+        return results
 
     def set_database_sequence_types(self, sequence_types: str | list[str]) -> None:
         """
@@ -1163,12 +1255,13 @@ class OligoDatabase:
         for region_id in region_ids:
             if region_id not in self.database:
                 continue
-            database_region = self.database[region_id]
+            database_region = self.load_region(region_id)
             for oligo_id, oligo_properties in database_region.items():
                 if oligo_id in new_oligo_property:
                     oligo_properties.update(
                         format_oligo_properties(new_oligo_property[oligo_id], self.database_sequence_types)
                     )
+            self.save_region(region_id, database_region)
 
     def filter_database_by_region(self, remove_region: bool, region_ids: str | list[str]) -> None:
         """
@@ -1209,12 +1302,14 @@ class OligoDatabase:
         oligo_ids = cast_to_list(oligo_ids)
         if self.database:
             for region_id in self.database.keys():  # noqa: SIM118
-                oligo_ids_region = list(self.database[region_id].keys())
+                database_region = self.load_region(region_id)
+                oligo_ids_region = list(database_region.keys())
                 for oligo_id in oligo_ids_region:
                     if (remove_region and (oligo_id in oligo_ids)) or (
                         not remove_region and (oligo_id not in oligo_ids)
                     ):
-                        del self.database[region_id][oligo_id]
+                        del database_region[oligo_id]
+                self.save_region(region_id, database_region)
         else:
             raise DatabaseError(
                 "Cannot filter database: database is empty. Call load_database() or load_database_from_fasta() first."
@@ -1235,11 +1330,11 @@ class OligoDatabase:
                                             if False, removes oligos with property values larger than the threshold.
         :type remove_if_smaller_threshold: bool
         """
-        oligos_to_delete = []
         for region_id in self.database.keys():  # noqa: SIM118
-            for oligo_id in self.database[region_id].keys():  # noqa: SIM118
-                property_values = self.get_oligo_property_value(
-                    property=property_name, region_id=region_id, oligo_id=oligo_id, flatten=True
+            database_region = self.load_region(region_id)
+            for oligo_id in list(database_region.keys()):
+                property_values = get_oligo_property_value(
+                    property=property_name, region=database_region, oligo_id=oligo_id, flatten=True
                 )
                 if property_values is not None:
                     property_values = cast_to_list(property_values)
@@ -1249,10 +1344,8 @@ class OligoDatabase:
                         not remove_if_smaller_threshold
                         and all(item > property_thr for item in property_values)
                     ):
-                        oligos_to_delete.append((region_id, oligo_id))
-
-        for region_id, oligo_id in oligos_to_delete:
-            del self.database[region_id][oligo_id]
+                        del database_region[oligo_id]
+            self.save_region(region_id, database_region)
 
     def filter_database_by_property_category(
         self, property_name: str, property_category: str | list[str], remove_if_equals_category: bool
@@ -1271,13 +1364,13 @@ class OligoDatabase:
         """
         # Check formatting
         property_category = cast_to_list(property_category)
-        oligos_to_delete = []
 
         for region_id in self.database.keys():  # noqa: SIM118
-            for oligo_id in self.database[region_id].keys():  # noqa: SIM118
+            database_region = self.load_region(region_id)
+            for oligo_id in list(database_region.keys()):
                 property_values = cast_to_list(
-                    self.get_oligo_property_value(
-                        property=property_name, region_id=region_id, oligo_id=oligo_id, flatten=True
+                    get_oligo_property_value(
+                        property=property_name, region=database_region, oligo_id=oligo_id, flatten=True
                     )
                 )
                 if property_values:  # noqa: SIM102
@@ -1289,7 +1382,5 @@ class OligoDatabase:
                         not remove_if_equals_category
                         and all(item not in property_category for item in property_values)
                     ):
-                        oligos_to_delete.append((region_id, oligo_id))
-
-        for region_id, oligo_id in oligos_to_delete:
-            del self.database[region_id][oligo_id]
+                        del database_region[oligo_id]
+            self.save_region(region_id, database_region)

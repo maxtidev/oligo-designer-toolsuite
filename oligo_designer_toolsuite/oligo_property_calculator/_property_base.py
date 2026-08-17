@@ -4,8 +4,6 @@
 
 from abc import ABC, abstractmethod
 
-from oligo_designer_toolsuite.database import OligoDatabase
-
 ############################################
 # Property Base Class
 ############################################
@@ -24,7 +22,7 @@ class BaseProperty(ABC):
         """Constructor for the BaseProperty class."""
 
     @abstractmethod
-    def apply(self, oligo_database: OligoDatabase, region_id: str, oligo_id: str, sequence_type: str) -> dict:
+    def apply(self, region: dict, oligo_id: str, sequence_type: str) -> dict:
         """
         Calculate the property for a specific oligo and return the result as a dictionary.
 

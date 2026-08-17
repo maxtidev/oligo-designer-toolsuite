@@ -9,8 +9,6 @@ import shutil
 from pathlib import Path
 
 import yaml
-from joblib import Parallel, delayed
-from joblib_progress import joblib_progress
 
 from oligo_designer_toolsuite.database import OligoDatabase, ReferenceDatabase
 from oligo_designer_toolsuite.oligo_efficiency_filter import (
@@ -62,6 +60,7 @@ from oligo_designer_toolsuite.pipelines._utils import (
 )
 from oligo_designer_toolsuite.sequence_generator import OligoSequenceGenerator
 from oligo_designer_toolsuite.utils import configure_root_logger, logger
+from oligo_designer_toolsuite.utils._database_processor import get_oligo_property_value
 
 ############################################
 # SCRINSHOT Probe Designer
@@ -603,12 +602,14 @@ class ScrinshotProbeDesigner:
 
             return barcodes
 
-        region_ids = list(oligo_database.database.keys())
+        region_ids = oligo_database.get_regionid_list()
 
         barcodes = _get_barcode(len(region_ids), barcode_length=4, seed=0, choices=["A", "C", "T", "G"])
 
         for region_idx, region_id in enumerate(region_ids):
-            oligo_sets_region = oligo_database.oligosets[region_id]
+            database_region = oligo_database.load_region(region_id)
+
+            oligo_sets_region = oligo_database.load_oligoset(region_id)
             oligo_sets_oligo_columns = [col for col in oligo_sets_region.columns if col.startswith("oligo_")]
 
             new_oligo_properties = {}
@@ -618,11 +619,11 @@ class ScrinshotProbeDesigner:
                     oligo_id = str(oligo_sets_region.loc[index, column])
                     barcode: str = barcodes[region_idx]
 
-                    ligation_site = oligo_database.get_oligo_property_value(
-                        property="ligation_site", region_id=region_id, oligo_id=oligo_id, flatten=True
+                    ligation_site = get_oligo_property_value(
+                        property="ligation_site", region=database_region, oligo_id=oligo_id, flatten=True
                     )
-                    sequence_oligo = oligo_database.get_oligo_property_value(
-                        property="oligo", region_id=region_id, oligo_id=oligo_id, flatten=True
+                    sequence_oligo = get_oligo_property_value(
+                        property="oligo", region=database_region, oligo_id=oligo_id, flatten=True
                     )
                     # required for type linting since get_oligo_property_value() could return None
                     if not isinstance(sequence_oligo, str) or not isinstance(ligation_site, int):
@@ -656,8 +657,8 @@ class ScrinshotProbeDesigner:
 
                     new_oligo_properties[oligo_id] = {
                         "barcode": barcode,
-                        "sequence_target": oligo_database.get_oligo_property_value(
-                            property="target", region_id=region_id, oligo_id=oligo_id, flatten=True
+                        "sequence_target": get_oligo_property_value(
+                            property="target", region=database_region, oligo_id=oligo_id, flatten=True
                         ),
                         "sequence_padlock_arm1": sequence_padlock_arm1,
                         "sequence_padlock_arm2": sequence_padlock_arm2,
@@ -1548,26 +1549,20 @@ class DetectionOligoDesigner:
         :rtype: OligoDatabase
         """
 
-        region_ids = list(oligo_database.database.keys())
-
-        with joblib_progress(description="Design Detection Oligos", total=len(region_ids)):
-            Parallel(
-                n_jobs=self.n_jobs, prefer="threads", require="sharedmem"
-            )(  # there should be an explicit return
-                delayed(self._create_detection_oligos_region)(
-                    oligo_database,
-                    region_id,
-                    oligo_length_min,
-                    oligo_length_max,
-                    min_thymines,
-                    U_distance,
-                    Tm_opt,
-                    Tm_parameters,
-                    Tm_chem_correction_parameters,
-                    Tm_salt_correction_parameters,
-                )
-                for region_id in region_ids
-            )
+        oligo_database.map_regions(
+            self._create_detection_oligos_region,
+            args=(
+                oligo_length_min,
+                oligo_length_max,
+                min_thymines,
+                U_distance,
+                Tm_opt,
+                Tm_parameters,
+                Tm_chem_correction_parameters,
+                Tm_salt_correction_parameters,
+            ),
+            description="Design Detection Oligos",
+        )
 
         return oligo_database
 
@@ -1618,8 +1613,9 @@ class DetectionOligoDesigner:
         :type Tm_salt_correction_parameters: dict | None
         :return: None. The oligo_database is updated in-place with detection oligo properties.
         """
+        database_region = oligo_database.load_region(region_id)
 
-        oligosets_region = oligo_database.oligosets[region_id]
+        oligosets_region = oligo_database.load_oligoset(region_id)
         oligosets_oligo_columns = [col for col in oligosets_region.columns if col.startswith("oligo_")]
 
         new_oligo_properties = {}
@@ -1628,11 +1624,11 @@ class DetectionOligoDesigner:
             for column in oligosets_oligo_columns:
                 oligo_id = str(oligosets_region.loc[index, column])
 
-                ligation_site = oligo_database.get_oligo_property_value(
-                    property="ligation_site", region_id=region_id, oligo_id=oligo_id, flatten=True
+                ligation_site = get_oligo_property_value(
+                    property="ligation_site", region=database_region, oligo_id=oligo_id, flatten=True
                 )
-                sequence_oligo = oligo_database.get_oligo_property_value(
-                    property="oligo", region_id=region_id, oligo_id=oligo_id, flatten=True
+                sequence_oligo = get_oligo_property_value(
+                    property="oligo", region=database_region, oligo_id=oligo_id, flatten=True
                 )
                 # required for type linting since get_oligo_property_value() could return None
                 if not isinstance(sequence_oligo, str) or not isinstance(ligation_site, int):

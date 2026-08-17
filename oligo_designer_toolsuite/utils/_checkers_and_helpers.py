@@ -5,8 +5,10 @@
 import csv
 import time
 import uuid
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
+from functools import wraps
 from pathlib import Path
+from time import sleep
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -230,3 +232,23 @@ def safe_append_filename(dir_path: str, file_name: str) -> str:
     if not resolved_path.name == file_name:
         raise ConfigurationError(f"Invalid file name: {file_name}. The resolved file name does not match.")
     return str(joined_path)
+
+
+def retry(attempts: int, exception_type: type[Exception] = Exception):
+    def retry(function: Callable):
+
+        @wraps(function)
+        def _retry_wrapper(*args, **kwargs):
+
+            for i in range(attempts):
+                try:
+                    return function(*args, **kwargs)
+                except exception_type:
+                    if i < attempts - 1:
+                        sleep(0.01)
+                        continue
+                    raise
+
+        return _retry_wrapper
+
+    return retry

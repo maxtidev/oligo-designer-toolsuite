@@ -2,8 +2,6 @@
 # imports
 ############################################
 
-from joblib import Parallel, delayed
-from joblib_progress import joblib_progress
 from oligo_designer_toolsuite_ai_filters.api import APIHybridizationProbability
 
 from oligo_designer_toolsuite._exceptions import ConfigurationError
@@ -69,16 +67,14 @@ class HybridizationProbabilityFilter(ReferenceSpecificityFilter):
         self.threshold = threshold
         self.model = APIHybridizationProbability(ai_filter_path=ai_filter_path)
 
-    def _create_reference(self, n_jobs: int) -> str:
+    def _create_reference(self) -> str:
         """
         Creates a reference file and builds an index for alignment-based search.
 
-        :param n_jobs: Number of parallel jobs to use for processing.
-        :type n_jobs: int
         :return: The name of the created reference file.
         :rtype: str
         """
-        file_reference = self.alignment_method._create_reference(n_jobs=n_jobs)
+        file_reference = self.alignment_method._create_reference()
 
         return file_reference
 
@@ -113,22 +109,16 @@ class HybridizationProbabilityFilter(ReferenceSpecificityFilter):
         consider_hits_from_input_region = False
 
         # create reference database / index
-        file_reference = self._create_reference(n_jobs=n_jobs)
+        file_reference = self._create_reference()
 
         # run search in parallel for each region
-        region_ids = list(oligo_database.database.keys())
         name = " ".join(string.capitalize() for string in self.filter_name.split("_"))
-        with joblib_progress(description=f"Specificity Filter: {name}", total=len(region_ids)):
-            Parallel(n_jobs=n_jobs, prefer="threads", require="sharedmem")(
-                delayed(self._run_filter)(
-                    region_id=region_id,
-                    oligo_database=oligo_database,
-                    file_reference=file_reference,
-                    consider_hits_from_input_region=consider_hits_from_input_region,
-                    mode=int(self.remove_hits),
-                )
-                for region_id in region_ids
-            )
+        oligo_database.map_regions(
+            self._run_filter,
+            args=(file_reference, consider_hits_from_input_region, int(self.remove_hits)),
+            description=f"Specificity Filter: {name}",
+            n_jobs=n_jobs,
+        )
 
         self._remove_reference(file_reference)
 
@@ -137,8 +127,8 @@ class HybridizationProbabilityFilter(ReferenceSpecificityFilter):
     def _run_filter(
         self,
         oligo_database: OligoDatabase,
-        file_reference: str,
         region_id: str,
+        file_reference: str,
         consider_hits_from_input_region: bool,
         mode: int,
     ) -> None:

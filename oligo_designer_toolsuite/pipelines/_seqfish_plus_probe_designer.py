@@ -605,7 +605,7 @@ class SeqFishPlusProbeDesigner:
             - `sequence_hybridization_probe`: The complete assembled hybridization probe sequence
         :rtype: OligoDatabase
         """
-        region_ids = list(target_probe_database.database.keys())
+        region_ids = target_probe_database.get_regionid_list()
 
         target_probe_database.set_database_sequence_types(
             [
@@ -619,7 +619,10 @@ class SeqFishPlusProbeDesigner:
         )
 
         for region_id in region_ids:
+            database_region = target_probe_database.load_region(region_id)
+
             barcode = codebook.loc[region_id]
+            # pyrefly: ignore [bad-index]
             bits = barcode[barcode == 1].index
             readout_probe_sequences = readout_probe_table.loc[bits, "readout_probe_sequence"]
             sequence_readout_probe_1 = readout_probe_sequences.iloc[0]
@@ -627,14 +630,13 @@ class SeqFishPlusProbeDesigner:
             sequence_readout_probe_3 = readout_probe_sequences.iloc[2]
             sequence_readout_probe_4 = readout_probe_sequences.iloc[3]
 
-            probe_ids = list(target_probe_database.database[region_id].keys())
+            probe_ids = list(database_region.keys())
             new_properties: dict[str, dict[str, str]] = {probe_id: {} for probe_id in probe_ids}
 
             for probe_id in probe_ids:
                 new_properties[probe_id]["sequence_target"] = format_sequence(
-                    database=target_probe_database,
                     property="target",
-                    region_id=region_id,
+                    region=database_region,
                     oligo_id=probe_id,
                 )
 
@@ -648,9 +650,8 @@ class SeqFishPlusProbeDesigner:
                     + str(Seq(sequence_readout_probe_2).reverse_complement())
                     + "T"
                     + format_sequence(
-                        database=target_probe_database,
                         property="oligo",
-                        region_id=region_id,
+                        region=database_region,
                         oligo_id=probe_id,
                     )
                     + "T"
@@ -874,7 +875,9 @@ class SeqFishPlusProbeDesigner:
         # iterate over all primers in the database to find the one with Tm closest to the reverse primer Tm
         min_dif_Tm = float("inf")
         forward_primer_sequence = ""
-        for database_region in oligo_database.database.values():
+        region_ids = oligo_database.get_regionid_list()
+        for region_id in region_ids:
+            database_region = oligo_database.load_region(region_id)
             for primer_properties in database_region.values():
                 Tm_forward_primer = calc_tm_nn(
                     sequence=primer_properties["oligo"],
@@ -925,7 +928,7 @@ class SeqFishPlusProbeDesigner:
             - `sequence_dna_template_probe`: The complete assembled DNA template probe sequence
         :rtype: OligoDatabase
         """
-        region_ids = list(hybridization_probe_database.database.keys())
+        region_ids = hybridization_probe_database.get_regionid_list()
         hybridization_probe_database.set_database_sequence_types(
             [
                 "sequence_forward_primer",
@@ -935,7 +938,9 @@ class SeqFishPlusProbeDesigner:
         )
 
         for region_id in region_ids:
-            probe_ids = list(hybridization_probe_database.database[region_id].keys())
+            database_region = hybridization_probe_database.load_region(region_id)
+
+            probe_ids = list(database_region.keys())
             new_properties: dict[str, dict[str, str]] = {probe_id: {} for probe_id in probe_ids}
 
             for probe_id in probe_ids:
@@ -945,9 +950,8 @@ class SeqFishPlusProbeDesigner:
                 new_properties[probe_id]["sequence_dna_template_probe"] = (
                     forward_primer_sequence
                     + format_sequence(
-                        database=hybridization_probe_database,
                         property="sequence_hybridization_probe",
-                        region_id=region_id,
+                        region=database_region,
                         oligo_id=probe_id,
                     )
                     + reverse_primer_sequence
@@ -2474,7 +2478,7 @@ def main() -> None:
 
     codebook, readout_probe_table = pipeline.design_readout_probes(
         # Step 1: Create Database Parameters
-        region_ids=list(target_probe_database.database.keys()),
+        region_ids=target_probe_database.get_regionid_list(),
         readout_probe_length=config["readout_probe_length"],
         readout_probe_base_probabilities=config["readout_probe_base_probabilities"],
         readout_probe_initial_num_sequences=config["readout_probe_initial_num_sequences"],

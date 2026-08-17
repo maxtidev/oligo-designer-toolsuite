@@ -79,22 +79,22 @@ class BowtieFilter(AlignmentSpecificityFilter):
         ],
         filter_name: str = "bowtie_filter",
         dir_output: str = "output",
+        n_jobs: int = 1,
     ) -> None:
         """Constructor for the BowtieFilter class."""
         super().__init__(remove_hits, filter_name, dir_output)
 
         self.search_parameters = search_parameters
         self.names_search_output = names_search_output
+        self.n_jobs = n_jobs
 
-    def _create_reference(self, n_jobs: int) -> str:
+    def _create_reference(self) -> str:
         """
         Creates a Bowtie index for a given reference file.
 
         This function generates a Bowtie index from a reference file, which is necessary for performing sequence alignment.
         The index creation is parallelized across multiple threads to optimize performance.
 
-        :param n_jobs: Number of parallel jobs to use for processing.
-        :type n_jobs: int
         :return: The name of the created Bowtie reference file.
         :rtype: str
         """
@@ -113,7 +113,7 @@ class BowtieFilter(AlignmentSpecificityFilter):
             "--offrate",
             "4",
             "--threads",
-            str(n_jobs),
+            str(self.n_jobs),
             "-f",
             file_reference,
             file_reference,
@@ -362,22 +362,22 @@ class Bowtie2Filter(AlignmentSpecificityFilter):
         ],
         filter_name: str = "bowtie2_filter",
         dir_output: str = "output",
+        n_jobs: int = 1,
     ) -> None:
         """Constructor for the Bowtie2Filter class."""
         super().__init__(remove_hits, filter_name, dir_output)
 
         self.search_parameters = search_parameters
         self.names_search_output = names_search_output
+        self.n_jobs = n_jobs
 
-    def _create_reference(self, n_jobs: int) -> str:
+    def _create_reference(self) -> str:
         """
         Creates an index for the Bowtie2 alignment tool using a specified reference file.
 
         This method generates a Bowtie2 index from a reference file, which is necessary for performing sequence alignment.
         The index creation is parallelized across multiple threads to optimize performance.
 
-        :param n_jobs: Number of parallel jobs to use for processing.
-        :type n_jobs: int
         :return: The name of the created Bowtie2 reference file.
         :rtype: str
         """
@@ -396,7 +396,7 @@ class Bowtie2Filter(AlignmentSpecificityFilter):
             "--offrate",
             "4",
             "--threads",
-            str(n_jobs),
+            str(self.n_jobs),
             "-f",
             file_reference,
             file_reference,
