@@ -97,7 +97,6 @@ class BlastNFilter(AlignmentSpecificityFilter):
 
     def _create_reference(
         self,
-        n_jobs: int,  # not utilized in this filter
     ) -> str:
         """
         Creates a BLAST index for a given reference file.
@@ -105,8 +104,6 @@ class BlastNFilter(AlignmentSpecificityFilter):
         This method generates an index for a nucleotide BLAST database from the specified reference file.
         The index is stored in the specified output directory.
 
-        :param n_jobs: Number of parallel jobs to use for processing. Note: This parameter is not utilized in this filter.
-        :type n_jobs: int
         :return: The name of the created BLAST reference file.
         :rtype: str
         """

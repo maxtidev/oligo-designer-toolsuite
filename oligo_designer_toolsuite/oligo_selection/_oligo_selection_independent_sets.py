@@ -84,8 +84,8 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
     def _get_oligo_sets_for_region(
         self,
         oligo_database: OligoDatabase,
-        sequence_type: str,
         region_id: str,
+        sequence_type: str,
         n_sets: int,
     ) -> None:
         """
@@ -110,10 +110,10 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
         :param n_sets: The number of oligo sets to generate.
         :type n_sets: int
         """
+        database_region = oligo_database.load_region(region_id)
+
         # create the overlapping matrix
-        non_overlap_matrix, non_overlap_matrix_ids = self._get_non_overlap_matrix(
-            oligo_database=oligo_database, region_id=region_id
-        )
+        non_overlap_matrix, non_overlap_matrix_ids = self._get_non_overlap_matrix(region=database_region)
 
         # pre-filter oligos by degree
         non_overlap_matrix, non_overlap_matrix_ids = self._pre_filter_oligos_by_degree(
@@ -125,8 +125,7 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
         # generate candidate sets
         if len(non_overlap_matrix_ids) >= self.set_size_min:
             oligosets = self._generate_candidate_sets(
-                oligo_database=oligo_database,
-                region_id=region_id,
+                region=database_region,
                 sequence_type=sequence_type,
                 non_overlap_matrix=non_overlap_matrix,
                 non_overlap_matrix_ids=non_overlap_matrix_ids,
@@ -142,13 +141,14 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
 
         # remove oligos from database that are not part of oligosets
         oligos_keep = set().union(*oligosets.keys())
-        oligo_ids = list(oligo_database.database[region_id].keys())
+        oligo_ids = list(database_region.keys())
         for oligo_id in oligo_ids:
             if oligo_id not in oligos_keep:
-                del oligo_database.database[region_id][oligo_id]
+                del database_region[oligo_id]
+        oligo_database.save_region(region_id, database_region)
 
         # format oligosets to dataframe
-        oligo_database.oligosets[region_id] = self._oligosets_to_dataframe(oligosets)
+        oligo_database.save_oligoset(region_id, self._oligosets_to_dataframe(oligosets))
 
         # delete unused variables to free some memory
         del non_overlap_matrix
@@ -156,8 +156,7 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
 
     def _get_non_overlap_matrix(
         self,
-        oligo_database: OligoDatabase,
-        region_id: str,
+        region: dict,
     ) -> tuple[csr_matrix, list[str]]:
         """
         Build a sparse matrix encoding pairwise non-overlap distances between oligos.
@@ -187,7 +186,7 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
             return int(distances)
 
         # Keep track of the indices
-        non_overlap_matrix_ids = list(oligo_database.database[region_id].keys())
+        non_overlap_matrix_ids = list(region.keys())
 
         # Get all intervals (start, end)
         intervals = []
@@ -197,8 +196,8 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
                     [s, e]
                     # loop through sequences from different genomic regions for the same oligo (can have the same coordinates if coming from shorter and longer exons)
                     for start, end in zip(
-                        oligo_database.database[region_id][oligo_id]["start"],
-                        oligo_database.database[region_id][oligo_id]["end"],
+                        region[oligo_id]["start"],
+                        region[oligo_id]["end"],
                     )
                     # loop through exon junction parts for the same oligo
                     for s, e in zip(start, end)
@@ -263,8 +262,7 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
 
     def _generate_candidate_sets(
         self,
-        oligo_database: OligoDatabase,
-        region_id: str,
+        region: dict,
         sequence_type: str,
         non_overlap_matrix: csr_matrix,
         non_overlap_matrix_ids: list[str],
@@ -299,8 +297,7 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
         def _add_clique_to_oligosets(clique: list[int], oligoset_size: int) -> None:
             oligo_ids = [non_overlap_matrix_ids[v] for v in clique]
             oligos_scores = self.oligos_scoring.apply(
-                oligo_database=oligo_database,
-                region_id=region_id,
+                region=region,
                 oligo_ids=oligo_ids,
                 sequence_type=sequence_type,
                 non_overlap_matrix=non_overlap_matrix,
@@ -322,8 +319,7 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
         all_nodes = np.array(list(G_full.nodes))
 
         oligos_scores = self.oligos_scoring.apply(
-            oligo_database=oligo_database,
-            region_id=region_id,
+            region=region,
             oligo_ids=non_overlap_matrix_ids,
             sequence_type=sequence_type,
             non_overlap_matrix=non_overlap_matrix,

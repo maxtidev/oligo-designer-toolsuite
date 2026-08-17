@@ -14,7 +14,7 @@ name = "oligo-designer-toolsuite"
 dynamic = ["version"]
 description = "Oligo Designer Toolsuite: lightweight development of custom oligo design pipelines"
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.13"
 license = { file = "LICENSE" }
 authors = [
   { name = "Lisa Barros de Andrade e Sousa", email = "lisa.barros.andrade.sousa@gmail.com" },
@@ -62,6 +62,7 @@ dependencies = [
   "pyyaml>=6.0,<7",
   "scipy>=1.13,<2",
   "seqfold>=0.9,<1",
+  "filelock>=3",
 ]
 
 [dependency-groups]
@@ -69,7 +70,7 @@ test = ["pytest>=7,<9", "coverage[toml]>=7,<8"]
 lint = [
   "pre-commit>=3,<5",
   "ruff==0.16.0",
-  "pyrefly==1.1.1",
+  "pyrefly==1.2.0",
 ]
 types = [
   "types-PyYAML",

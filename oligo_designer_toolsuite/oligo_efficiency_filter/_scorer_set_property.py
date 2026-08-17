@@ -6,7 +6,6 @@ from typing import Any
 
 from scipy.sparse import csr_matrix
 
-from oligo_designer_toolsuite.database import OligoDatabase
 from oligo_designer_toolsuite.oligo_efficiency_filter import BaseScorer
 
 ############################################
@@ -33,8 +32,7 @@ class UniformDistanceScorer(BaseScorer):
 
     def apply(  # type: ignore[override]
         self,
-        oligo_database: OligoDatabase,
-        region_id: str,
+        region: dict,
         oligo_id: str,
         sequence_type: str,
         *,

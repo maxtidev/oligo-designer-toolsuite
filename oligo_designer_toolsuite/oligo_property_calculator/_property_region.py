@@ -3,9 +3,9 @@
 ############################################
 
 
-from oligo_designer_toolsuite.database import OligoDatabase
 from oligo_designer_toolsuite.oligo_property_calculator import BaseProperty
 from oligo_designer_toolsuite.utils import cast_to_list
+from oligo_designer_toolsuite.utils._database_processor import get_oligo_property_value
 
 from ._property_functions import calc_isoform_consensus, calc_num_targeted_transcripts
 
@@ -24,7 +24,7 @@ class NumTargetedTranscriptsProperty(BaseProperty):
         self.property_name = property_name
         super().__init__()
 
-    def apply(self, oligo_database: OligoDatabase, region_id: str, oligo_id: str, sequence_type: str) -> dict:
+    def apply(self, region: dict, oligo_id: str, sequence_type: str) -> dict:
         """
         Calculate the number of unique transcripts targeted by the oligonucleotide.
 
@@ -39,8 +39,8 @@ class NumTargetedTranscriptsProperty(BaseProperty):
         :return: A dictionary containing the calculated number of targeted transcripts property.
         :rtype: dict
         """
-        transcript_id = oligo_database.get_oligo_property_value(
-            property=self.property_name, region_id=region_id, oligo_id=oligo_id, flatten=True
+        transcript_id = get_oligo_property_value(
+            property=self.property_name, region=region, oligo_id=oligo_id, flatten=True
         )
 
         if transcript_id:
@@ -70,7 +70,7 @@ class IsoformConsensusProperty(BaseProperty):
         self.property_name_transcript_id = property_name_transcript_id
         self.property_name_number_total_transcripts = property_name_number_total_transcripts
 
-    def apply(self, oligo_database: OligoDatabase, region_id: str, oligo_id: str, sequence_type: str) -> dict:
+    def apply(self, region: dict, oligo_id: str, sequence_type: str) -> dict:
         """
         Calculate the isoform consensus for the oligonucleotide.
 
@@ -85,16 +85,16 @@ class IsoformConsensusProperty(BaseProperty):
         :return: A dictionary containing the calculated isoform consensus property.
         :rtype: dict
         """
-        number_total_transcripts = oligo_database.get_oligo_property_value(
+        number_total_transcripts = get_oligo_property_value(
             property=self.property_name_number_total_transcripts,
-            region_id=region_id,
+            region=region,
             oligo_id=oligo_id,
             flatten=True,
         )
 
-        transcript_id = oligo_database.get_oligo_property_value(
+        transcript_id = get_oligo_property_value(
             property=self.property_name_transcript_id,
-            region_id=region_id,
+            region=region,
             oligo_id=oligo_id,
             flatten=True,
         )

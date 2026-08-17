@@ -4,9 +4,9 @@
 
 from typing import Any
 
-from oligo_designer_toolsuite.database import OligoDatabase
 from oligo_designer_toolsuite.oligo_efficiency_filter import BaseScorer
 from oligo_designer_toolsuite.oligo_property_calculator import calc_gc_content, calc_tm_nn
+from oligo_designer_toolsuite.utils._database_processor import get_oligo_property_value
 
 ############################################
 # Sequence Property Scorer Classes
@@ -66,8 +66,7 @@ class DeviationFromOptimalGCContentScorer(SequencePropertyScorer):
 
     def apply(
         self,
-        oligo_database: OligoDatabase,
-        region_id: str,
+        region: dict,
         oligo_id: str,
         sequence_type: str,
         **_: Any,
@@ -88,8 +87,8 @@ class DeviationFromOptimalGCContentScorer(SequencePropertyScorer):
         :return: Weighted score based on GC content deviation.
         :rtype: float
         """
-        sequence = oligo_database.get_oligo_property_value(
-            property=sequence_type, region_id=region_id, oligo_id=oligo_id, flatten=True
+        sequence = get_oligo_property_value(
+            property=sequence_type, region=region, oligo_id=oligo_id, flatten=True
         )
 
         if not isinstance(sequence, str):
@@ -137,8 +136,7 @@ class DeviationFromOptimalTmScorer(SequencePropertyScorer):
 
     def apply(
         self,
-        oligo_database: OligoDatabase,
-        region_id: str,
+        region: dict,
         oligo_id: str,
         sequence_type: str,
         **_: Any,
@@ -159,8 +157,8 @@ class DeviationFromOptimalTmScorer(SequencePropertyScorer):
         :return: Weighted score based on Tm deviation.
         :rtype: float
         """
-        sequence = oligo_database.get_oligo_property_value(
-            property=sequence_type, region_id=region_id, oligo_id=oligo_id, flatten=True
+        sequence = get_oligo_property_value(
+            property=sequence_type, region=region, oligo_id=oligo_id, flatten=True
         )
 
         if not isinstance(sequence, str):
@@ -214,8 +212,7 @@ class NormalizedDeviationFromOptimalGCContentScorer(SequencePropertyScorer):
 
     def apply(
         self,
-        oligo_database: OligoDatabase,
-        region_id: str,
+        region: dict,
         oligo_id: str,
         sequence_type: str,
         **_: Any,
@@ -236,8 +233,8 @@ class NormalizedDeviationFromOptimalGCContentScorer(SequencePropertyScorer):
         :return: Weighted score based on normalized GC content deviation.
         :rtype: float
         """
-        sequence = oligo_database.get_oligo_property_value(
-            property=sequence_type, region_id=region_id, oligo_id=oligo_id, flatten=True
+        sequence = get_oligo_property_value(
+            property=sequence_type, region=region, oligo_id=oligo_id, flatten=True
         )
 
         if not isinstance(sequence, str):
@@ -302,8 +299,7 @@ class NormalizedDeviationFromOptimalTmScorer(SequencePropertyScorer):
 
     def apply(
         self,
-        oligo_database: OligoDatabase,
-        region_id: str,
+        region: dict,
         oligo_id: str,
         sequence_type: str,
         **_: Any,
@@ -324,8 +320,8 @@ class NormalizedDeviationFromOptimalTmScorer(SequencePropertyScorer):
         :return: Weighted score based on normalized Tm deviation.
         :rtype: float
         """
-        sequence = oligo_database.get_oligo_property_value(
-            property=sequence_type, region_id=region_id, oligo_id=oligo_id, flatten=True
+        sequence = get_oligo_property_value(
+            property=sequence_type, region=region, oligo_id=oligo_id, flatten=True
         )
 
         if not isinstance(sequence, str):

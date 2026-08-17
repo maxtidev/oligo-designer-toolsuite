@@ -4,9 +4,6 @@
 
 from typing import Any
 
-from joblib import Parallel, delayed
-from joblib_progress import joblib_progress
-
 from oligo_designer_toolsuite.database import OligoDatabase
 from oligo_designer_toolsuite.oligo_property_calculator import BaseProperty
 from oligo_designer_toolsuite.utils import check_if_key_in_database
@@ -49,12 +46,12 @@ class PropertyCalculator:
             f"Sequence type '{sequence_type}' not found in database."
         )
 
-        region_ids = list(oligo_database.database.keys())
-        with joblib_progress(description="Property Calculator", total=len(region_ids)):
-            Parallel(n_jobs=n_jobs, prefer="threads", require="sharedmem")(
-                delayed(self._calculate_region)(oligo_database, region_id, sequence_type)
-                for region_id in region_ids
-            )
+        oligo_database.map_regions(
+            self._calculate_region,
+            args=(sequence_type,),
+            description="Property Calculator",
+            n_jobs=n_jobs,
+        )
 
         return oligo_database
 
@@ -72,14 +69,14 @@ class PropertyCalculator:
         :param sequence_type: Type of sequence being processed.
         :type sequence_type: str
         """
+        database_region = oligo_database.load_region(region_id)
         new_oligo_property: dict[str, dict[str, Any]] = {}
 
-        for oligo_id in oligo_database.database[region_id].keys():  # noqa: SIM118
+        for oligo_id in database_region.keys():  # noqa: SIM118
             # Calculate all properties for this oligo
             for property_calc in self.properties:
                 property_result = property_calc.apply(
-                    oligo_database=oligo_database,
-                    region_id=region_id,
+                    region=database_region,
                     oligo_id=oligo_id,
                     sequence_type=sequence_type,
                 )

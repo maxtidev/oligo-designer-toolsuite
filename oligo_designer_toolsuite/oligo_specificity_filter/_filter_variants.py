@@ -4,9 +4,6 @@
 
 import os
 
-from joblib import Parallel, delayed
-from joblib_progress import joblib_progress
-
 from oligo_designer_toolsuite._exceptions import ConfigurationError, DatabaseError
 from oligo_designer_toolsuite.database import OligoDatabase
 from oligo_designer_toolsuite.oligo_specificity_filter import ReferenceSpecificityFilter
@@ -59,13 +56,10 @@ class VariantsFilter(ReferenceSpecificityFilter):
 
     def _create_reference(
         self,
-        n_jobs: int,  # not utilized in this filter
     ) -> str:
         """
         Create a reference file from the variant reference database.
 
-        :param n_jobs: Number of parallel jobs to use for processing. Note: This parameter is not utilized in this filter.
-        :type n_jobs: int
         :return: Path to the written reference file.
         :rtype: str
         """
@@ -99,21 +93,16 @@ class VariantsFilter(ReferenceSpecificityFilter):
         :return: The filtered OligoDatabase.
         :rtype: OligoDatabase
         """
-        file_reference = self._create_reference(n_jobs=n_jobs)
+        file_reference = self._create_reference()
 
         # run search in parallel for each region
-        region_ids = list(oligo_database.database.keys())
         name = " ".join(string.capitalize() for string in self.filter_name.split("_"))
-        with joblib_progress(description=f"Specificity Filter: {name}", total=len(region_ids)):
-            Parallel(n_jobs=n_jobs, prefer="threads", require="sharedmem")(
-                delayed(self._run_filter)(
-                    region_id=region_id,
-                    oligo_database=oligo_database,
-                    file_reference=file_reference,
-                    mode=int(self.remove_hits),
-                )
-                for region_id in region_ids
-            )
+        oligo_database.map_regions(
+            self._run_filter,
+            args=(file_reference, int(self.remove_hits)),
+            description=f"Specificity Filter: {name}",
+            n_jobs=n_jobs,
+        )
 
         self._remove_reference(file_reference)
 
@@ -121,8 +110,8 @@ class VariantsFilter(ReferenceSpecificityFilter):
 
     def _run_filter(
         self,
-        region_id: str,
         oligo_database: OligoDatabase,
+        region_id: str,
         file_reference: str,
         mode: int,
     ) -> None:

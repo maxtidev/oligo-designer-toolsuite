@@ -60,7 +60,10 @@ class BaseFilterPolicy(ABC):
         :return: A dictionary mapping each region to the number of oligos it contains.
         :rtype: dict
         """
-        return {region: len(oligo_database.database[region]) for region in oligo_database.database.keys()}  # noqa: SIM118
+        return {
+            region_id: len(oligo_database.load_region(region_id))
+            for region_id in oligo_database.get_regionid_list()
+        }
 
 
 class RemoveAllFilterPolicy(BaseFilterPolicy):
@@ -88,7 +91,7 @@ class RemoveAllFilterPolicy(BaseFilterPolicy):
         :return: A dictionary mapping each region to a list of oligos that should be removed based on the policy.
         :rtype: dict
         """
-        oligos_with_hits: dict[str, list[str]] = {region: [] for region in oligo_database.database.keys()}  # noqa: SIM118
+        oligos_with_hits: dict[str, list[str]] = {region: [] for region in oligo_database.get_regionid_list()}
 
         # remove all query oligos
         for hit in oligo_pair_hits:
@@ -133,7 +136,7 @@ class RemoveByLargerRegionFilterPolicy(BaseFilterPolicy):
         """
         graph = nx.from_edgelist(oligo_pair_hits)
         number_oligos_per_region = self._get_number_oligos_per_region(oligo_database=oligo_database)
-        oligos_with_hits: dict[str, list[str]] = {region: [] for region in oligo_database.database.keys()}  # noqa: SIM118
+        oligos_with_hits: dict[str, list[str]] = {region: [] for region in oligo_database.get_regionid_list()}
 
         while graph.number_of_edges() > 0:
             edge = list(graph.edges)[0]  # noqa: RUF015
@@ -174,7 +177,7 @@ class RemoveByDegreeFilterPolicy(BaseFilterPolicy):
         :rtype: dict
         """
         graph = nx.from_edgelist(oligo_pair_hits)
-        oligos_with_hits: dict[str, list[str]] = {region: [] for region in oligo_database.database.keys()}  # noqa: SIM118
+        oligos_with_hits: dict[str, list[str]] = {region: [] for region in oligo_database.get_regionid_list()}
 
         while graph.number_of_edges() > 0:
             degrees = dict(graph.degree())

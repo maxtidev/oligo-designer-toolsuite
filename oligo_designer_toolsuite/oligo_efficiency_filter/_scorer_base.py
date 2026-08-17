@@ -5,8 +5,6 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from oligo_designer_toolsuite.database import OligoDatabase
-
 ############################################
 # Scorer Base Class
 ############################################
@@ -26,8 +24,7 @@ class BaseScorer(ABC):
     @abstractmethod
     def apply(
         self,
-        oligo_database: OligoDatabase,
-        region_id: str,
+        region: dict,
         oligo_id: str,
         sequence_type: str,
         **kwargs: dict[str, Any],

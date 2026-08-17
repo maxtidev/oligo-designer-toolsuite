@@ -4,10 +4,10 @@
 
 from typing import Any
 
-from oligo_designer_toolsuite.database import OligoDatabase
 from oligo_designer_toolsuite.oligo_efficiency_filter import BaseScorer
 from oligo_designer_toolsuite.oligo_property_calculator._property_functions import calc_isoform_consensus
 from oligo_designer_toolsuite.utils import cast_to_list
+from oligo_designer_toolsuite.utils._database_processor import get_oligo_property_value
 
 ############################################
 # Sequence Property Scorer Classes
@@ -38,8 +38,7 @@ class OverlapTargetedExonsScorer(BaseScorer):
 
     def apply(
         self,
-        oligo_database: OligoDatabase,
-        region_id: str,
+        region: dict,
         oligo_id: str,
         sequence_type: str,
         **_: Any,
@@ -60,8 +59,8 @@ class OverlapTargetedExonsScorer(BaseScorer):
         :return: Weighted score based on overlap with targeted exons.
         :rtype: float
         """
-        exon_numbers = oligo_database.get_oligo_property_value(
-            self.property_name, flatten=True, region_id=region_id, oligo_id=oligo_id
+        exon_numbers = get_oligo_property_value(
+            self.property_name, flatten=True, region=region, oligo_id=oligo_id
         )
         exon_numbers = cast_to_list(exon_numbers) if exon_numbers else None
 
@@ -100,8 +99,7 @@ class OverlapUTRScorer(BaseScorer):
 
     def apply(
         self,
-        oligo_database: OligoDatabase,
-        region_id: str,
+        region: dict,
         oligo_id: str,
         sequence_type: str,
         **_: Any,
@@ -122,8 +120,8 @@ class OverlapUTRScorer(BaseScorer):
         :return: Weighted score based on UTR overlap.
         :rtype: float
         """
-        regiontype = oligo_database.get_oligo_property_value(
-            property=self.property_name, region_id=region_id, oligo_id=oligo_id, flatten=True
+        regiontype = get_oligo_property_value(
+            property=self.property_name, region=region, oligo_id=oligo_id, flatten=True
         )
         if regiontype:
             sequence_originates_from_UTR = "three_prime_UTR" in regiontype or "five_prime_UTR" in regiontype
@@ -164,8 +162,7 @@ class IsoformConsensusScorer(BaseScorer):
 
     def apply(
         self,
-        oligo_database: OligoDatabase,
-        region_id: str,
+        region: dict,
         oligo_id: str,
         sequence_type: str,
         **_: Any,
@@ -186,13 +183,13 @@ class IsoformConsensusScorer(BaseScorer):
         :return: Weighted score based on isoform consensus.
         :rtype: float
         """
-        transcript_id = oligo_database.get_oligo_property_value(
-            property=self.property_name_transcript_id, region_id=region_id, oligo_id=oligo_id, flatten=True
+        transcript_id = get_oligo_property_value(
+            property=self.property_name_transcript_id, region=region, oligo_id=oligo_id, flatten=True
         )
 
-        number_transcripts = oligo_database.get_oligo_property_value(
+        number_transcripts = get_oligo_property_value(
             property=self.property_name_number_total_transcripts,
-            region_id=region_id,
+            region=region,
             oligo_id=oligo_id,
             flatten=True,
         )
