@@ -3,11 +3,13 @@ This module provides different approaches for a strategic selection of optimal o
 """
 
 from ._oligo_selection_base import BaseOligoSelection
+from ._oligo_selection_dp import DynamicProgrammingOligoSelection
 from ._oligo_selection_homogeneous_properties import HomogeneousPropertyOligoSelection
 from ._oligo_selection_independent_sets import IndependentSetsOligoSelection
 
 __all__ = [
     "BaseOligoSelection",
+    "DynamicProgrammingOligoSelection",
     "HomogeneousPropertyOligoSelection",
     "IndependentSetsOligoSelection",
 ]
