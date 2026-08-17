@@ -3,9 +3,6 @@
 ############################################
 
 
-from joblib import Parallel, delayed
-from joblib_progress import joblib_progress
-
 from oligo_designer_toolsuite.database import OligoDatabase
 from oligo_designer_toolsuite.oligo_property_filter import BasePropertyFilter
 from oligo_designer_toolsuite.utils import check_if_key_in_database
@@ -52,12 +49,10 @@ class PropertyFilter:
             f"Sequence type '{sequence_type}' not found in database."
         )
 
-        region_ids = list(oligo_database.database.keys())
-        with joblib_progress(description="Property Filter", total=len(region_ids)):
-            Parallel(n_jobs=n_jobs, prefer="threads", require="sharedmem")(
-                delayed(self._filter_region)(oligo_database, region_id, sequence_type)
-                for region_id in region_ids
-            )
+        oligo_database.map_regions(
+            self._filter_region, args=(sequence_type,), description="Property Filter", n_jobs=n_jobs
+        )
+
         oligo_database.remove_regions_with_insufficient_oligos(pipeline_step="Property Filters")
 
         return oligo_database
@@ -77,13 +72,13 @@ class PropertyFilter:
         :param sequence_type: Type of sequence being processed.
         :type sequence_type: str
         """
-        oligo_ids = list(oligo_database.database[region_id].keys())
+        database_region = oligo_database.load_region(region_id)
+        oligo_ids = list(database_region.keys())
         for oligo_id in oligo_ids:
-            fulfills_all_filter = self._filter_sequence(
-                oligo_database.database[region_id][oligo_id][sequence_type]
-            )
+            fulfills_all_filter = self._filter_sequence(database_region[oligo_id][sequence_type])
             if not fulfills_all_filter:
-                del oligo_database.database[region_id][oligo_id]
+                del database_region[oligo_id]
+        oligo_database.save_region(region_id, database_region)
 
     def _filter_sequence(self, sequence: str) -> bool:
         """

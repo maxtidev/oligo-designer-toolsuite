@@ -5,7 +5,7 @@ channels:
   - bioconda
 dependencies:
   # Core runtime
-  - python=3.12
+  - python=3.14.4
   - pip>=25.1 # min version supporting dependency groups
 
   # Oligo Designer Toolsuite AI filters dependencies

@@ -12,6 +12,7 @@ from ._checkers_and_helpers import (
     check_if_key_exists,
     check_tsv_format,
     generate_unique_filename,
+    retry,
 )
 from ._database_processor import (
     check_if_key_in_database,
@@ -19,6 +20,7 @@ from ._database_processor import (
     collapse_properties_for_duplicated_sequences,
     flatten_property_list,
     format_oligo_properties,
+    get_oligo_property_value,
     merge_databases,
 )
 from ._logging import configure_root_logger, logger
@@ -55,8 +57,10 @@ __all__ = [
     "generate_unique_filename",
     "get_complement_regions",
     "get_intersection",
+    "get_oligo_property_value",
     "get_sequence_from_annotation",
     "logger",
     "merge_databases",
     "remove_index_files",
+    "retry",
 ]

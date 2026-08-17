@@ -3,12 +3,11 @@
 ############################################
 
 import os
+import typing
 from abc import ABC, abstractmethod
 from pathlib import Path
 
 import pandas as pd
-from joblib import Parallel, delayed
-from joblib_progress import joblib_progress
 
 from oligo_designer_toolsuite._constants import SEPARATOR_FASTA_HEADER_FIELDS, SEPARATOR_OLIGO_ID
 from oligo_designer_toolsuite._exceptions import ConfigurationError
@@ -88,13 +87,15 @@ class BaseSpecificityFilter(ABC):
         :param oligos_with_hits: A dictionary of regio_ids associated with oligo_ids that have been identified as hits and should be removed.
         :type oligos_with_hits: dict
         """
-        region_ids = cast_to_list(region_ids) if region_ids else oligo_database.database.keys()
+        region_ids = cast_to_list(region_ids) if region_ids else oligo_database.get_regionid_list()
 
         for region_id in region_ids:
-            oligo_ids = list(oligo_database.database[region_id].keys())
+            database_region = oligo_database.load_region(region_id)
+            oligo_ids = list(database_region.keys())
             for oligo_id in oligo_ids:
                 if oligo_id in oligos_with_hits[region_id]:
-                    del oligo_database.database[region_id][oligo_id]
+                    del database_region[oligo_id]
+            oligo_database.save_region(region_id, database_region)
 
     def _flag_hits_in_database(
         self,
@@ -119,17 +120,17 @@ class BaseSpecificityFilter(ABC):
         :param oligos_with_hits_properties: Dictionary mapping oligo IDs to properties related to their hits.
         :type oligos_with_hits_properties: dict
         """
-        region_ids = cast_to_list(region_ids) if region_ids else oligo_database.database.keys()
+        region_ids = cast_to_list(region_ids) if region_ids else oligo_database.get_regionid_list()
 
         for region_id in region_ids:
-            oligo_ids = list(oligo_database.database[region_id].keys())
+            database_region = oligo_database.load_region(region_id)
+            oligo_ids = list(database_region.keys())
             for oligo_id in oligo_ids:
                 if oligo_id in oligos_with_hits[region_id]:
-                    oligo_database.database[region_id][oligo_id][self.filter_name] = (
-                        oligos_with_hits_properties[oligo_id]
-                    )
+                    database_region[oligo_id][self.filter_name] = oligos_with_hits_properties[oligo_id]
                 else:
-                    oligo_database.database[region_id][oligo_id][self.filter_name] = None
+                    database_region[oligo_id][self.filter_name] = None
+            oligo_database.save_region(region_id, database_region)
 
 
 class ReferenceSpecificityFilter(BaseSpecificityFilter):
@@ -173,12 +174,10 @@ class ReferenceSpecificityFilter(BaseSpecificityFilter):
         self.reference_database = reference_database
 
     @abstractmethod
-    def _create_reference(self, n_jobs: int) -> str:
+    def _create_reference(self) -> str:
         """
         Abstract method to write a reference database to file and create an index in case of alignment based methods.
 
-        :param n_jobs: Number of parallel jobs to use for processing.
-        :type n_jobs: int
         :return: The name of the created reference file.
         :rtype: str
         """
@@ -303,22 +302,16 @@ class AlignmentSpecificityFilter(ReferenceSpecificityFilter):
         # when applying filters we don't want to consider hits within the same region
         consider_hits_from_input_region = False
 
-        file_reference = self._create_reference(n_jobs=n_jobs)
+        file_reference = self._create_reference()
 
         # run search in parallel for each region
-        region_ids = list(oligo_database.database.keys())
         name = " ".join(string.capitalize() for string in self.filter_name.split("_"))
-        with joblib_progress(description=f"Specificity Filter: {name}", total=len(region_ids)):
-            Parallel(n_jobs=n_jobs, prefer="threads", require="sharedmem")(
-                delayed(self._run_filter)(
-                    region_id=region_id,
-                    oligo_database=oligo_database,
-                    file_reference=file_reference,
-                    consider_hits_from_input_region=consider_hits_from_input_region,
-                    mode=int(self.remove_hits),
-                )
-                for region_id in region_ids
-            )
+        oligo_database.map_regions(
+            self._run_filter,
+            args=(file_reference, consider_hits_from_input_region, int(self.remove_hits)),
+            description=f"Specificity Filter: {name}",
+            n_jobs=n_jobs,
+        )
 
         self._remove_reference(file_reference)
 
@@ -350,21 +343,15 @@ class AlignmentSpecificityFilter(ReferenceSpecificityFilter):
         # when getting oligo pair hits we want to consider hits within the same region
         consider_hits_from_input_region = True
 
-        file_reference = self._create_reference(n_jobs=n_jobs)
-
-        region_ids = list(oligo_database.database.keys())
+        file_reference = self._create_reference()
         name = " ".join(string.capitalize() for string in self.filter_name.split("_"))
-        with joblib_progress(description=f"Specificity Filter: {name}", total=len(region_ids)):
-            table_hits = Parallel(n_jobs=n_jobs, prefer="threads", require="sharedmem")(
-                delayed(self._run_filter)(
-                    region_id=region_id,
-                    oligo_database=oligo_database,
-                    file_reference=file_reference,
-                    consider_hits_from_input_region=consider_hits_from_input_region,
-                    mode=2,
-                )
-                for region_id in region_ids
-            )
+        table_hits = oligo_database.map_regions(
+            self._run_filter,
+            args=(file_reference, consider_hits_from_input_region, 2),
+            description=f"Specificity Filter: {name}",
+            n_jobs=n_jobs,
+        )
+        typing.cast(list[pd.DataFrame], table_hits)
 
         table_hits = pd.concat(table_hits, ignore_index=True)
         oligo_pair_hits = list(zip(table_hits["query"].values, table_hits["reference"].values))
@@ -375,8 +362,8 @@ class AlignmentSpecificityFilter(ReferenceSpecificityFilter):
 
     def _run_filter(
         self,
-        region_id: str,
         oligo_database: OligoDatabase,
+        region_id: str,
         file_reference: str,
         consider_hits_from_input_region: bool,
         mode: int,
@@ -498,10 +485,8 @@ class AlignmentSpecificityFilter(ReferenceSpecificityFilter):
         :return: A list of query sequences corresponding to the hits.
         :rtype: list[str]
         """
-        queries = [
-            oligo_database.database[region_id][query_id][self.sequence_type]
-            for query_id in table_hits["query"]
-        ]
+        database_region = oligo_database.load_region(region_id)
+        queries = [database_region[query_id][self.sequence_type] for query_id in table_hits["query"]]
         return queries
 
     @abstractmethod

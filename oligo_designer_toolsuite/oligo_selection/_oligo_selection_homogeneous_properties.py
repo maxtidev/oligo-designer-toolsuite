@@ -47,8 +47,8 @@ class HomogeneousPropertyOligoSelection(BaseOligoSelection):
     def _get_oligo_sets_for_region(
         self,
         oligo_database: OligoDatabase,
-        sequence_type: str,
         region_id: str,
+        sequence_type: str,
         n_sets: int,
     ) -> None:
         """
@@ -101,7 +101,7 @@ class HomogeneousPropertyOligoSelection(BaseOligoSelection):
         rows = [[idx] + oligos + [score] for idx, (oligos, score) in enumerate(best_combinations)]  # noqa: RUF005
         columns = ["oligoset_id"] + [f"oligo_{i}" for i in range(self.set_size)] + ["set_score"]
 
-        oligo_database.oligosets[region_id] = pd.DataFrame(rows, columns=columns)
+        oligo_database.save_oligoset(region_id, pd.DataFrame(rows, columns=columns))
 
     def _score_combination(self, oligo_df: pd.DataFrame, combination: list[str]) -> tuple[list[str], float]:
         """
