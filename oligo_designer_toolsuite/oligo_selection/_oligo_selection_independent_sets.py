@@ -205,6 +205,29 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
                 ]
             )
 
+        # multiple_count = 0
+        # clean_multiple_count = 0
+        # seen_lengths = {}
+        # clean_seen_lengths = {}
+        # for ins in intervals:
+        #     if len(ins) > 1:
+        #         multiple_count += 1
+        #         if len(ins) in seen_lengths:
+        #             seen_lengths[len(ins)] += 1
+        #         else:
+        #             seen_lengths[len(ins)] = 1
+
+        #         first = ins[0]
+        #         if any(first != interval for interval in ins):
+        #             clean_multiple_count += 1
+        #             if len(ins) in clean_seen_lengths:
+        #                 clean_seen_lengths[len(ins)] += 1
+        #             else:
+        #                 clean_seen_lengths[len(ins)] = 1
+        # if multiple_count > 0:
+        #     print(f"{multiple_count=} {len(intervals)=} {seen_lengths=}")
+        #     print(f"{clean_multiple_count=} {clean_seen_lengths=}")
+
         # Create a sparse non-overlap matrix
         n_oligos = len(non_overlap_matrix_ids)
         non_overlap_matrix = lil_matrix((n_oligos, n_oligos), dtype=int)
