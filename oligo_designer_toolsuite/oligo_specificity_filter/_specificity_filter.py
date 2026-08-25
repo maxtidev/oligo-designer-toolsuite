@@ -54,8 +54,8 @@ class SpecificityFilter:
         :rtype: OligoDatabase
         """
         if sequence_type is not None:
-            assert check_if_key_in_database(oligo_database.database, sequence_type), (
-                f"Sequence type '{sequence_type}' not found in database."
+            assert sequence_type in oligo_database.metadata.columns, (
+                f"Sequence type '{sequence_type}' not found in database. {oligo_database.metadata.columns}"
             )
 
         for specificity_filter in self.filters:

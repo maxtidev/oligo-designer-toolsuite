@@ -594,6 +594,7 @@ class CycleHCRProbeDesigner:
 
         for region_id in region_ids:
             database_region = target_probe_database.load_region(region_id)
+            # NOTE: needs some more thought
 
             barcode = codebook.loc[region_id]
             # pyrefly: ignore [bad-index]
@@ -602,7 +603,7 @@ class CycleHCRProbeDesigner:
             sequence_readout_probe_L = readout_probe_sequences.iloc[0]
             sequence_readout_probe_R = readout_probe_sequences.iloc[1]
 
-            probe_ids = list(database_region.keys())
+            probe_ids = list(database_region.index)
             new_properties: dict[str, dict[str, str]] = {probe_id: {} for probe_id in probe_ids}
 
             for probe_id in probe_ids:
@@ -761,8 +762,9 @@ class CycleHCRProbeDesigner:
 
         for region_id in region_ids:
             database_region = hybridization_probe_database.load_region(region_id)
+            # NOTE: needs some more thought
 
-            probe_ids = list(database_region.keys())
+            probe_ids = list(database_region.index)
             new_properties: dict[str, dict[str, str]] = {probe_id: {} for probe_id in probe_ids}
 
             for probe_id in probe_ids:

@@ -9,11 +9,15 @@ import dbm.sqlite3
 import os
 import pickle
 import shelve
+import shutil
+from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
 from typing import Any, Literal, Protocol
 
+import numpy as np
 import pandas as pd
+import pyarrow as pa
 import yaml
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -30,18 +34,16 @@ from oligo_designer_toolsuite.utils import (
     FastaParser,
     cast_to_list,
     cast_to_list_of_lists,
-    check_if_key_in_database,
     check_if_region_in_database,
     check_tsv_format,
     collapse_properties_for_duplicated_sequences,
     flatten_property_list,
     format_oligo_properties,
+    get_oligo_property_value,
     logger,
-    merge_databases,
     retry,
 )
 from oligo_designer_toolsuite.utils._checkers_and_helpers import safe_append_filename
-from oligo_designer_toolsuite.utils._database_processor import get_oligo_property_value
 
 CustomYamlDumper.add_representer(list, CustomYamlDumper.represent_list)
 CustomYamlDumper.add_representer(dict, CustomYamlDumper.represent_dict)
@@ -50,6 +52,12 @@ CustomYamlDumper.add_representer(dict, CustomYamlDumper.represent_dict)
 ############################################
 # Oligo Database Class
 ############################################
+
+
+@dataclass(slots=True)
+class DatabaseMetadata:
+    region_ids: set[str]
+    columns: set[str]
 
 
 class RegionProcessor[R](Protocol):
@@ -106,14 +114,15 @@ class OligoDatabase:
         self.fasta_parser = FastaParser()
 
         # Initialize database shelfs
-        self._database_shelf_path = safe_append_filename(self._dir_cache_files, "database.db")
-        self._database_lock_path = safe_append_filename(self._dir_cache_files, "database.lock")
         self._oligosets_shelf_path = safe_append_filename(self._dir_cache_files, "oligosets.db")
         self._oligosets_lock_path = safe_append_filename(self._dir_cache_files, "oligosets.lock")
         self.open_shelfs(flag="n")
 
+        self.database_path = safe_append_filename(self._dir_cache_files, "database_fragments")
+
         # Database metadata
         self.database_sequence_types: list[str] = []
+        self.metadata = DatabaseMetadata(set(), set())
 
         # Initialize the file for regions with insufficient oligos
         if self.write_regions_with_insufficient_oligos:
@@ -132,6 +141,93 @@ class OligoDatabase:
     ############################################
     # Load Functions
     ############################################
+
+    # def load_database_from_parquet(
+    #     self,
+    #     file_parquet: str,
+    #     database_overwrite: bool,
+    #     sequence_type: str,
+    #     region_ids: str | list[str] | None = None,
+    # ) -> None:
+    #     filters = [("region_id", "in", region_ids)] if region_ids is not None else None
+    #     database = pd.read_parquet(file_parquet, filters=filters)  # TODO: merge multiple files
+    #     database = database.rename(
+    #         columns={"seqid": "chromosome", "sequence": sequence_type}
+    #     )  # NOTE: this feels wrong
+
+    #     # Set database sequence types
+    #     self.set_database_sequence_types(sequence_type)
+
+    #     # Clear database if it should be overwritten
+    #     if database_overwrite:
+    #         shutil.rmtree(self.database_path, ignore_errors=True)
+
+    #     for region_id, region in database.groupby("region_id"):
+    #         # initialize the lists-of-lists data structure
+
+    #     database["oligo_id"] = database["region_id"].str.cat(
+    #         others=database.groupby(["region_id", sequence_type]).ngroup().apply(str), sep=SEPARATOR_OLIGO_ID
+    #     )
+
+    #     # We will load the database from parquet format, but we will keep the shelve database format otherwise
+    #     # This will give us a speedup for initial loading if nothing else
+
+    #     # Merge properties of duplicate oligos (same sequence, e.g. different transcripts)
+    #     # we will turn all properties into lists except for those where the key is in self.database_sequence_types
+
+    #     is_non_aggregate_column = df.columns.isin(self.database_sequence_types)
+    #     aggregate_columns = df.columns[(~is_non_aggregate_column) & (df.columns != "sequence")]
+    #     non_aggregate_columns = df.columns[is_non_aggregate_column & (df.columns != "sequence")]
+    #     print(aggregate_columns)
+    #     print(non_aggregate_columns)
+
+    #     for region_id, region_df in df.groupby("region_id"):
+    #         database_region: dict[str, dict[str, Any]] = {}
+    #         sequence_index: dict[str, str] = {}
+
+    #         for i, row in region_df.reset_index().iterrows():
+    #             i = typing.cast(int, i)
+
+    #             oligo_properties = row[aggregate_columns].to_dict()
+    #             oligo_properties = typing.cast(dict[str, Any], oligo_properties)
+
+    #             # Add sequence with key sequence_type (e.g. oligo or target) as plain objects
+    #             sequence = row["sequence"]
+    #             oligo_properties[sequence_type] = sequence
+
+    #             # Convert everything except self.database_sequence_types to lists of lists
+    #             oligo_properties = format_oligo_properties(oligo_properties, self.database_sequence_types)
+
+    #             if sequence in sequence_index:
+    #                 # Merge properties with existing oligo
+    #                 oligo_id = sequence_index[sequence]
+    #                 previous_oligo_properties = database_region[oligo_id]
+
+    #                 oligo_properties = collapse_properties_for_duplicated_sequences(
+    #                     oligo_properties1=previous_oligo_properties,
+    #                     oligo_properties2=oligo_properties,
+    #                     database_sequence_types=self.database_sequence_types,
+    #                 )
+
+    #                 database_region[oligo_id] = oligo_properties
+    #             else:
+    #                 # Add new oligo
+    #                 oligo_id = f"{region_id}{SEPARATOR_OLIGO_ID}{i}"
+    #                 database_region[oligo_id] = oligo_properties
+    #                 sequence_index[sequence] = oligo_id
+
+    #         self.save_region(region_id, database_region)
+
+    #     self.metadata.columns = set(database.columns)
+    #     self.metadata.region_ids = set(database["region_id"].unique())
+
+    #     database.to_parquet(
+    #         self.database_path,
+    #         compression="zstd",
+    #         partition_cols=["region_id"],
+    #         max_partitions=len(self.metadata.region_ids),
+    #         existing_data_behavior="delete_matching",
+    #     )
 
     def load_database_from_fasta(
         self,
@@ -191,6 +287,7 @@ class OligoDatabase:
                     else:
                         oligo_properties = coordinates | additional_info
                     oligo_properties = format_oligo_properties(oligo_properties, self.database_sequence_types)
+                    # NOTE: multiple rows with same region here
                     if region in sequences:
                         if entry.seq in sequences[region]:
                             oligo_properties = collapse_properties_for_duplicated_sequences(
@@ -202,31 +299,32 @@ class OligoDatabase:
                     else:
                         sequences[region] = {str(entry.seq): oligo_properties}
 
-                database_region: dict[str, dict[str, Any]] = {region: {} for region in sequences}
                 for region, sequences_region in sequences.items():
-                    i = 1
-                    for oligo_sequence, oligo_properties in sequences_region.items():
-                        oligo_id = f"{region}{SEPARATOR_OLIGO_ID}{i}"
-                        oligo_seq_info = {sequence_type: oligo_sequence} | oligo_properties
-                        database_region[region][oligo_id] = oligo_seq_info
-                        i += 1
+                    for i, (oligo_sequence, oligo_properties) in enumerate(sequences_region.items()):
+                        oligo_properties["oligo_id"] = f"{region}{SEPARATOR_OLIGO_ID}{i + 1}"
+                        oligo_properties[sequence_type] = oligo_sequence
 
-                # only merge if there are common keys
-                if len(set(self.database) & set(database_region)) > 0:
-                    new_database = merge_databases(
-                        database1=self.database,
-                        # pyrefly: ignore [bad-argument-type]
-                        database2=database_region,
-                        sequence_type=sequence_type,
-                        database_sequence_types=self.database_sequence_types,
-                        dir_cache_files=self._dir_cache_files,
-                        max_entries_in_memory=self._max_entries_in_memory,
+                # # only merge if there are common keys
+                # if len(set(self.database) & set(database_region)) > 0:
+                #     new_database = merge_databases(
+                #         database1=self.database,
+                #         # pyrefly: ignore [bad-argument-type]
+                #         database2=database_region,
+                #         sequence_type=sequence_type,
+                #         database_sequence_types=self.database_sequence_types,
+                #         dir_cache_files=self._dir_cache_files,
+                #         max_entries_in_memory=self._max_entries_in_memory,
+                #     )
+                #     self.database.close()
+                #     self.database = new_database
+                # else:
+                for region_id, sequences_region in sequences.items():
+                    # Convert to pyarrow-backed DataFrame
+                    region_df: pd.DataFrame = pa.Table.from_pylist(list(sequences_region.values())).to_pandas(
+                        types_mapper=pd.ArrowDtype
                     )
-                    self.database.close()
-                    self.database = new_database
-                else:
-                    for region_id, region_info in database_region.items():
-                        self.save_region(region_id, region_info)
+                    region_df = region_df.set_index("oligo_id")
+                    self.save_region(region_id, region_df)
 
         # Check formatting
         region_ids = cast_to_list(region_ids) if region_ids else None
@@ -237,25 +335,24 @@ class OligoDatabase:
 
         # Clear database if it should be overwritten
         if database_overwrite:
-            self.database.clear()
+            shutil.rmtree(self.database_path, ignore_errors=True)
+            os.mkdir(self.database_path)
 
         # Load files into database
-        # NOTE: for multiprocessing safety and thread safety (database access in merge_databases), don't do parallel
-        # NOTE: sharedmem required because of self.database assign
         with joblib_progress(description="Database Loading", total=len(files_fasta)):
             Parallel(n_jobs=1, prefer="threads", require="sharedmem")(
                 delayed(_load_fasta_file)(file_fasta) for file_fasta in files_fasta
             )
 
         # add this step to log regions which are not available in database
-        if region_ids:
-            check_if_region_in_database(
-                # pyrefly: ignore [bad-argument-type]
-                database=self.database,
-                region_ids=region_ids,
-                write_regions_with_insufficient_oligos=self.write_regions_with_insufficient_oligos,
-                file_removed_regions=self.file_removed_regions,
-            )
+        # if region_ids:
+        #     check_if_region_in_database(
+        #         # pyrefly: ignore [bad-argument-type]
+        #         database=self.database,
+        #         region_ids=region_ids,
+        #         write_regions_with_insufficient_oligos=self.write_regions_with_insufficient_oligos,
+        #         file_removed_regions=self.file_removed_regions,
+        #     )
 
     def load_database_from_table(
         self,
@@ -298,9 +395,8 @@ class OligoDatabase:
 
         # Clear database if it should be overwritten
         if database_overwrite:
-            # backend = PickleBackend(storage_path=self._dir_cache_files)
-            # strategy = LRUReplacement(disk_backend=backend, max_in_memory=self._max_entries_in_memory)
-            self.database.clear()
+            shutil.rmtree(self.database_path, ignore_errors=True)
+            os.mkdir(self.database_path)
 
         # Load file and process content
         file_tsv_content = pd.read_table(file_database, sep="\t")
@@ -333,17 +429,17 @@ class OligoDatabase:
                     entry, self.database_sequence_types
                 )
 
-        if not database_overwrite and self.database:
-            new_database = merge_databases(
-                database1=self.database,
-                database2=database_tmp2,
-                sequence_type=merge_databases_on_sequence_type,
-                database_sequence_types=self.database_sequence_types,
-                dir_cache_files=self._dir_cache_files,
-                max_entries_in_memory=self._max_entries_in_memory,
-            )
-            database_tmp2.close()
-            database_tmp2 = new_database
+        # if not database_overwrite and self.database:
+        #     new_database = merge_databases(
+        #         database1=self.database,
+        #         database2=database_tmp2,
+        #         sequence_type=merge_databases_on_sequence_type,
+        #         database_sequence_types=self.database_sequence_types,
+        #         dir_cache_files=self._dir_cache_files,
+        #         max_entries_in_memory=self._max_entries_in_memory,
+        #     )
+        #     database_tmp2.close()
+        #     database_tmp2 = new_database
 
         # Filter for region ids
         if region_ids:
@@ -355,8 +451,8 @@ class OligoDatabase:
                 file_removed_regions=self.file_removed_regions,
             )
 
-        self.database.close()
-        self.database = database_tmp2
+        # self.database.close()
+        # self.database = database_tmp2
 
     def load_database(
         self,
@@ -380,6 +476,7 @@ class OligoDatabase:
         :param region_ids: Region identifier(s) to process. Can be a single region ID (str) or a list of region IDs (list[str]). If None, all regions in the database are processed, defaults to None.
         :type region_ids: str | list[str] | None, optional
         """
+        raise NotImplementedError
 
         def _load_database_file(file: str) -> None:
             """
@@ -403,16 +500,16 @@ class OligoDatabase:
             # Only process selected regions
             if not region_ids or region_id in region_ids:
                 # only merge if there are common keys
-                if region_id in self.database.keys():  # noqa: SIM118
-                    self.database = merge_databases(
-                        database1=self.database,
-                        # pyrefly: ignore [bad-argument-type]
-                        database2={region_id: database_region},
-                        sequence_type=merge_databases_on_sequence_type,
-                        database_sequence_types=self.database_sequence_types,
-                        dir_cache_files=self._dir_cache_files,
-                        max_entries_in_memory=self._max_entries_in_memory,
-                    )
+                if region_id in self.get_regionid_list():
+                    # self.database = merge_databases(
+                    #     database1=self.database,
+                    #     # pyrefly: ignore [bad-argument-type]
+                    #     database2={region_id: database_region},
+                    #     sequence_type=merge_databases_on_sequence_type,
+                    #     database_sequence_types=self.database_sequence_types,
+                    #     dir_cache_files=self._dir_cache_files,
+                    #     max_entries_in_memory=self._max_entries_in_memory,
+                    # )
                     self.save_oligoset(region_id, pd.concat([self.load_oligoset(region_id), oligoset_region]))
                 else:
                     self.save_region(region_id, database_region)
@@ -425,7 +522,8 @@ class OligoDatabase:
             raise DatabaseError(f"Database directory '{dir_database}' does not exist.")
 
         if database_overwrite:
-            self.database.clear()
+            shutil.rmtree(self.database_path, ignore_errors=True)
+            os.mkdir(self.database_path)
 
         # retrieve all files in the directory
         path = os.path.abspath(dir_database)
@@ -439,14 +537,14 @@ class OligoDatabase:
             )
 
         # add this step to log regions which are not available in database
-        if region_ids:
-            check_if_region_in_database(
-                # pyrefly: ignore [bad-argument-type]
-                database=self.database,
-                region_ids=region_ids,
-                write_regions_with_insufficient_oligos=self.write_regions_with_insufficient_oligos,
-                file_removed_regions=self.file_removed_regions,
-            )
+        # if region_ids:
+        #     check_if_region_in_database(
+        #         # pyrefly: ignore [bad-argument-type]
+        #         database=self.database,
+        #         region_ids=region_ids,
+        #         write_regions_with_insufficient_oligos=self.write_regions_with_insufficient_oligos,
+        #         file_removed_regions=self.file_removed_regions,
+        #     )
 
     ############################################
     # Save Functions
@@ -503,31 +601,17 @@ class OligoDatabase:
         :return: The directory path where the database was saved.
         :rtype: str
         """
+
         # Check formatting
-        region_ids = cast_to_list(region_ids) if region_ids else list(self.database.keys())
+        region_ids = cast_to_list(region_ids) if region_ids else self.get_regionid_list()
 
         if dir_output:
             dir_database = safe_append_filename(dir_output, name_database)
         else:
             dir_database = safe_append_filename(self.dir_output, name_database)
-        Path(dir_database).mkdir(parents=True, exist_ok=True)
 
-        for region_id in region_ids:
-            database_region = self.load_region(region_id)
-            if self.oligosets and region_id in self.oligosets:
-                oligoset_region = self.load_oligoset(region_id)
-            else:
-                oligoset_region = None
-            file_output = safe_append_filename(dir_database, region_id)
-            with open(file_output, "wb") as file:
-                pickle.dump(
-                    {
-                        "region_id": region_id,
-                        "database_region": database_region,
-                        "oligoset_region": oligoset_region,
-                    },
-                    file,
-                )
+        shutil.copytree(self.database_path, dir_database, dirs_exist_ok=True)
+        shutil.copy2(self._oligosets_shelf_path, safe_append_filename(dir_database, "oligosets.shelve"))
 
         return dir_database
 
@@ -556,12 +640,12 @@ class OligoDatabase:
         :rtype: str
         """
         # Check if sequence type exists in database
-        assert check_if_key_in_database(self.database, sequence_type), (
+        assert sequence_type in self.metadata.columns, (
             f"Sequence type '{sequence_type}' not found in database."
         )
 
         # Check formatting
-        region_ids = cast_to_list(region_ids) if region_ids else list(self.database.keys())
+        region_ids = cast_to_list(region_ids) if region_ids else self.get_regionid_list()
 
         dir_output = dir_output if dir_output else self.dir_output
         file_fasta = safe_append_filename(dir_output, f"{filename}.fna")
@@ -570,7 +654,8 @@ class OligoDatabase:
         with open(file_fasta, "w") as handle_fasta:
             for region_id in region_ids:
                 database_region = self.load_region(region_id)
-                for oligo_id, oligo_properties in database_region.items():
+                for oligo_id, oligo_properties in database_region.iterrows():
+                    oligo_id = str(oligo_id)
                     description = sequence_type if save_description else ""
                     seq_record = SeqRecord(
                         Seq(oligo_properties[sequence_type]),
@@ -607,7 +692,7 @@ class OligoDatabase:
         :rtype: str
         """
         # Check formatting
-        region_ids = cast_to_list(region_ids) if region_ids else list(self.database.keys())
+        region_ids = cast_to_list(region_ids) if region_ids else self.get_regionid_list()
 
         dir_output = dir_output if dir_output else self.dir_output
         file_bed = safe_append_filename(dir_output, f"{filename}.bed")
@@ -664,7 +749,7 @@ class OligoDatabase:
         :rtype: str
         """
         # Check formatting
-        region_ids = cast_to_list(region_ids) if region_ids else list(self.database.keys())
+        region_ids = cast_to_list(region_ids) if region_ids else self.get_regionid_list()
         properties = cast_to_list(properties)
 
         dir_output = dir_output if dir_output else self.dir_output
@@ -673,15 +758,19 @@ class OligoDatabase:
         first_entry = True
         for region_id in region_ids:
             database_region = self.load_region(region_id)
+            database_region = database_region.replace({pd.NA: None})
+            # NOTE: lots of custom and confusing formatting, we'd be better off changing this to a simple export of the dataframe
 
             file_tsv_content = []
-            for oligo_id in database_region.keys():  # noqa: SIM118
+            for oligo_id, oligo_properties in database_region.iterrows():
                 entry = {"region_id": region_id, "oligo_id": oligo_id}
                 for property in properties:
-                    if property in database_region[oligo_id]:
-                        oligo_property = database_region[oligo_id][property]
+                    if property in oligo_properties:
+                        oligo_property = oligo_properties[property]
                         if flatten_property:
                             oligo_property = flatten_property_list(oligo_property)
+                            if isinstance(oligo_property, np.ndarray):
+                                oligo_property = oligo_property.tolist()
                             if oligo_property:
                                 oligo_property = list(set(oligo_property))
                             entry[property] = (
@@ -723,12 +812,13 @@ class OligoDatabase:
         """
         # Check formatting
         properties = cast_to_list(properties)
-        region_ids = cast_to_list(region_ids) if region_ids else list(self.database.keys())
+        region_ids = cast_to_list(region_ids) if region_ids else self.get_regionid_list()
 
         yaml_dict: dict[str, dict[str, Any]] = {region_id: {} for region_id in region_ids}
 
         for region_id in region_ids:
             database_region = self.load_region(region_id)
+            database_region = database_region.replace({pd.NA: None})
 
             oligosets_region = self.load_oligoset(region_id)
             oligosets_oligo_columns = [col for col in oligosets_region.columns if col.startswith("oligo_")]
@@ -749,20 +839,22 @@ class OligoDatabase:
                 }
 
                 for oligo_idx, oligo_id in enumerate(oligoset):
+                    oligo_id = str(oligo_id)
                     yaml_dict_oligo_entry = {"oligo_id": oligo_id}
+                    oligo_properties = database_region.loc[oligo_id]
 
                     # iterate through all properties that should be written
                     for property in properties:
-                        if property in database_region[oligo_id]:
-                            oligo_property = database_region[oligo_id][property]
+                        if property in oligo_properties:
+                            oligo_property = oligo_properties[property]
+                            if isinstance(oligo_property, np.ndarray):
+                                oligo_property = oligo_property.tolist()
                             # format oligo properties: flatten lists of lists, join string lists with comma,
                             # keep strings as-is, None -> empty list
-                            if oligo_property:  # noqa: SIM102
-                                if (
-                                    sum(len(sublist) for sublist in cast_to_list_of_lists(oligo_property))
-                                    == 1
-                                ):
-                                    oligo_property = flatten_property_list(oligo_property)
+                            if oligo_property and (
+                                sum(len(sublist) for sublist in cast_to_list_of_lists(oligo_property)) == 1
+                            ):
+                                oligo_property = flatten_property_list(oligo_property)
                             yaml_dict_oligo_entry[property] = oligo_property
 
                     oligo_id_yaml = f"Oligo {oligo_idx + 1}"
@@ -770,7 +862,9 @@ class OligoDatabase:
 
         dir_output = dir_output if dir_output else self.dir_output
         file_yaml = safe_append_filename(os.path.dirname(dir_output), f"{filename}.yml")
-
+        thing = str(yaml_dict)
+        pos = thing.find("array")
+        print(thing[pos - 100 : pos + 100])
         with open(file_yaml, "w") as handle:
             yaml.dump(yaml_dict, handle, Dumper=CustomYamlDumper, default_flow_style=False, sort_keys=False)
 
@@ -784,12 +878,13 @@ class OligoDatabase:
     ) -> None:
         # Check formatting
         properties = cast_to_list(properties)
-        region_ids = cast_to_list(region_ids) if region_ids else list(self.database.keys())
+        region_ids = cast_to_list(region_ids) if region_ids else self.get_regionid_list()
 
         csv_table = list()  # noqa: C408
 
         for region_id in region_ids:
             database_region = self.load_region(region_id)
+            database_region = database_region.replace({pd.NA: None})
 
             oligosets_region = self.load_oligoset(region_id)
             oligosets_oligo_columns = [col for col in oligosets_region.columns if col.startswith("oligo_")]
@@ -811,19 +906,20 @@ class OligoDatabase:
                         "oligoset_id": oligoset_id,
                         "oligo_id": oligo_id,
                     }
+                    oligo_properties = database_region.loc[oligo_id]
 
                     for property in properties:
-                        if property in database_region[oligo_id]:
-                            oligo_property = database_region[oligo_id][property]
+                        if property in oligo_properties:
+                            oligo_property = oligo_properties[property]
+                            if isinstance(oligo_property, np.ndarray):
+                                oligo_property = oligo_property.tolist()
                             # format oligo properties: flatten lists of lists, join string lists with comma, keep strings as-is, None -> empty list
-                            if oligo_property:  # noqa: SIM102
-                                if (
-                                    sum(len(sublist) for sublist in cast_to_list_of_lists(oligo_property))
-                                    == 1
-                                ):
-                                    oligo_property = flatten_property_list(oligo_property)
-                                    if len(oligo_property) == 1:
-                                        oligo_property = oligo_property[0]
+                            if oligo_property and (
+                                sum(len(sublist) for sublist in cast_to_list_of_lists(oligo_property)) == 1
+                            ):
+                                oligo_property = flatten_property_list(oligo_property)
+                                if len(oligo_property) == 1:
+                                    oligo_property = oligo_property[0]
                             entry[property] = oligo_property
 
                     csv_table.append(entry)
@@ -879,7 +975,7 @@ class OligoDatabase:
         :return: None
         """
         properties = cast_to_list(properties)
-        region_ids = cast_to_list(region_ids) if region_ids else list(self.database.keys())
+        region_ids = cast_to_list(region_ids) if region_ids else self.get_regionid_list()
 
         yaml_dict: dict[str, dict] = {}
 
@@ -904,16 +1000,19 @@ class OligoDatabase:
                 yaml_dict[region_id][oligoset_id] = {}
                 for oligo_id in oligoset:
                     entry = {}
+                    oligo_properties = database_region.loc[oligo_id]
                     for property in properties:
-                        if property in database_region[oligo_id]:
-                            oligo_property = database_region[oligo_id][property]
+                        if property in oligo_properties:
+                            oligo_property = oligo_properties[property]
+                            if isinstance(oligo_property, np.ndarray):
+                                oligo_property = oligo_property.tolist()
                             # format oligo properties: flatten lists of lists, join string lists with comma, keep strings as-is, None -> empty list
-                            if oligo_property:  # noqa: SIM102
-                                if (
-                                    sum(len(sublist) for sublist in cast_to_list_of_lists(oligo_property))
-                                    == 1
-                                ):
-                                    oligo_property = flatten_property_list(oligo_property)
+                            if (
+                                oligo_property
+                                and sum(len(sublist) for sublist in cast_to_list_of_lists(oligo_property))
+                                == 1
+                            ):
+                                oligo_property = flatten_property_list(oligo_property)
                             entry[property] = oligo_property
                     yaml_dict[region_id][oligoset_id][oligo_id] = entry
 
@@ -933,16 +1032,16 @@ class OligoDatabase:
         :type pipeline_step: str
         """
 
-        region_ids = list(self.database.keys())
+        region_ids = self.get_regionid_list()
         regions_to_remove = [
             region_id
             for region_id in region_ids
             if len(self.load_region(region_id)) < self.min_oligos_per_region
         ]
 
-        for region in regions_to_remove:
-            self.database.pop(region, None)
-            self.oligosets.pop(region, None)
+        for region_id in regions_to_remove:
+            self._remove_region(region_id)
+            self.oligosets.pop(region_id, None)
 
         if self.write_regions_with_insufficient_oligos and regions_to_remove:
             with open(self.file_removed_regions, "a") as handle:
@@ -958,11 +1057,7 @@ class OligoDatabase:
         :return: A list of property names stored in the database.
         :rtype: list[str]
         """
-        region_id = next(iter(self.database.values()))
-        oligo_id = next(iter(region_id.values()))
-        properties = list(oligo_id.keys())
-
-        return properties
+        return list(self.metadata.columns)
 
     def get_regionid_list(self) -> list[str]:
         """
@@ -971,9 +1066,7 @@ class OligoDatabase:
         :return: A list of region IDs in the database.
         :rtype: list[str]
         """
-        region_ids = list(self.database.keys())
-
-        return region_ids
+        return list(self.metadata.region_ids)
 
     def get_oligoid_list(self, region_ids: str | list[str] | None = None) -> list[str]:
         """
@@ -984,8 +1077,10 @@ class OligoDatabase:
         :return: A list of oligo IDs from all regions in the database.
         :rtype: list[str]
         """
-        region_ids = cast_to_list(region_ids) if region_ids else list(self.database.keys())
-        oligo_ids = [oligo_id for region_id in region_ids for oligo_id in self.load_region(region_id)]
+        region_ids = cast_to_list(region_ids) if region_ids else self.get_regionid_list()
+        oligo_ids = [
+            str(oligo_id) for region_id in region_ids for oligo_id in self.load_region(region_id).index
+        ]
 
         return oligo_ids
 
@@ -998,14 +1093,13 @@ class OligoDatabase:
         :return: A list of sequences corresponding to the specified sequence type from all regions in the database.
         :rtype: list[str]
         """
-        assert check_if_key_in_database(self.database, sequence_type), (
+        assert sequence_type in self.metadata.columns, (
             f"Sequence type '{sequence_type}' not found in database."
         )
         sequences = [
             str(oligo_properties[sequence_type])
-            for region_id, database_region in self.database.items()
-            if database_region  # skip regions without any oligos
-            for oligo_id, oligo_properties in database_region.items()
+            for region_id in self.get_regionid_list()
+            for _, oligo_properties in self.load_region(region_id).iterrows()
         ]
 
         return sequences
@@ -1021,17 +1115,15 @@ class OligoDatabase:
         :return: A dictionary mapping oligo IDs to their corresponding sequences.
         :rtype: dict
         """
-        assert check_if_key_in_database(self.database, sequence_type), (
+        assert sequence_type in self.metadata.columns, (
             f"Sequence type '{sequence_type}' not found in database."
         )
 
         oligoid_sequence_mapping = {}
 
-        for region_id, database_region in self.database.items():  # noqa: PERF102
-            if not database_region:
-                # Skip regions without any oligos
-                continue
-            for oligo_id, oligo_properties in database_region.items():
+        for region_id in self.get_regionid_list():
+            for oligo_id, oligo_properties in self.load_region(region_id).iterrows():
+                oligo_id = str(oligo_id)
                 seq = oligo_properties[sequence_type]
                 if sequence_to_upper:
                     seq = seq.upper()
@@ -1050,17 +1142,15 @@ class OligoDatabase:
         :return: A dictionary mapping sequences to their corresponding oligo IDs.
         :rtype: dict
         """
-        assert check_if_key_in_database(self.database, sequence_type), (
+        assert sequence_type in self.metadata.columns, (
             f"Sequence type '{sequence_type}' not found in database."
         )
 
         sequence_oligoids_mapping = {}
 
-        for region_id, database_region in self.database.items():  # noqa: PERF102
-            if not database_region:
-                # Skip regions without any oligos
-                continue
-            for oligo_id, oligo_properties in database_region.items():
+        for region_id in self.get_regionid_list():
+            for oligo_id, oligo_properties in self.load_region(region_id).iterrows():
+                oligo_id = str(oligo_id)
                 seq = oligo_properties[sequence_type]
                 if sequence_to_upper:
                     seq = seq.upper()
@@ -1098,7 +1188,7 @@ class OligoDatabase:
             Flatten lists with only one element, i.e. if x is a list of length 1, return that single element.
             If x is an empty list, return None.
             """
-            if isinstance(x, list):
+            if isinstance(x, list | np.ndarray):
                 if len(x) == 1:
                     return x[0]
                 elif len(x) == 0:
@@ -1106,15 +1196,16 @@ class OligoDatabase:
             return x
 
         # Check formatting
-        region_ids = cast_to_list(region_ids) if region_ids else list(self.database.keys())
+        region_ids = cast_to_list(region_ids) if region_ids else self.get_regionid_list()
         properties = [properties] if isinstance(properties, str) else properties
 
         properties_dict = {}
 
         for region_id in region_ids:
-            if region_id in self.database.keys():  # noqa: SIM118
+            if region_id in self.metadata.region_ids:
                 database_region = self.load_region(region_id)
-                for oligo_id, oligo_properties in database_region.items():
+                for oligo_id, oligo_properties in database_region.iterrows():
+                    oligo_id = str(oligo_id)
                     key = (region_id, oligo_id)
                     if key not in properties_dict:
                         properties_dict[key] = {
@@ -1147,42 +1238,47 @@ class OligoDatabase:
 
     def open_shelfs(self, flag: Literal["r", "w", "c", "n"] = "w") -> None:
         with (
-            FileLock(self._database_lock_path, is_singleton=True),
             FileLock(self._oligosets_lock_path, is_singleton=True),
         ):
-            self.database = shelve.open(self._database_shelf_path, flag=flag)  # noqa: SIM115
             self.oligosets = shelve.open(self._oligosets_shelf_path, flag=flag)  # noqa: SIM115
 
     def close_shelfs(self) -> None:
         with (
-            FileLock(self._database_lock_path, is_singleton=True),
             FileLock(self._oligosets_lock_path, is_singleton=True),
         ):
-            self.database.close()
             self.oligosets.close()
 
-    @retry(attempts=100, exception_type=dbm.sqlite3.error)
-    def load_region(self, region_id: str) -> dict:
-        """Loads region from database, sufficiently multi-processing safe.
+    def update_database_metadata(self) -> None:
+        fragments = os.listdir(self.database_path)
+        region_ids = [filename.removesuffix(".feather") for filename in fragments]
+        self.metadata.region_ids = set(region_ids)
 
-        Notes:
-            Instead of obtaining a lock on the database, retries incase the database is used by another process.
-            Locking would prevent parallel pickle serialization (main performance bottleneck).
-            Simultaneous access is rare enough that retrying upon failure is safe.
+        if region_ids:
+            some_region_id = region_ids[0]
+            # Could be optimized to reading just feather metadata
+            some_region = self.load_region(some_region_id)
+            self.metadata.columns = set(some_region.columns)
 
-            An alternative approach might be a ReadWriteLock that allows multiple readers but only a singler writer.
-            Both the compatability of SQLite3 and the performance of this approach would need to be investigated.
-        """
-        return self.database[region_id]
+    def load_region(self, region_id: str) -> pd.DataFrame:
+        """Loads region from database, sufficiently multi-processing safe."""
+        path = os.path.join(self.database_path, f"{region_id}.feather")
+        return pd.read_feather(path, dtype_backend="pyarrow")
 
-    @retry(attempts=100, exception_type=dbm.sqlite3.error)
-    def save_region(self, region_id: str, region: dict) -> None:
-        """Writes region to database, sufficiently multi-processing safe.
+    def save_region(self, region_id: str, region: pd.DataFrame) -> None:
+        """Loads region from database, sufficiently multi-processing safe."""
+        if len(region) == 0:
+            self._remove_region(region_id)
+            return
+        self.metadata.region_ids.add(region_id)
+        self.metadata.columns |= set(region.columns)  # assumes no columns get removed
 
-        Notes:
-            See `OligoDatabase.load_region()`.
-        """
-        self.database[region_id] = region
+        path = os.path.join(self.database_path, f"{region_id}.feather")
+        region.to_feather(path, compression="zstd")
+
+    def _remove_region(self, region_id: str) -> None:
+        self.metadata.region_ids.remove(region_id)
+        path = os.path.join(self.database_path, f"{region_id}.feather")
+        os.remove(path)
 
     @retry(attempts=100, exception_type=dbm.sqlite3.error)
     def load_oligoset(self, region_id: str) -> DataFrame:
@@ -1248,6 +1344,10 @@ class OligoDatabase:
         # Re-open database after all subprocesses finished
         self.open_shelfs()
 
+        # Update database metadata
+        # (necessary since processes don't synchronize the state of self.metadata)
+        self.update_database_metadata()
+
         return results
 
     def set_database_sequence_types(self, sequence_types: str | list[str]) -> None:
@@ -1284,16 +1384,14 @@ class OligoDatabase:
                            or a list of region IDs (list[str]). Otherwise all regions are scanned.
         :type region_ids: str | list[str] | None
         """
-        region_ids = cast_to_list(region_ids) if region_ids is not None else list(self.database.keys())
+        region_ids = cast_to_list(region_ids) if region_ids is not None else self.get_regionid_list()
+        new_properties_df = pd.DataFrame.from_dict(new_oligo_property, orient="index")
         for region_id in region_ids:
-            if region_id not in self.database:
+            if region_id not in self.metadata.region_ids:
                 continue
             database_region = self.load_region(region_id)
-            for oligo_id, oligo_properties in database_region.items():
-                if oligo_id in new_oligo_property:
-                    oligo_properties.update(
-                        format_oligo_properties(new_oligo_property[oligo_id], self.database_sequence_types)
-                    )
+            new_columns = new_properties_df.columns.difference(database_region.columns)
+            database_region = database_region.join(new_properties_df[new_columns])
             self.save_region(region_id, database_region)
 
     def filter_database_by_region(self, remove_region: bool, region_ids: str | list[str]) -> None:
@@ -1309,44 +1407,33 @@ class OligoDatabase:
         """
         # Check formatting
         region_ids = cast_to_list(region_ids)
-        if self.database:
-            for region_id in self.database.keys():  # noqa: SIM118
-                if (remove_region and (region_id in region_ids)) or (
-                    not remove_region and (region_id not in region_ids)
-                ):
-                    del self.database[region_id]
-        else:
-            raise DatabaseError(
-                "Cannot filter database: database is empty. Call load_database() or load_database_from_fasta() first."
-            )
+        for region_id in self.get_regionid_list():
+            if (remove_region and (region_id in region_ids)) or (
+                not remove_region and (region_id not in region_ids)
+            ):
+                self._remove_region(region_id)
 
-    def filter_database_by_oligo(self, remove_region: bool, oligo_ids: str | list[str]) -> None:
+    def filter_database_by_oligo(self, remove_oligo: bool, oligo_ids: str | list[str]) -> None:
         """
-        Filters the OligoDatabase based on the specified oligo IDs. Depending on the `remove_region` flag,
+        Filters the OligoDatabase based on the specified oligo IDs. Depending on the `remove_oligo` flag,
         this function either removes the specified oligos from the database or retains only the specified oligos
         and removes the others.
 
-        :param remove_region: Flag indicating whether to remove the specified oligos (True) or keep only the specified oligos (False).
-        :type remove_region: bool
+        :param remove_oligo: Flag indicating whether to remove the specified oligos (True) or keep only the specified oligos (False).
+        :type remove_oligo: bool
         :param oligo_ids: A single oligo ID or a list of oligo IDs to be removed or retained in the database.
         :type oligo_ids: str | list[str]
         """
         # Check formatting
         oligo_ids = cast_to_list(oligo_ids)
-        if self.database:
-            for region_id in self.database.keys():  # noqa: SIM118
-                database_region = self.load_region(region_id)
-                oligo_ids_region = list(database_region.keys())
-                for oligo_id in oligo_ids_region:
-                    if (remove_region and (oligo_id in oligo_ids)) or (
-                        not remove_region and (oligo_id not in oligo_ids)
-                    ):
-                        del database_region[oligo_id]
-                self.save_region(region_id, database_region)
-        else:
-            raise DatabaseError(
-                "Cannot filter database: database is empty. Call load_database() or load_database_from_fasta() first."
-            )
+
+        for region_id in self.get_regionid_list():
+            database_region = self.load_region(region_id)
+            if remove_oligo:
+                database_region = database_region.drop(oligo_ids, errors="ignore", axis=0)
+            else:
+                database_region = database_region.filter(oligo_ids, axis=0)
+            self.save_region(region_id, database_region)
 
     def filter_database_by_property_threshold(
         self, property_name: str, property_thr: float, remove_if_smaller_threshold: bool
@@ -1354,6 +1441,7 @@ class OligoDatabase:
         """
         Filters the OligoDatabase based on the specified property threshold. The function iterates through all
         oligos in the database and removes those that do not meet the given threshold criteria.
+        Always keeps oligos with values equal to the threshold.
 
         :param property_name: The name of the property and its threshold to be evaluated.
         :type property_name: str
@@ -1363,9 +1451,10 @@ class OligoDatabase:
                                             if False, removes oligos with property values larger than the threshold.
         :type remove_if_smaller_threshold: bool
         """
-        for region_id in self.database.keys():  # noqa: SIM118
+        for region_id in self.get_regionid_list():
             database_region = self.load_region(region_id)
-            for oligo_id in list(database_region.keys()):
+            oligos_to_remove = []
+            for oligo_id in list(database_region.index):
                 property_values = get_oligo_property_value(
                     property=property_name, region=database_region, oligo_id=oligo_id, flatten=True
                 )
@@ -1377,7 +1466,8 @@ class OligoDatabase:
                         not remove_if_smaller_threshold
                         and all(item > property_thr for item in property_values)
                     ):
-                        del database_region[oligo_id]
+                        oligos_to_remove.append(oligo_id)
+            database_region = database_region.drop(oligos_to_remove)
             self.save_region(region_id, database_region)
 
     def filter_database_by_property_category(
@@ -1398,9 +1488,10 @@ class OligoDatabase:
         # Check formatting
         property_category = cast_to_list(property_category)
 
-        for region_id in self.database.keys():  # noqa: SIM118
+        for region_id in self.get_regionid_list():
             database_region = self.load_region(region_id)
-            for oligo_id in list(database_region.keys()):
+            oligos_to_remove = []
+            for oligo_id in list(database_region.index):
                 property_values = cast_to_list(
                     get_oligo_property_value(
                         property=property_name, region=database_region, oligo_id=oligo_id, flatten=True
@@ -1415,5 +1506,19 @@ class OligoDatabase:
                         not remove_if_equals_category
                         and all(item not in property_category for item in property_values)
                     ):
-                        del database_region[oligo_id]
+                        oligos_to_remove.append(oligo_id)
+            database_region = database_region.drop(oligos_to_remove)
             self.save_region(region_id, database_region)
+
+    def get_database_info(self) -> tuple[int, int]:
+        """
+        Get information about the number of regions and oligos in a database.
+
+        :param oligo_database: Dictionary containing region IDs as keys and oligo dictionaries as values.
+        :type oligo_database: dict[str, dict[str, Any]]
+        :return: Tuple containing (number of regions, total number of oligos).
+        :rtype: tuple[int, int]
+        """
+        num_genes = len(self.metadata.region_ids)
+        num_oligos = len(self.get_oligoid_list())
+        return num_genes, num_oligos

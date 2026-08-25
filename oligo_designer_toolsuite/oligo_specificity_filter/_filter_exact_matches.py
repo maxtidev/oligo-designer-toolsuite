@@ -220,8 +220,10 @@ class ExactMatchFilter(BaseSpecificityFilter):
         """
         database_region = oligo_database.load_region(region_id)
         hit_dict = {}
-        for oligo_id in database_region.keys():  # noqa: SIM118
-            oligo_seq = database_region[oligo_id][self.sequence_type].upper()
+        sequences = database_region[self.sequence_type].str.upper()
+        for oligo_id in database_region.index:
+            oligo_id = str(oligo_id)
+            oligo_seq = sequences[oligo_id]
             if oligo_seq in search_results:
                 # find all reverse complements with the same sequence
                 if oligo_seq in sequence_oligoids_mapping:

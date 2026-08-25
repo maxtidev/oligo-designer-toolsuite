@@ -607,6 +607,7 @@ class ScrinshotProbeDesigner:
 
         for region_idx, region_id in enumerate(region_ids):
             database_region = oligo_database.load_region(region_id)
+            # NOTE: needs some more thought
 
             oligo_sets_region = oligo_database.load_oligoset(region_id)
             oligo_sets_oligo_columns = [col for col in oligo_sets_region.columns if col.startswith("oligo_")]
@@ -618,6 +619,7 @@ class ScrinshotProbeDesigner:
                     oligo_id = str(oligo_sets_region.loc[index, column])
                     barcode: str = barcodes[region_idx]
 
+                    # NOTE: can this be list?
                     ligation_site = get_oligo_property_value(
                         property="ligation_site", region=database_region, oligo_id=oligo_id, flatten=True
                     )
@@ -1613,6 +1615,7 @@ class DetectionOligoDesigner:
         :return: None. The oligo_database is updated in-place with detection oligo properties.
         """
         database_region = oligo_database.load_region(region_id)
+        # NOTE: needs some more thought
 
         oligosets_region = oligo_database.load_oligoset(region_id)
         oligosets_oligo_columns = [col for col in oligosets_region.columns if col.startswith("oligo_")]
@@ -1623,6 +1626,7 @@ class DetectionOligoDesigner:
             for column in oligosets_oligo_columns:
                 oligo_id = str(oligosets_region.loc[index, column])
 
+                # NOTE: can this be list?
                 ligation_site = get_oligo_property_value(
                     property="ligation_site", region=database_region, oligo_id=oligo_id, flatten=True
                 )

@@ -518,7 +518,7 @@ class TargetProbeDesigner:
             max_entries_in_memory=self.n_jobs * 2 + 2,
             database_name=self.subdir_db_probes,
             dir_output=self.dir_output,
-            n_jobs=1,
+            n_jobs=self.n_jobs,
         )
         oligo_database.load_database_from_fasta(
             files_fasta=oligo_fasta_file,

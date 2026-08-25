@@ -271,6 +271,7 @@ class HcrProbeDesigner:
 
         for region_id in region_ids:
             database_region = target_probe_database.load_region(region_id)
+            # NOTE: needs some more thought
 
             barcode = codebook.loc[region_id]
             # pyrefly: ignore [bad-index]
@@ -278,7 +279,7 @@ class HcrProbeDesigner:
             sequence_initiator_L = initiator_table.loc[bits, "initiator_L_sequence"].iloc[0]
             sequence_initiator_R = initiator_table.loc[bits, "initiator_R_sequence"].iloc[0]
 
-            probe_ids = list(database_region.keys())
+            probe_ids = list(database_region.index)
             new_properties: dict[str, dict[str, str]] = {probe_id: {} for probe_id in probe_ids}
 
             for probe_id in probe_ids:

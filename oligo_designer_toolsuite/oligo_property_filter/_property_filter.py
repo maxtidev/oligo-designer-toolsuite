@@ -5,7 +5,6 @@
 
 from oligo_designer_toolsuite.database import OligoDatabase
 from oligo_designer_toolsuite.oligo_property_filter import BasePropertyFilter
-from oligo_designer_toolsuite.utils import check_if_key_in_database
 
 ############################################
 # Property Filter Class
@@ -45,7 +44,7 @@ class PropertyFilter:
         :return: The filtered OligoDatabase.
         :rtype: OligoDatabase
         """
-        assert check_if_key_in_database(oligo_database.database, sequence_type), (
+        assert sequence_type in oligo_database.metadata.columns, (
             f"Sequence type '{sequence_type}' not found in database."
         )
 
@@ -73,11 +72,15 @@ class PropertyFilter:
         :type sequence_type: str
         """
         database_region = oligo_database.load_region(region_id)
-        oligo_ids = list(database_region.keys())
+        sequences = database_region[sequence_type]
+        oligo_ids = list(database_region.index)
+
+        oligo_ids_to_remove = []
         for oligo_id in oligo_ids:
-            fulfills_all_filter = self._filter_sequence(database_region[oligo_id][sequence_type])
+            fulfills_all_filter = self._filter_sequence(sequences[oligo_id])
             if not fulfills_all_filter:
-                del database_region[oligo_id]
+                oligo_ids_to_remove.append(oligo_id)
+        database_region = database_region.drop(oligo_ids_to_remove, errors="ignore")
         oligo_database.save_region(region_id, database_region)
 
     def _filter_sequence(self, sequence: str) -> bool:

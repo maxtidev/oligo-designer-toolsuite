@@ -57,7 +57,7 @@ dependencies = [
   "numpy>=1.26,<3",
   "oligo-designer-toolsuite-ai-filters",
   "openpyxl>=3.1,<4",
-  "pandas>=2.2,<3",
+  "pandas[pyarrow]>=3.0",
   "pydantic>=2.12.5,<3",
   "pyyaml>=6.0,<7",
   "scipy>=1.13,<2",

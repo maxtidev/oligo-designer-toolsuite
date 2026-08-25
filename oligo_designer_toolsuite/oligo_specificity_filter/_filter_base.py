@@ -91,10 +91,13 @@ class BaseSpecificityFilter(ABC):
 
         for region_id in region_ids:
             database_region = oligo_database.load_region(region_id)
-            oligo_ids = list(database_region.keys())
+            oligo_ids = list(map(str, database_region.index))
+            oligos_to_remove = []
             for oligo_id in oligo_ids:
                 if oligo_id in oligos_with_hits[region_id]:
-                    del database_region[oligo_id]
+                    oligos_to_remove.append(oligo_id)
+            database_region = database_region.drop(oligos_to_remove, errors="ignore")
+
             oligo_database.save_region(region_id, database_region)
 
     def _flag_hits_in_database(
@@ -124,12 +127,9 @@ class BaseSpecificityFilter(ABC):
 
         for region_id in region_ids:
             database_region = oligo_database.load_region(region_id)
-            oligo_ids = list(database_region.keys())
-            for oligo_id in oligo_ids:
-                if oligo_id in oligos_with_hits[region_id]:
-                    database_region[oligo_id][self.filter_name] = oligos_with_hits_properties[oligo_id]
-                else:
-                    database_region[oligo_id][self.filter_name] = None
+            # NOTE: may have to be converted to pyarrow first
+            properties_series = pd.Series(oligos_with_hits_properties).rename(self.filter_name)
+            database_region = database_region.join(properties_series)
             oligo_database.save_region(region_id, database_region)
 
 
@@ -486,7 +486,8 @@ class AlignmentSpecificityFilter(ReferenceSpecificityFilter):
         :rtype: list[str]
         """
         database_region = oligo_database.load_region(region_id)
-        queries = [database_region[query_id][self.sequence_type] for query_id in table_hits["query"]]
+        # NOTE: adjust access pattern
+        queries = [database_region[self.sequence_type][query_id] for query_id in table_hits["query"]]
         return queries
 
     @abstractmethod

@@ -733,6 +733,7 @@ class MerfishProbeDesigner:
 
         for region_id in region_ids:
             database_region = target_probe_database.load_region(region_id)
+            # NOTE: needs some more thought
 
             barcode = codebook.loc[region_id]
             # pyrefly: ignore [bad-index]
@@ -741,7 +742,7 @@ class MerfishProbeDesigner:
             sequence_readout_probe_1 = readout_probe_sequences.iloc[0]
             sequence_readout_probe_2 = readout_probe_sequences.iloc[1]
 
-            probe_ids = list(database_region.keys())
+            probe_ids = list(database_region.index)
             new_properties: dict[str, dict[str, str]] = {probe_id: {} for probe_id in probe_ids}
 
             for probe_id in probe_ids:
@@ -985,6 +986,7 @@ class MerfishProbeDesigner:
         region_ids = oligo_database.get_regionid_list()
         for region_id in region_ids:
             database_region = oligo_database.load_region(region_id)
+            # NOTE: needs some more thought
             for primer_properties in database_region.values():
                 Tm_forward_primer = calc_tm_nn(
                     sequence=primer_properties["oligo"],
@@ -1046,8 +1048,9 @@ class MerfishProbeDesigner:
 
         for region_id in region_ids:
             database_region = hybridization_probe_database.load_region(region_id)
+            # NOTE: needs some more thought
 
-            probe_ids = list(database_region.keys())
+            probe_ids = list(database_region.index)
             new_properties: dict[str, dict[str, str]] = {probe_id: {} for probe_id in probe_ids}
 
             for probe_id in probe_ids:

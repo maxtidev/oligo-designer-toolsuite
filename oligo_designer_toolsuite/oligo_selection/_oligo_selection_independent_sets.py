@@ -141,10 +141,8 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
 
         # remove oligos from database that are not part of oligosets
         oligos_keep = set().union(*oligosets.keys())
-        oligo_ids = list(database_region.keys())
-        for oligo_id in oligo_ids:
-            if oligo_id not in oligos_keep:
-                del database_region[oligo_id]
+        database_region = database_region.filter(list(oligos_keep), axis=0)
+
         oligo_database.save_region(region_id, database_region)
 
         # format oligosets to dataframe
@@ -156,7 +154,7 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
 
     def _get_non_overlap_matrix(
         self,
-        region: dict,
+        region: pd.DataFrame,
     ) -> tuple[csr_matrix, list[str]]:
         """
         Build a sparse matrix encoding pairwise non-overlap distances between oligos.
@@ -186,7 +184,7 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
             return int(distances)
 
         # Keep track of the indices
-        non_overlap_matrix_ids = list(region.keys())
+        non_overlap_matrix_ids = list(region.index)
 
         # Get all intervals (start, end)
         intervals = []
@@ -196,8 +194,8 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
                     [s, e]
                     # loop through sequences from different genomic regions for the same oligo (can have the same coordinates if coming from shorter and longer exons)
                     for start, end in zip(
-                        region[oligo_id]["start"],
-                        region[oligo_id]["end"],
+                        region.loc[oligo_id]["start"],
+                        region.loc[oligo_id]["end"],
                     )
                     # loop through exon junction parts for the same oligo
                     for s, e in zip(start, end)
@@ -262,7 +260,7 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
 
     def _generate_candidate_sets(
         self,
-        region: dict,
+        region: pd.DataFrame,
         sequence_type: str,
         non_overlap_matrix: csr_matrix,
         non_overlap_matrix_ids: list[str],

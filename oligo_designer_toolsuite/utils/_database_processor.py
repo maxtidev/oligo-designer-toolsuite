@@ -6,6 +6,9 @@ import shelve
 from shelve import Shelf
 from typing import Any
 
+import numpy as np
+import pandas as pd
+
 from oligo_designer_toolsuite._constants import SEPARATOR_OLIGO_ID
 from oligo_designer_toolsuite.utils._checkers_and_helpers import safe_append_filename
 from oligo_designer_toolsuite.utils._logging import logger
@@ -172,7 +175,7 @@ def collapse_properties_for_duplicated_sequences(
 
 
 def get_oligo_property_value(
-    property: str, flatten: bool, region: dict, oligo_id: str
+    property: str, flatten: bool, region: pd.DataFrame, oligo_id: str
 ) -> Any | list[Any] | None:
     """
     Retrieve the value of a specified property for a given oligo and region ID,
@@ -193,18 +196,16 @@ def get_oligo_property_value(
     # if not region_id in self.database:
     #     raise DatabaseError(f"Region '{region_id}' does not exist in the database.")
 
-    if not oligo_id in region:
+    if not oligo_id in region.index:
         raise ValueError(f"Oligo '{oligo_id}' does not exist in specified region.")
-
-    oligo_properties = region[oligo_id]
-    if property not in oligo_properties:
-        property_value = None
-    elif flatten:
-        property_value = flatten_property_list(region[oligo_id][property])
+    if property not in region:
+        return None
+    
+    property_value = region[property][oligo_id]
+    if flatten:
+        property_value = flatten_property_list(property_value)
         if property_value and len(property_value) == 1:
             property_value = property_value[0]
-    else:
-        property_value = region[oligo_id][property]
 
     return property_value
 
@@ -308,7 +309,7 @@ def format_oligo_properties(
     return oligo_properties
 
 
-def flatten_property_list(property: list[Any]) -> list[Any]:
+def flatten_property_list(property: Any) -> list[Any]:
     """
     Flattens a nested list of properties into a single list, or returns the item if only one element remains.
 
@@ -319,9 +320,9 @@ def flatten_property_list(property: list[Any]) -> list[Any]:
     """
     flattened_property_list = [
         item
-        for sublist in (property if isinstance(property, list) else [property])
-        for item in (sublist if isinstance(sublist, list) else [sublist])
+        for sublist in (property if isinstance(property, list | np.ndarray) else [property])
+        for item in (sublist if isinstance(sublist, list | np.ndarray) else [sublist])
     ]
-    if len(flattened_property_list) == 1:
+    if len(flattened_property_list) == 1:  # NOTE: umm, what?
         return cast_to_list(flattened_property_list[0])
     return cast_to_list(flattened_property_list)

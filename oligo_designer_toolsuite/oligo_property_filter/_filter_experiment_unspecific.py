@@ -2,6 +2,8 @@
 # imports
 ############################################
 
+import numpy as np
+
 from oligo_designer_toolsuite._exceptions import ConfigurationError
 from oligo_designer_toolsuite.oligo_property_calculator import (
     calc_dg_secondary_structure,
@@ -95,7 +97,7 @@ class ProhibitedSequenceFilter(BasePropertyFilter):
     def __init__(self, prohibited_sequences: str | list[str]) -> None:
         """Constructor for the ProhibitedSequenceFilter class."""
         super().__init__()
-        if not isinstance(prohibited_sequences, list):
+        if not isinstance(prohibited_sequences, list | np.ndarray):
             prohibited_sequences = [prohibited_sequences]
         self.prohibited_sequences = [s.upper() for s in prohibited_sequences]
         # Check that the prohibited sequences are valid DNA sequences.
@@ -420,6 +422,8 @@ class SelfComplementFilter(BasePropertyFilter):
         :return: `True` if the sequence's self-complementary length is within the specified limit, `False` otherwise.
         :rtype: bool
         """
+        # NOTE: calc_length_complement needs a variant that makes use of the fact we're analyzing the self-complement
+        # ...because currently, it's slow
         len_selfcomp = calc_length_complement(sequence1=sequence, sequence2=sequence[::-1])
         if len_selfcomp <= self.max_len_selfcomplement:  # noqa: SIM103
             return True

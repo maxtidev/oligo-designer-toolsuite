@@ -4,6 +4,8 @@
 
 from abc import ABC, abstractmethod
 
+import pandas as pd
+
 ############################################
 # Property Base Class
 ############################################
@@ -22,7 +24,7 @@ class BaseProperty(ABC):
         """Constructor for the BaseProperty class."""
 
     @abstractmethod
-    def apply(self, region: dict, oligo_id: str, sequence_type: str) -> dict:
+    def apply(self, region: pd.DataFrame, oligo_id: str, sequence_type: str) -> dict:
         """
         Calculate the property for a specific oligo and return the result as a dictionary.
 
