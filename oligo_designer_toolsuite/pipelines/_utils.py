@@ -77,20 +77,6 @@ def log_parameters_and_get_db(func: Callable[..., Any], args: tuple[Any, ...], k
     return bound_args.arguments.get("oligo_database")
 
 
-def get_oligo_database_info(oligo_database: dict[str, dict[str, Any]]) -> tuple[int, int]:
-    """
-    Get information about the number of regions and oligos in a database.
-
-    :param oligo_database: Dictionary containing region IDs as keys and oligo dictionaries as values.
-    :type oligo_database: dict[str, dict[str, Any]]
-    :return: Tuple containing (number of regions, total number of oligos).
-    :rtype: tuple[int, int]
-    """
-    num_genes = len(oligo_database)
-    num_oligos = sum(len(oligos) for oligos in oligo_database.values())
-    return num_genes, num_oligos
-
-
 def get_oligo_length_min_max_from_database(oligo_database: OligoDatabase) -> tuple[int, int]:
     """
     Get the minimum and maximum oligo lengths from the database.
@@ -136,7 +122,7 @@ def pipeline_step_basic(step_name: str) -> Callable[[F], F]:
 
             oligo_database = function(*args, **kwargs)
 
-            num_genes, num_oligos = get_oligo_database_info(oligo_database.database)
+            num_genes, num_oligos = oligo_database.get_database_info()
             logger.info(
                 f"Step - {step_name}: database contains {num_oligos} oligos from {num_genes} regions."
             )
@@ -163,11 +149,11 @@ def pipeline_step_advanced(step_name: str) -> Callable[[F], F]:
             logger.info(f"Parameters {step_name}:")
             oligo_database = log_parameters_and_get_db(function, args, kwargs)
 
-            num_genes_before, num_oligos_before = get_oligo_database_info(oligo_database.database)
+            num_genes_before, num_oligos_before = oligo_database.get_database_info()
 
             oligo_database, *returned_values = function(*args, **kwargs)
 
-            num_genes_after, num_oligos_after = get_oligo_database_info(oligo_database.database)
+            num_genes_after, num_oligos_after = oligo_database.get_database_info()
             logger.info(
                 f"Step - {step_name}: database contains {num_oligos_after} oligos from {num_genes_after} regions, "
                 f"{num_oligos_before - num_oligos_after} oligos and {num_genes_before - num_genes_after} regions removed."

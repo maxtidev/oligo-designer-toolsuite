@@ -1384,3 +1384,16 @@ class OligoDatabase:
                     ):
                         del database_region[oligo_id]
             self.save_region(region_id, database_region)
+
+    def get_database_info(self) -> tuple[int, int]:
+        """
+        Get information about the number of regions and oligos in a database.
+
+        :param oligo_database: Dictionary containing region IDs as keys and oligo dictionaries as values.
+        :type oligo_database: dict[str, dict[str, Any]]
+        :return: Tuple containing (number of regions, total number of oligos).
+        :rtype: tuple[int, int]
+        """
+        num_genes = len(self.get_regionid_list())
+        num_oligos = len(self.get_oligoid_list())
+        return num_genes, num_oligos
