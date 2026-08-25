@@ -4,6 +4,8 @@
 
 from typing import Any
 
+import pandas as pd
+
 from oligo_designer_toolsuite.oligo_efficiency_filter import BaseScorer
 from oligo_designer_toolsuite.oligo_property_calculator._property_functions import calc_isoform_consensus
 from oligo_designer_toolsuite.utils import cast_to_list
@@ -38,7 +40,7 @@ class OverlapTargetedExonsScorer(BaseScorer):
 
     def apply(
         self,
-        region: dict,
+        region: pd.DataFrame,
         oligo_id: str,
         sequence_type: str,
         **_: Any,
@@ -99,7 +101,7 @@ class OverlapUTRScorer(BaseScorer):
 
     def apply(
         self,
-        region: dict,
+        region: pd.DataFrame,
         oligo_id: str,
         sequence_type: str,
         **_: Any,
@@ -162,7 +164,7 @@ class IsoformConsensusScorer(BaseScorer):
 
     def apply(
         self,
-        region: dict,
+        region: pd.DataFrame,
         oligo_id: str,
         sequence_type: str,
         **_: Any,

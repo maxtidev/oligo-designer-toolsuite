@@ -3,6 +3,8 @@
 ############################################
 
 
+import pandas as pd
+
 from oligo_designer_toolsuite.oligo_property_calculator import BaseProperty
 from oligo_designer_toolsuite.utils import cast_to_list
 from oligo_designer_toolsuite.utils._database_processor import get_oligo_property_value
@@ -24,7 +26,7 @@ class NumTargetedTranscriptsProperty(BaseProperty):
         self.property_name = property_name
         super().__init__()
 
-    def apply(self, region: dict, oligo_id: str, sequence_type: str) -> dict:
+    def apply(self, region: pd.DataFrame, oligo_id: str, sequence_type: str) -> dict:
         """
         Calculate the number of unique transcripts targeted by the oligonucleotide.
 
@@ -70,7 +72,7 @@ class IsoformConsensusProperty(BaseProperty):
         self.property_name_transcript_id = property_name_transcript_id
         self.property_name_number_total_transcripts = property_name_number_total_transcripts
 
-    def apply(self, region: dict, oligo_id: str, sequence_type: str) -> dict:
+    def apply(self, region: pd.DataFrame, oligo_id: str, sequence_type: str) -> dict:
         """
         Calculate the isoform consensus for the oligonucleotide.
 

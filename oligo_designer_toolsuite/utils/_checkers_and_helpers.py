@@ -11,6 +11,8 @@ from pathlib import Path
 from time import sleep
 from typing import TYPE_CHECKING, Any
 
+import numpy as np
+
 if TYPE_CHECKING:
     from _typeshed import SupportsItems  # only available to type checkers
 
@@ -108,6 +110,8 @@ def cast_to_list(obj: Any) -> list[Any]:
     :return: The object wrapped in a list if it wasn't already a list.
     :rtype: list[Any]
     """
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
 
     return [obj] if not isinstance(obj, list) else obj
 
@@ -121,6 +125,9 @@ def cast_to_list_of_lists(obj: Any) -> list[list[Any]]:
     :return: The object as a list of lists.
     :rtype: list[list[Any]]
     """
+    if isinstance(obj, np.ndarray):
+        obj = obj.tolist()
+
     if isinstance(obj, list):
         # Check if it's a list of lists
         if all(isinstance(subitem, list) for subitem in obj):
@@ -146,7 +153,7 @@ def cast_to_int(value: Any) -> int | None:
     if value is None:
         return None
 
-    if isinstance(value, list):
+    if isinstance(value, list | np.ndarray):
         if len(value) == 1:
             return int(value[0])
         else:
@@ -167,7 +174,7 @@ def cast_to_string(value: Any) -> str | None:
     if value is None:
         return None
 
-    if isinstance(value, list):
+    if isinstance(value, list | np.ndarray):
         if len(value) == 1:
             return str(value[0])
         else:

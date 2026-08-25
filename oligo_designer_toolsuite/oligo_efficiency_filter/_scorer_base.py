@@ -5,6 +5,8 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
+import pandas as pd
+
 ############################################
 # Scorer Base Class
 ############################################
@@ -24,7 +26,7 @@ class BaseScorer(ABC):
     @abstractmethod
     def apply(
         self,
-        region: dict,
+        region: pd.DataFrame,
         oligo_id: str,
         sequence_type: str,
         **kwargs: dict[str, Any],

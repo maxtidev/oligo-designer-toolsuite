@@ -31,7 +31,7 @@ class OligoScoring:
 
     def apply(
         self,
-        region: dict,
+        region: pd.DataFrame,
         oligo_ids: list[str],
         sequence_type: str,
         **kwargs: Any,
@@ -56,12 +56,7 @@ class OligoScoring:
         :return: A pandas Series of scores indexed by oligo ID.
         :rtype: pd.Series
         """
-
-        # assert check_if_key_in_database(oligo_database.database, sequence_type), (
-        #     f"Sequence type '{sequence_type}' not found in database."
-        # )
-
-        oligos_scores = pd.Series(index=oligo_ids, dtype=float)
+        oligo_scores: dict[str, float] = {}
         for oligo_id in oligo_ids:
             score = 0.0
             for scorer in self.scorers:
@@ -71,5 +66,5 @@ class OligoScoring:
                     sequence_type=sequence_type,
                     **kwargs,
                 )
-            oligos_scores[oligo_id] = round(score, 4)
-        return oligos_scores
+            oligo_scores[oligo_id] = round(score, 4)
+        return pd.Series(oligo_scores, dtype=float)

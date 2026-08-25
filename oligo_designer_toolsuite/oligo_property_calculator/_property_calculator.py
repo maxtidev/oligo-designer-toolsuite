@@ -6,7 +6,6 @@ from typing import Any
 
 from oligo_designer_toolsuite.database import OligoDatabase
 from oligo_designer_toolsuite.oligo_property_calculator import BaseProperty
-from oligo_designer_toolsuite.utils import check_if_key_in_database
 
 ############################################
 # Property Calculator Class
@@ -42,7 +41,7 @@ class PropertyCalculator:
         :return: The updated OligoDatabase with the calculated properties.
         :rtype: OligoDatabase
         """
-        assert check_if_key_in_database(oligo_database.database, sequence_type), (
+        assert sequence_type in oligo_database.metadata.columns, (
             f"Sequence type '{sequence_type}' not found in database."
         )
 
@@ -72,9 +71,9 @@ class PropertyCalculator:
         database_region = oligo_database.load_region(region_id)
         new_oligo_property: dict[str, dict[str, Any]] = {}
 
-        for oligo_id in database_region.keys():  # noqa: SIM118
-            # Calculate all properties for this oligo
-            for property_calc in self.properties:
+        for property_calc in self.properties:
+            for oligo_id in database_region.index:
+                # Calculate property for all oligos
                 property_result = property_calc.apply(
                     region=database_region,
                     oligo_id=oligo_id,
@@ -85,5 +84,4 @@ class PropertyCalculator:
                     new_oligo_property[oligo_id] = {}
                 new_oligo_property[oligo_id].update(property_result)
 
-        # Update only this region (avoids O(regions × total_oligos) full-database scan per worker)  # noqa: RUF003
         oligo_database.update_oligo_properties(new_oligo_property, region_ids=region_id)

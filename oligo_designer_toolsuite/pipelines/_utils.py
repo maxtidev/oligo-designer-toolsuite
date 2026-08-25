@@ -8,6 +8,7 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from collections.abc import Callable
 from typing import Any, TypeVar, cast
 
+import pandas as pd
 from Bio.SeqUtils import MeltingTemp as mt
 
 from oligo_designer_toolsuite.database import OligoDatabase
@@ -77,19 +78,6 @@ def log_parameters_and_get_db(func: Callable[..., Any], args: tuple[Any, ...], k
     return bound_args.arguments.get("oligo_database")
 
 
-def get_oligo_database_info(oligo_database: dict[str, dict[str, Any]]) -> tuple[int, int]:
-    """
-    Get information about the number of regions and oligos in a database.
-
-    :param oligo_database: Dictionary containing region IDs as keys and oligo dictionaries as values.
-    :type oligo_database: dict[str, dict[str, Any]]
-    :return: Tuple containing (number of regions, total number of oligos).
-    :rtype: tuple[int, int]
-    """
-    num_genes = len(oligo_database)
-    num_oligos = sum(len(oligos) for oligos in oligo_database.values())
-    return num_genes, num_oligos
-
 
 def get_oligo_length_min_max_from_database(oligo_database: OligoDatabase) -> tuple[int, int]:
     """
@@ -110,9 +98,10 @@ def get_oligo_length_min_max_from_database(oligo_database: OligoDatabase) -> tup
 
     for region_id in region_ids:
         database_region = oligo_database.load_region(region_id)
-        oligo_ids = database_region.keys()
+        oligo_ids = database_region.index
+        lengths = database_region["length"]
         for oligo_id in oligo_ids:
-            length = database_region[oligo_id]["length"]
+            length = lengths[oligo_id]
             oligo_length_min = min(oligo_length_min, length)
             oligo_length_max = max(oligo_length_max, length)
 
@@ -136,7 +125,7 @@ def pipeline_step_basic(step_name: str) -> Callable[[F], F]:
 
             oligo_database = function(*args, **kwargs)
 
-            num_genes, num_oligos = get_oligo_database_info(oligo_database.database)
+            num_genes, num_oligos = oligo_database.get_database_info()
             logger.info(
                 f"Step - {step_name}: database contains {num_oligos} oligos from {num_genes} regions."
             )
@@ -163,11 +152,11 @@ def pipeline_step_advanced(step_name: str) -> Callable[[F], F]:
             logger.info(f"Parameters {step_name}:")
             oligo_database = log_parameters_and_get_db(function, args, kwargs)
 
-            num_genes_before, num_oligos_before = get_oligo_database_info(oligo_database.database)
+            num_genes_before, num_oligos_before = oligo_database.get_database_info()
 
             oligo_database, *returned_values = function(*args, **kwargs)
 
-            num_genes_after, num_oligos_after = get_oligo_database_info(oligo_database.database)
+            num_genes_after, num_oligos_after = oligo_database.get_database_info()
             logger.info(
                 f"Step - {step_name}: database contains {num_oligos_after} oligos from {num_genes_after} regions, "
                 f"{num_oligos_before - num_oligos_after} oligos and {num_genes_before - num_genes_after} regions removed."
@@ -191,10 +180,11 @@ def check_content_oligo_database(oligo_database: OligoDatabase) -> None:
     if len(oligo_database.get_regionid_list()) == 0:
         logger.error("The oligo database is empty. Exiting program...")
         print("The oligo database is empty. Exiting program...")
+        raise ValueError
         sys.exit(1)  # Exit the program with a status code of 1
 
 
-def format_sequence(property: str, region: dict, oligo_id: str) -> str:
+def format_sequence(property: str, region: pd.DataFrame, oligo_id: str) -> str:
     """
     Get a sequence property as a string from the database, raising an error if not available.
 
@@ -210,6 +200,7 @@ def format_sequence(property: str, region: dict, oligo_id: str) -> str:
     :rtype: str
     :raises ValueError: If the property value is not a string.
     """
+    # NOTE: investigate references, get rid if possible
     value = get_oligo_property_value(
         property=property,
         region=region,

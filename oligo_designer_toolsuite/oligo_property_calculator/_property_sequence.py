@@ -2,6 +2,8 @@
 # imports
 ############################################
 
+import pandas as pd
+
 from oligo_designer_toolsuite._exceptions import ConfigurationError
 from oligo_designer_toolsuite.oligo_property_calculator import BaseProperty
 from oligo_designer_toolsuite.utils import cast_to_int, cast_to_string
@@ -37,7 +39,7 @@ class LengthProperty(BaseProperty):
         """Constructor for the LengthProperty class."""
         super().__init__()
 
-    def apply(self, region: dict, oligo_id: str, sequence_type: str) -> dict:
+    def apply(self, region: pd.DataFrame, oligo_id: str, sequence_type: str) -> dict:
         """
         Calculate the length of the oligonucleotide sequence.
 
@@ -73,7 +75,7 @@ class GCContentProperty(BaseProperty):
         """Constructor for the GCContentProperty class."""
         super().__init__()
 
-    def apply(self, region: dict, oligo_id: str, sequence_type: str) -> dict:
+    def apply(self, region: pd.DataFrame, oligo_id: str, sequence_type: str) -> dict:
         """
         Calculate the GC content of the oligonucleotide sequence.
 
@@ -130,7 +132,7 @@ class TmNNProperty(BaseProperty):
         self.Tm_salt_correction_parameters = Tm_salt_correction_parameters
         self.Tm_chem_correction_parameters = Tm_chem_correction_parameters
 
-    def apply(self, region: dict, oligo_id: str, sequence_type: str) -> dict:
+    def apply(self, region: pd.DataFrame, oligo_id: str, sequence_type: str) -> dict:
         """
         Calculate the melting temperature (Tm) of the oligonucleotide sequence.
 
@@ -175,7 +177,7 @@ class DGSecondaryStructureProperty(BaseProperty):
         super().__init__()
         self.T = T
 
-    def apply(self, region: dict, oligo_id: str, sequence_type: str) -> dict:
+    def apply(self, region: pd.DataFrame, oligo_id: str, sequence_type: str) -> dict:
         """
         Calculate the Gibbs free energy (ΔG) of secondary structure formation.
 
@@ -211,7 +213,7 @@ class LengthSelfComplementProperty(BaseProperty):
         """Constructor for the LengthSelfComplementProperty class."""
         super().__init__()
 
-    def apply(self, region: dict, oligo_id: str, sequence_type: str) -> dict:
+    def apply(self, region: pd.DataFrame, oligo_id: str, sequence_type: str) -> dict:
         """
         Calculate the length of the self-complementary region.
 
@@ -251,7 +253,7 @@ class LengthComplementProperty(BaseProperty):
         super().__init__()
         self.comparison_sequence = comparison_sequence
 
-    def apply(self, region: dict, oligo_id: str, sequence_type: str) -> dict:
+    def apply(self, region: pd.DataFrame, oligo_id: str, sequence_type: str) -> dict:
         """
         Calculate the length of complementary overlap with the comparison sequence.
 
@@ -294,7 +296,7 @@ class ShortenedSequenceProperty(BaseProperty):
         self.sequence_length = sequence_length
         self.reverse = reverse
 
-    def apply(self, region: dict, oligo_id: str, sequence_type: str) -> dict:
+    def apply(self, region: pd.DataFrame, oligo_id: str, sequence_type: str) -> dict:
         """
         Calculate the shortened sequence.
 
@@ -337,7 +339,7 @@ class ReverseComplementSequenceProperty(BaseProperty):
         super().__init__()
         self.sequence_type_reverse_complement = sequence_type_reverse_complement
 
-    def apply(self, region: dict, oligo_id: str, sequence_type: str) -> dict:
+    def apply(self, region: pd.DataFrame, oligo_id: str, sequence_type: str) -> dict:
         """
         Calculate the reverse complement sequence.
 
@@ -388,7 +390,7 @@ class SplitSequenceProperty(BaseProperty):
         self.split_start_end = split_start_end
         self.split_names = split_names
 
-    def apply(self, region: dict, oligo_id: str, sequence_type: str) -> dict:
+    def apply(self, region: pd.DataFrame, oligo_id: str, sequence_type: str) -> dict:
         """
         Calculate split sequences from the main sequence.
 
@@ -431,7 +433,7 @@ class SeedregionProperty(BaseProperty):
         self.start = start
         self.end = end
 
-    def apply(self, region: dict, oligo_id: str, sequence_type: str) -> dict:
+    def apply(self, region: pd.DataFrame, oligo_id: str, sequence_type: str) -> dict:
         """
         Calculate the seed region positions.
 
@@ -484,7 +486,7 @@ class SeedregionSiteProperty(BaseProperty):
         self.seedregion_size = seedregion_size
         self.seedregion_site_name = seedregion_site_name
 
-    def apply(self, region: dict, oligo_id: str, sequence_type: str) -> dict:
+    def apply(self, region: pd.DataFrame, oligo_id: str, sequence_type: str) -> dict:
         """
         Calculate the seed region around the seed region site.
 
@@ -562,7 +564,7 @@ class PadlockArmsProperty(BaseProperty):
         self.Tm_salt_correction_parameters = Tm_salt_correction_parameters
         self.Tm_chem_correction_parameters = Tm_chem_correction_parameters
 
-    def apply(self, region: dict, oligo_id: str, sequence_type: str) -> dict:
+    def apply(self, region: pd.DataFrame, oligo_id: str, sequence_type: str) -> dict:
         """
         Calculate the padlock probe arms and ligation site.
 
@@ -630,7 +632,7 @@ class DetectOligoProperty(BaseProperty):
         self.min_thymines = min_thymines
         self.ligation_site_name = ligation_site_name
 
-    def apply(self, region: dict, oligo_id: str, sequence_type: str) -> dict:
+    def apply(self, region: pd.DataFrame, oligo_id: str, sequence_type: str) -> dict:
         """
         Calculate the detection oligo sequences around the ligation site.
 

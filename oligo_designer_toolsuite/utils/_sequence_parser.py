@@ -456,7 +456,7 @@ class FastaParser:
                         info_list = info.split(SEPARATOR_FASTA_HEADER_FIELDS_LIST)
                         for infos in info_list:
                             key, value = infos.split("=")
-                            value_parsed = self.parse_number(value)
+                            value_parsed = self.parse_number(value) if key != "exon_number" else value
                             if key in additional_info:
                                 additional_info[key].append(value_parsed)
                             else:

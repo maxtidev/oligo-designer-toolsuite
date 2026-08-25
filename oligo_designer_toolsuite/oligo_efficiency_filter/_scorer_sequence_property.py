@@ -4,6 +4,8 @@
 
 from typing import Any
 
+import pandas as pd
+
 from oligo_designer_toolsuite.oligo_efficiency_filter import BaseScorer
 from oligo_designer_toolsuite.oligo_property_calculator import calc_gc_content, calc_tm_nn
 from oligo_designer_toolsuite.utils._database_processor import get_oligo_property_value
@@ -66,7 +68,7 @@ class DeviationFromOptimalGCContentScorer(SequencePropertyScorer):
 
     def apply(
         self,
-        region: dict,
+        region: pd.DataFrame,
         oligo_id: str,
         sequence_type: str,
         **_: Any,
@@ -136,7 +138,7 @@ class DeviationFromOptimalTmScorer(SequencePropertyScorer):
 
     def apply(
         self,
-        region: dict,
+        region: pd.DataFrame,
         oligo_id: str,
         sequence_type: str,
         **_: Any,
@@ -212,7 +214,7 @@ class NormalizedDeviationFromOptimalGCContentScorer(SequencePropertyScorer):
 
     def apply(
         self,
-        region: dict,
+        region: pd.DataFrame,
         oligo_id: str,
         sequence_type: str,
         **_: Any,
@@ -299,7 +301,7 @@ class NormalizedDeviationFromOptimalTmScorer(SequencePropertyScorer):
 
     def apply(
         self,
-        region: dict,
+        region: pd.DataFrame,
         oligo_id: str,
         sequence_type: str,
         **_: Any,
