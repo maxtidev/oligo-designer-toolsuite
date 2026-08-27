@@ -339,7 +339,8 @@ class OligoDatabase:
             os.mkdir(self.database_path)
 
         # Load files into database
-        with joblib_progress(description="Database Loading", total=len(files_fasta)):
+        progress_description = "Database Loading".ljust(80)
+        with joblib_progress(description=progress_description, total=len(files_fasta)):
             Parallel(n_jobs=1, prefer="threads", require="sharedmem")(
                 delayed(_load_fasta_file)(file_fasta) for file_fasta in files_fasta
             )
@@ -531,7 +532,8 @@ class OligoDatabase:
 
         # Load files parallel into database
         # NOTE: for thread safety (database access in merge_databases), actually don't do parallel
-        with joblib_progress(description="Database Loading", total=len(files_database)):
+        progress_description = "Database Loading".ljust(80)
+        with joblib_progress(description=progress_description, total=len(files_database)):
             Parallel(n_jobs=1, prefer="threads", require="sharedmem")(
                 delayed(_load_database_file)(file_database) for file_database in files_database
             )
@@ -1320,6 +1322,9 @@ class OligoDatabase:
         """
         if kwargs is None:
             kwargs = {}
+        if description is not None:
+            # Hopefully align progress bars for all pipeline steps
+            description = description.ljust(80)
 
         @wraps(function)
         def _run_with_database(oligo_database: OligoDatabase, region_id: str, *args, **kwargs) -> R:

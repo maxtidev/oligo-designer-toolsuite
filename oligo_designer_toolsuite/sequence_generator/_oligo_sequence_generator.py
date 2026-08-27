@@ -8,6 +8,7 @@ from pathlib import Path
 
 from Bio.SeqRecord import SeqRecord
 from joblib import Parallel, delayed
+from joblib_progress import joblib_progress
 
 from oligo_designer_toolsuite.utils import FastaParser, logger
 
@@ -287,10 +288,15 @@ class OligoSequenceGenerator:
         for file_fasta in files_fasta_in:
             self.fasta_parser.check_fasta_format(file_fasta)
             fasta_sequences = self.fasta_parser.read_fasta_sequences(file_fasta, region_ids)
-            files_fasta_oligos = Parallel(n_jobs=n_jobs, prefer="processes")(
-                delayed(get_sliding_window_sequence)(entry, length_interval_sequences, split_region, stride)
-                for entry in fasta_sequences
-            )
+
+            progress_description = f"Sequence Generation (...{file_fasta[-50:]})".ljust(80)
+            with joblib_progress(description=progress_description, total=len(fasta_sequences)):
+                files_fasta_oligos = Parallel(n_jobs=n_jobs, prefer="processes")(
+                    delayed(get_sliding_window_sequence)(
+                        entry, length_interval_sequences, split_region, stride
+                    )
+                    for entry in fasta_sequences
+                )
             files_fasta_oligos = [file for file in files_fasta_oligos if file is not None]
 
             for region_id in region_ids:
