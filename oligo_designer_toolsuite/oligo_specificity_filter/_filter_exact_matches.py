@@ -77,16 +77,10 @@ class ExactMatchFilter(BaseSpecificityFilter):
         sequences = oligo_database.get_sequence_list(sequence_type=self.sequence_type)
         search_results = self._get_duplicated_sequences(sequences)
 
-        # get mapping from sequence to oligo_id
-        # use same sequence as sequence_type
-        sequence_oligoids_mapping = oligo_database.get_sequence_oligoid_mapping(
-            sequence_type=self.sequence_type, sequence_to_upper=True
-        )
-
         name = " ".join(string.capitalize() for string in self.filter_name.split("_"))
         table_hits = oligo_database.map_regions(
             self._run_filter,
-            args=(search_results, sequence_oligoids_mapping, False),
+            args=(search_results, self.sequence_type, False),
             description=f"Specificity Filter: {name}",
             n_jobs=n_jobs,
         )
@@ -143,15 +137,10 @@ class ExactMatchFilter(BaseSpecificityFilter):
         sequences_rc = oligo_database.get_sequence_list(sequence_type=sequence_type_reverse_complement)
         search_results = self._get_duplicated_sequences(sequences + sequences_rc)
 
-        # get mapping from sequence to oligo_id
-        sequence_oligoids_mapping = oligo_database.get_sequence_oligoid_mapping(
-            sequence_type=sequence_type_reverse_complement, sequence_to_upper=True
-        )
-
         name = " ".join(string.capitalize() for string in self.filter_name.split("_"))
         table_hits = oligo_database.map_regions(
             self._run_filter,
-            args=(search_results, sequence_oligoids_mapping, False),
+            args=(search_results, self.sequence_type, False),
             description=f"Specificity Filter: {name}",
             n_jobs=n_jobs,
         )
@@ -196,7 +185,7 @@ class ExactMatchFilter(BaseSpecificityFilter):
         oligo_database: OligoDatabase,
         region_id: str,
         search_results: list,
-        sequence_oligoids_mapping: dict,
+        sequence_type: str,
         consider_hits_from_input_region: bool,
     ) -> pd.DataFrame:
         """
@@ -218,6 +207,12 @@ class ExactMatchFilter(BaseSpecificityFilter):
         :return: A DataFrame containing the oligo ID pairs for sequences that matched the search results.
         :rtype: pd.DataFrame
         """
+        # get mapping from sequence to oligo_id
+        # use same sequence as sequence_type
+        sequence_oligoids_mapping = oligo_database.get_sequence_oligoid_mapping(
+            sequence_type=sequence_type, sequence_to_upper=True
+        )
+
         database_region = oligo_database.load_region(region_id)
         hit_dict = {}
         sequences = database_region[self.sequence_type].str.upper()

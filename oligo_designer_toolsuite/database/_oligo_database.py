@@ -1432,24 +1432,15 @@ class OligoDatabase:
                                             if False, removes oligos with property values larger than the threshold.
         :type remove_if_smaller_threshold: bool
         """
+        # NOTE: assume property always a scalar
         for region_id in self.get_regionid_list():
-            database_region = self.load_region(region_id)
-            oligos_to_remove = []
-            for oligo_id in list(database_region.index):
-                property_values = get_oligo_property_value(
-                    property=property_name, region=database_region, oligo_id=oligo_id, flatten=True
-                )
-                if property_values is not None and property_values is not pd.NA:
-                    property_values = cast_to_list(property_values)
-                    if (
-                        remove_if_smaller_threshold and any(item < property_thr for item in property_values)
-                    ) or (
-                        not remove_if_smaller_threshold
-                        and all(item > property_thr for item in property_values)
-                    ):
-                        oligos_to_remove.append(oligo_id)
-            database_region = database_region.drop(oligos_to_remove)
-            self.save_region(region_id, database_region)
+            region_df = self.load_region(region_id)
+
+            if remove_if_smaller_threshold:
+                region_df = region_df[region_df[property_name] >= property_thr]
+            else:
+                region_df = region_df[region_df[property_name] <= property_thr]
+            self.save_region(region_id, region_df)
 
     def filter_database_by_property_category(
         self, property_name: str, property_category: str | list[str], remove_if_equals_category: bool
@@ -1468,6 +1459,7 @@ class OligoDatabase:
         """
         # Check formatting
         property_category = cast_to_list(property_category)
+        # NOTE: could be optimized like above function but is currently unused
 
         for region_id in self.get_regionid_list():
             database_region = self.load_region(region_id)
