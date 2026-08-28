@@ -305,7 +305,8 @@ def format_oligo_properties(
     """
     for key, value in oligo_properties.items():
         if key not in database_sequence_types:
-            oligo_properties[key] = cast_to_list_of_lists(value)
+            # We assume these values to be lists and cast them to lists of lists
+            oligo_properties[key] = [value]
     return oligo_properties
 
 

@@ -12,6 +12,10 @@ from time import sleep
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+import pyarrow as pa
+import pyarrow.compute as pc
+import pyarrow.dataset as ds
+import pyarrow.parquet as pq
 
 if TYPE_CHECKING:
     from _typeshed import SupportsItems  # only available to type checkers
@@ -259,3 +263,54 @@ def retry(attempts: int, exception_type: type[Exception] = Exception):
         return _retry_wrapper
 
     return retry
+
+
+def get_parquet_partitions(parquet_dir_path: str) -> list[dict[str, Any]]:
+    dataset = pq.ParquetDataset(parquet_dir_path)
+    return [ds.get_partition_keys(f.partition_expression) for f in dataset.fragments]
+
+
+def register_custom_pyarrow_functions() -> None:
+
+    # work-around for https://github.com/apache/arrow/issues/44383
+    # making use of pyarrow's experimental register_aggregate_function
+    # see https://arrow.apache.org/docs/python/generated/pyarrow.compute.register_aggregate_function.html#pyarrow.compute.register_aggregate_function
+
+    def array_to_list(ctx: pc.UdfContext, array: pa.array):
+        # see https://arrow.apache.org/docs/python/generated/pyarrow.ListArray.html#pyarrow.ListArray.from_arrays
+        # return pa.scalar(array.to_pylist(), type=pa.list_(array.type))
+        # Casting arrays to ListScalar is not implemented, so we do this little hack
+        return pa.ListArray.from_arrays([0, len(array)], array, pool=ctx.memory_pool)[0]
+
+    # Protect from registering the same function name twice
+    if "list string" in pc.list_functions():
+        return
+
+    # Register function for each base_dtype and the nested-in-list version of it
+    # because pyarrow requires us to have specific input and output types.
+    # If it's possible to have generic UDFs, it's either undocumented or very hard to find.
+    base_dtypes = [pa.string(), pa.large_string(), pa.int32(), pa.int64()]
+    for base_dtype in base_dtypes:
+        for dtype in [base_dtype, pa.list_(base_dtype)]:
+            function_name = f"list {dtype}"
+
+            # The type of a list gets reported as "list<element: string>" for table columns
+            # but as "list<item: string>" for the dtype objects
+            function_name = function_name.replace("item", "element")
+
+            function_doc = {
+                "summary": f"like `hash_list` but for {dtype}",
+                "description": f"like `hash_list` but for {dtype}",
+            }
+            in_types = {
+                "array": dtype
+            }
+            out_type = pa.list_(dtype)
+
+            pc.register_aggregate_function(
+                array_to_list,
+                function_name,
+                function_doc,
+                in_types,
+                out_type
+            )
