@@ -844,6 +844,9 @@ class CustomGenomicRegionGenerator:
         :rtype: str
         """
 
+        # NOTE: this has a bug that sometimes a sequence with multiple transcripts is split into two separate fasta entries
+        # e.g. example config will produce: AAAATAGGGGAACAGGAGCCTGACTC, 57957367-57957377, 57958410-57958424 with one entry for [NM_001286130.2, NM_001297.5] and one entry for [NM_001135639.2]
+
         def _compute_exon_exon_junction_annotation(annotation: pd.DataFrame, block_size: int) -> pd.DataFrame:
             """
             Computes exon-exon junction annotations from exon data.

@@ -503,7 +503,7 @@ class TargetProbeDesigner:
 
         # generate candidate oligo sequences (sliding window over FASTA regions)
         oligo_sequences = OligoSequenceGenerator(dir_output=self.dir_output)
-        oligo_fasta_file = oligo_sequences.create_sequences_sliding_window(
+        oligo_parquet_file = oligo_sequences.create_sequences_sliding_window(
             files_fasta_in=files_fasta_oligo_database,
             length_interval_sequences=(oligo_length_min, oligo_length_max),
             split_region=split_region,
@@ -520,8 +520,8 @@ class TargetProbeDesigner:
             dir_output=self.dir_output,
             n_jobs=self.n_jobs,
         )
-        oligo_database.load_database_from_fasta(
-            files_fasta=oligo_fasta_file,
+        oligo_database.load_database_from_parquet(
+            file_parquet=oligo_parquet_file,
             sequence_type="target",
             database_overwrite=True,
             region_ids=region_ids,

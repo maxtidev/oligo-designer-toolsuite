@@ -138,6 +138,8 @@ class RemoveByLargerRegionFilterPolicy(BaseFilterPolicy):
         number_oligos_per_region = self._get_number_oligos_per_region(oligo_database=oligo_database)
         oligos_with_hits: dict[str, list[str]] = {region: [] for region in oligo_database.get_regionid_list()}
 
+        # NOTE: this is insanely slow
+        # like, to a ridiculous degree
         while graph.number_of_edges() > 0:
             edge = list(graph.edges)[0]  # noqa: RUF015
             region_0 = self._oligo_to_region(oligo=edge[0])

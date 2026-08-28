@@ -7,10 +7,12 @@ import os
 import pickle
 import re
 import subprocess
-from typing import Any
+from collections import defaultdict
+from typing import Any, Literal, overload
 
 import pandas as pd
 from Bio import SeqIO
+from Bio.SeqRecord import SeqRecord
 from cyvcf2 import VCF, Writer
 
 from oligo_designer_toolsuite._constants import (
@@ -315,6 +317,14 @@ class FastaParser:
         pattern = r"(\S+):(\d+)-(\d+)\(.*\)"
         return bool(re.match(pattern, entry))
 
+    def parse_coordinate(self, entry: str) -> tuple[str, int, int, str]:
+        """return (chromosome, start, end, strand)"""
+        chromosome, rest = entry.split(":", maxsplit=1)
+        start, rest = rest.split("-", maxsplit=1)
+        end, rest = rest.split("(", maxsplit=1)
+        strand = rest[0]
+        return chromosome, int(start), int(end), strand
+
     def parse_number(self, s: str) -> int | float | str:
         """
         Check if a string is an integer or a float. If so, return
@@ -359,14 +369,16 @@ class FastaParser:
         region_ids = []
         # use index instead of parse function for memory efficiency
         for idx in SeqIO.index(file_fasta_in, "fasta"):
-            region, _, _ = self.parse_fasta_header(idx, parse_additional_info=False)
+            region, _, _ = self.parse_fasta_header_strict(
+                idx, parse_coordinates=False, parse_additional_info=False
+            )
             region_ids.append(region)
 
         return list(set(region_ids))
 
     def read_fasta_sequences(
         self, file_fasta_in: str, region_ids: str | list[str] | None = None
-    ) -> list[Any]:
+    ) -> list[SeqRecord]:
         """
         Reads sequences from a FASTA file, optionally filtering by specific region identifiers.
 
@@ -388,7 +400,7 @@ class FastaParser:
             # use index instead of parse function for memory efficiency
             seq_record = SeqIO.index(file_fasta_in, "fasta")
             for idx in seq_record:
-                region, _, _ = self.parse_fasta_header(
+                region, _, _ = self.parse_fasta_header_strict(
                     idx, parse_coordinates=False, parse_additional_info=False
                 )
                 if region in region_ids_set:
@@ -468,6 +480,71 @@ class FastaParser:
                         additional_info[key] = [value_parsed]
                 else:
                     additional_info = str(info)
+
+        return region, additional_info, coordinates
+
+    @overload
+    def parse_fasta_header_strict(
+        self, header: str | None, parse_coordinates: bool = True, parse_additional_info: Literal[True] = ...
+    ) -> tuple[str, dict[str, list[Any]], dict[str, list[Any]]]: ...
+    @overload
+    def parse_fasta_header_strict(
+        self, header: str | None, parse_coordinates: bool = True, parse_additional_info: Literal[False] = ...
+    ) -> tuple[str, str, dict[str, list[Any]]]: ...
+
+    def parse_fasta_header_strict(
+        self, header: str | None, parse_coordinates: bool = True, parse_additional_info: bool = True
+    ) -> tuple[str, dict[str, list[Any]] | str, dict[str, list[Any]]]:
+        """
+        Parses the header of a FASTA sequence to extract region, coordinates, and additional information.
+
+        This function processes the header of a FASTA sequence to extract the region name,
+        optional genomic coordinates, and additional key-value pair information.
+
+        :param header: The header string from a FASTA sequence.
+        :type header: str
+        :param parse_coordinates: Whether to parse genomic coordinates from the header, defaults to True.
+        :type parse_coordinates: bool, optional
+        :param parse_additional_info: Whether to parse additional information from the header, defaults to True.
+        :type parse_additional_info: bool, optional
+        :return: A tuple containing the region name, additional info dictionary, and coordinates dictionary.
+        :rtype: tuple[str, dict[str, list[Any]], dict[str, list[Any]]]
+        """
+        assert header is not None, "empty faster header"
+        additional_info: dict[str, list[str | int]] | str
+        coordinates = defaultdict(list)
+
+        header_entries = header.split(SEPARATOR_FASTA_HEADER_FIELDS)
+        assert len(header_entries) == 3
+        region, info, raw_coordinates = header_entries
+
+        # the additional info field should be parsed, save information in dict
+        if parse_additional_info:
+            info_list = info.split(SEPARATOR_FASTA_HEADER_FIELDS_LIST)
+            additional_info = defaultdict(list)
+            for infos in info_list:
+                key, value = infos.split("=", maxsplit=1)
+                if key in {"start", "end", "number_total_transcripts"}:
+                    value = int(value)
+                additional_info[key].append(value)
+        else:
+            additional_info = info
+
+        if parse_coordinates:
+            header_coordinates = raw_coordinates.split(SEPARATOR_FASTA_HEADER_FIELDS_LIST)
+            for header_coordinate in header_coordinates:
+                chromosome, start, end, strand = self.parse_coordinate(header_coordinate)
+                coordinates["chromosome"].append(chromosome)
+                coordinates["start"].append(start)
+                coordinates["end"].append(end)
+                coordinates["strand"].append(strand)
+        else:
+            coordinates = {
+                "chromosome": [],
+                "start": [],
+                "end": [],
+                "strand": [],
+            }
 
         return region, additional_info, coordinates
 
