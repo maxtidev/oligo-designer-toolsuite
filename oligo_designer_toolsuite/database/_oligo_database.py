@@ -156,25 +156,7 @@ class OligoDatabase:
         """Load OligoDatabase from a parquet file, may be a partitioned parquet file."""
 
         def _load_parquet_region(oligo_database: OligoDatabase, region_id: str):
-            # register_custom_pyarrow_functions()
             filters = [("region_id", "==", region_id)]
-            # # use pyarrow directly for performance reasons (fastest way of iterating over all rows)
-            # region_table = pq.read_table(file_parquet, use_pandas_metadata=True, filters=filters)
-            # region_table = region_table.rename_columns({"sequence": sequence_type})
-
-            # # Combine duplicated sequences (multiple positions) by building lists-of-lists
-            # # Outer lists are duplicated sequences, inner lists are fragments of split sequences (e.g. exon-exon-junctions)
-            # # We use custom pyarrow functions, see _checkers_and_helpers.register_custom_pyarrow_functions()
-            # agg_column_names = filter(
-            #     lambda name: name not in {sequence_type, "region_id"}, region_table.column_names
-            # )
-            # # aggregations = [(name, f"list {region_table[name].type}") for name in agg_column_names]
-            # # region_table = region_table.group_by(sequence_type).aggregate(aggregations)
-            # # region_df: pd.DataFrame = region_table.to_pandas(types_mapper=pd.ArrowDtype)
-            # this is extremely slow: region_df = region_df.groupby(sequence_type, as_index=False).agg(list)
-
-            # Combine duplicated sequences (multiple positions) by building lists-of-lists
-            # Outer lists are duplicated sequences, inner lists are fragments of split sequences (e.g. exon-exon-junctions)
             region_df = pd.read_parquet(file_parquet, filters=filters, dtype_backend="pyarrow")
 
             python_data = region_df.to_dict("list")
@@ -221,64 +203,8 @@ class OligoDatabase:
             region_ids
         )  # optimistically add all regions, will be removed if not found
 
-        # for sequence, properties in database.groupby(sequence_type):
-        #     # Wrap every column in lists (to allow appending properties for sequences)
-        #     if len(properties) > 1 and properties["start"].iloc[0][0] != properties["start"].iloc[1][0]:
-        #         print(properties)
-
         # Load files into database
         self.map_regions(_load_parquet_region, description="Database Loading", n_jobs=self.n_jobs)
-        # progress_description = "Database Loading".ljust(80)
-        # with joblib_progress(description=progress_description, total=len(region_ids)):
-        #     Parallel(n_jobs=self.n_jobs, prefer="processes")(
-        #         delayed(_load_parquet_region)(self, region_id) for region_id in region_ids
-        #     )
-
-        # Merge properties of duplicate oligos (same sequence, e.g. different transcripts)
-        # we will turn all properties into lists except for those where the key is in self.database_sequence_types
-
-        # is_non_aggregate_column = df.columns.isin(self.database_sequence_types)
-        # aggregate_columns = df.columns[(~is_non_aggregate_column) & (df.columns != "sequence")]
-        # non_aggregate_columns = df.columns[is_non_aggregate_column & (df.columns != "sequence")]
-        # print(aggregate_columns)
-        # print(non_aggregate_columns)
-
-        # for region_id, region_df in df.groupby("region_id"):
-        #     database_region: dict[str, dict[str, Any]] = {}
-        #     sequence_index: dict[str, str] = {}
-
-        #     for i, row in region_df.reset_index().iterrows():
-        #         i = typing.cast(int, i)
-
-        #         oligo_properties = row[aggregate_columns].to_dict()
-        #         oligo_properties = typing.cast(dict[str, Any], oligo_properties)
-
-        #         # Add sequence with key sequence_type (e.g. oligo or target) as plain objects
-        #         sequence = row["sequence"]
-        #         oligo_properties[sequence_type] = sequence
-
-        #         # Convert everything except self.database_sequence_types to lists of lists
-        #         oligo_properties = format_oligo_properties(oligo_properties, self.database_sequence_types)
-
-        #         if sequence in sequence_index:
-        #             # Merge properties with existing oligo
-        #             oligo_id = sequence_index[sequence]
-        #             previous_oligo_properties = database_region[oligo_id]
-
-        #             oligo_properties = collapse_properties_for_duplicated_sequences(
-        #                 oligo_properties1=previous_oligo_properties,
-        #                 oligo_properties2=oligo_properties,
-        #                 database_sequence_types=self.database_sequence_types,
-        #             )
-
-        #             database_region[oligo_id] = oligo_properties
-        #         else:
-        #             # Add new oligo
-        #             oligo_id = f"{region_id}{SEPARATOR_OLIGO_ID}{i}"
-        #             database_region[oligo_id] = oligo_properties
-        #             sequence_index[sequence] = oligo_id
-
-        #     self.save_region(region_id, database_region)
 
         self.update_database_metadata()
 
