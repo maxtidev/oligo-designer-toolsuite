@@ -433,6 +433,32 @@ class OligoDatabase:
     # Save Functions
     ############################################
 
+    def _safe_as_parquet(self, out_dir: str) -> None:
+
+        def dict_to_dataframe(db: dict) -> pd.DataFrame:
+            for region in db.values():
+                for oligo in region.values():
+                    if "exon_number" in oligo:
+                        oligo["exon_number"] = str(oligo["exon_number"])
+
+            dfs = []
+            for region_id, region in db.items():
+                df = pd.DataFrame.from_dict(region, orient="index")
+                df["region_id"] = region_id
+                dfs.append(df)
+
+            return pd.concat(dfs)
+
+        regions_out_dir = os.path.join(out_dir, "regions-snapshot.parquet")
+        oligosets_out_dir = os.path.join(out_dir, "oligosets-snapshot.parquet")
+
+        df = dict_to_dataframe(self.database)
+        df.to_parquet(regions_out_dir, compression="zstd")
+
+        if self.oligosets:
+            df = pd.concat(self.oligosets.values())
+            df.to_parquet(oligosets_out_dir, compression="zstd")
+
     def save_database(
         self,
         name_database: str = "db_oligo",
@@ -460,23 +486,7 @@ class OligoDatabase:
             dir_database = safe_append_filename(self.dir_output, name_database)
         Path(dir_database).mkdir(parents=True, exist_ok=True)
 
-        for region_id in region_ids:
-            database_region = self.database[region_id]
-            if self.oligosets and region_id in self.oligosets:
-                oligoset_region = self.oligosets[region_id]
-            else:
-                oligoset_region = None
-            file_output = safe_append_filename(dir_database, region_id)
-            with open(file_output, "wb") as file:
-                pickle.dump(
-                    {
-                        "region_id": region_id,
-                        "database_region": database_region,
-                        "oligoset_region": oligoset_region,
-                    },
-                    file,
-                )
-
+        self._safe_as_parquet(dir_database)
         return dir_database
 
     def write_database_to_fasta(
