@@ -72,8 +72,12 @@ class DynamicProgrammingOligoSelection(BaseOligoSelection):
         # Treat oligos with multiple positions as very long oligos, stretching from their first occurence to their last one
         # Multiple positions mostly due to oligos spanning exons (i.e. on exon-exon junctions)
         # These are treated as incompatible with oligos within the bridged introns
-        start_points: list[int] = [min(starts) for id in oligo_ids for starts in database_region[id]["start"]]
-        end_points: list[int] = [max(ends) for id in oligo_ids for ends in database_region[id]["end"]]
+        start_points: list[int] = [
+            min(min(starts) for starts in database_region[id]["start"]) for id in oligo_ids
+        ]
+        end_points: list[int] = [
+            max(max(ends) for ends in database_region[id]["end"]) for id in oligo_ids
+        ]
 
         # Prepare reordering
         order = list(range(n))
@@ -100,9 +104,11 @@ class DynamicProgrammingOligoSelection(BaseOligoSelection):
         for set_idx in range(n_sets):
             # Calculate optimal set for remaining oligos
             nodes = self._get_oligo_set_for_subset(start_points, end_points, scores, skip_indices)
-            if nodes:
-                skip_indices.update(nodes)
-                oligosets.append({reordered_oligo_ids[i] for i in nodes})
+            if not nodes:
+                break
+
+            skip_indices.update(nodes)
+            oligosets.append({reordered_oligo_ids[i] for i in nodes})
 
         oligo_database.oligosets[region_id] = self._oligosets_to_dataframe(
             oligosets, scores_series, self.set_size_opt
@@ -166,12 +172,7 @@ class DynamicProgrammingOligoSelection(BaseOligoSelection):
                 bisect_idx = (
                     bisect.bisect(used_nodes[j], i) - 1
                 )  # either the index of i or of the next-smallest in used_nodes[j]
-                try:
-                    node = used_nodes[j][bisect_idx]
-                except:
-                    print(f"{used_nodes[j]=}")
-                    print(f"{i=} {j=} {bisect_idx=}")
-                    raise
+                node = used_nodes[j][bisect_idx]
                 nodes.append(node)
                 i = preds[node]
 
@@ -192,6 +193,7 @@ class DynamicProgrammingOligoSelection(BaseOligoSelection):
         # if there's no predecessor, preds[i] will be -1 and using that as an index will go to this last element
         # this lets us avoid an additional branch in the inner loop
         dp_prev.append((-inf, -inf))
+        dp_cur.append((-inf, -inf))
 
         # initialization for j=1 O(n)
         used_nodes[1].append(0)
@@ -282,6 +284,7 @@ class DynamicProgrammingOligoSelection(BaseOligoSelection):
         # if there's no predecessor, preds[i] will be -1 and using that as an index will go to this last element
         # this lets us avoid an additional branch in the inner loop
         dp_prev.append((-inf, -inf))
+        dp_cur.append((-inf, -inf))
 
         # initialization for j=1 O(n)
         used_nodes[1].append(0)
