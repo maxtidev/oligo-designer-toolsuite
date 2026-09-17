@@ -149,9 +149,7 @@ class OligoSequenceGenerator:
         :rtype: list
         """
 
-        # TODO: modify to still read FASTA, but write compressed parquet or feather instead
-        # potentially using pyarrow lists
-        # long term: investigate using pyarrow string functions for getting the sliding window oligos
+        # TODO long term: investigate using pyarrow string functions for getting the sliding window oligos
 
         # This also parses the additional info
 
@@ -225,6 +223,7 @@ class OligoSequenceGenerator:
                 # maybe define a constant after how many sequences we want to write to file and start with a new dataframe?
 
                 # approach for now: write to partitioned parquet (append), but not after every Fasta entry but every 100 entries (configurable)
+                # TODO: there might be trouble if some Fasta entries have keys that others don't
 
                 # All sequences for this Fasta entry
                 # each sequence may be split and thus have multiple coordinates (each a fragment of the entire sequence, forming a partition)
@@ -291,21 +290,21 @@ class OligoSequenceGenerator:
                                 all_entry_sequences_info["strand"].append([strand] * len(start_coordinates))
 
                 # Add info collected for this Fasta entry to dataframe rows
-                sequence_df_rows["region_id"].append(region)
-                for key, value_list in all_entry_sequences_info.items():
-                    sequence_df_rows[key].append(value_list)
-                for key, value_list in additional_info.items():
-                    sequence_df_rows[key].append(value_list)
+                if len(all_entry_sequences_info["sequence"]) > 0:
+                    sequence_df_rows["region_id"].append(region)
+                    for key, value_list in all_entry_sequences_info.items():
+                        sequence_df_rows[key].append(value_list)
+                    for key, value_list in additional_info.items():
+                        sequence_df_rows[key].append(value_list)
 
             sequence_df = pd.DataFrame(sequence_df_rows)
             sequence_df = sequence_df.explode(list(all_entry_sequences_info.keys()), ignore_index=True)
-            # sequence_df["just_string"] = "heeey"
-            # sequence_df["test"] = pd.Series([["value"]] * len(sequence_df))
 
             sequence_df.to_parquet(
                 output_dir,
                 compression="zstd",
                 partition_cols=["region_id"],
+                existing_data_behavior="overwrite_or_ignore",
             )
 
         files_fasta_in = cast_to_list(files_fasta_in)
@@ -323,9 +322,11 @@ class OligoSequenceGenerator:
             # make keys unique
             region_ids = list(set(region_ids))
 
-        # delete previous content
         parquet_dir_out = safe_append_filename(self.dir_output, "sequences.parquet")
+        partitioned_tmp_dir_out = safe_append_filename(self.dir_output, "tmp.parquet")
+        # delete previous content
         shutil.rmtree(parquet_dir_out, ignore_errors=True)
+        shutil.rmtree(partitioned_tmp_dir_out, ignore_errors=True)
 
         # create oligos and store all oligos of one region in seperate files
         for file_fasta in files_fasta_in:
@@ -338,9 +339,28 @@ class OligoSequenceGenerator:
             ) // SEQUENCE_GENERATION_BATCH_SIZE
             with joblib_progress(description=progress_description, total=batch_count):
                 Parallel(n_jobs=n_jobs, prefer="processes")(
-                    delayed(get_sliding_window_sequence)(entry_batch, parquet_dir_out)
+                    delayed(get_sliding_window_sequence)(entry_batch, partitioned_tmp_dir_out)
                     for entry_batch in itertools.batched(fasta_sequences, SEQUENCE_GENERATION_BATCH_SIZE)
                 )
+
+        # Manually merge fragments because the fragments might have differing schemas
+        # and pyarrow's schema merging only looks at the first fragment
+        # (see https://stackoverflow.com/a/75871219)
+        for region_dir in os.listdir(partitioned_tmp_dir_out):
+            region_id = region_dir.rsplit("=", maxsplit=1)[1]
+            dfs = []
+            for fragment_name in os.listdir(os.path.join(partitioned_tmp_dir_out, region_dir)):
+                fragment_path = os.path.join(partitioned_tmp_dir_out, region_dir, fragment_name)
+                dfs.append(pd.read_parquet(fragment_path, dtype_backend="pyarrow"))
+            region_df = pd.concat(dfs)
+            region_df["region_id"] = region_id
+            region_df.to_parquet(
+                parquet_dir_out,
+                compression="zstd",
+                partition_cols=["region_id"],
+                existing_data_behavior="overwrite_or_ignore",
+            )
+        shutil.rmtree(partitioned_tmp_dir_out, ignore_errors=True)
 
         # check if any oligos were created here instead of in get_sliding_window_sequence, because
         # the same region can be present in multiple input fasta files (files_fasta_in), e.g. genes and exon-exon-junctions.

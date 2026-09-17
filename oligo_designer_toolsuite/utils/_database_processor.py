@@ -13,7 +13,7 @@ from oligo_designer_toolsuite._constants import SEPARATOR_OLIGO_ID
 from oligo_designer_toolsuite.utils._checkers_and_helpers import safe_append_filename
 from oligo_designer_toolsuite.utils._logging import logger
 
-from ._checkers_and_helpers import cast_to_list, cast_to_list_of_lists
+from ._checkers_and_helpers import cast_to_list
 
 ############################################
 # Collection of utility functions
@@ -193,19 +193,26 @@ def get_oligo_property_value(
     :rtype: Any | list[Any] | None
     :raises ValueError: If the specified region or oligo does not exist in the database.
     """
-    # if not region_id in self.database:
-    #     raise DatabaseError(f"Region '{region_id}' does not exist in the database.")
-
-    if not oligo_id in region.index:
-        raise ValueError(f"Oligo '{oligo_id}' does not exist in specified region.")
     if property not in region:
         return None
-    
-    property_value = region[property][oligo_id]
+    try:
+        property_value = region.at[oligo_id, property]
+    except KeyError:
+        raise ValueError(f"Oligo '{oligo_id}' does not exist in specified region.")
+
+    if property_value is pd.NA:
+        return None
+
     if flatten:
         property_value = flatten_property_list(property_value)
+
         if property_value and len(property_value) == 1:
             property_value = property_value[0]
+        
+        # Due to some functions not handling lists of None values properly, merge lists of None into just None
+        # also see exception 2 in load_database_from_parquet
+        if isinstance(property_value, list) and all(v is None for v in property_value):
+            property_value = None
 
     return property_value
 

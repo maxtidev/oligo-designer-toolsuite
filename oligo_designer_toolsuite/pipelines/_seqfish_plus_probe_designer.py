@@ -661,7 +661,7 @@ class SeqFishPlusProbeDesigner:
                     + str(Seq(sequence_readout_probe_4).reverse_complement())
                 )
 
-            target_probe_database.update_oligo_properties(new_properties)
+            target_probe_database.update_oligo_properties(new_properties, region_id)
 
         return target_probe_database
 
@@ -880,8 +880,7 @@ class SeqFishPlusProbeDesigner:
         region_ids = oligo_database.get_regionid_list()
         for region_id in region_ids:
             database_region = oligo_database.load_region(region_id)
-            # NOTE: needs some more thought
-            for primer_properties in database_region.values():
+            for _, primer_properties in database_region.iterrows():
                 Tm_forward_primer = calc_tm_nn(
                     sequence=primer_properties["oligo"],
                     Tm_parameters=primer_Tm_parameters,
@@ -961,7 +960,7 @@ class SeqFishPlusProbeDesigner:
                     + reverse_primer_sequence
                 )
 
-            hybridization_probe_database.update_oligo_properties(new_properties)
+            hybridization_probe_database.update_oligo_properties(new_properties, region_id)
 
         return hybridization_probe_database
 
@@ -1167,7 +1166,7 @@ class TargetProbeDesigner:
         """
         ##### creating the oligo sequences #####
         oligo_sequences = OligoSequenceGenerator(dir_output=self.dir_output)
-        oligo_fasta_file = oligo_sequences.create_sequences_sliding_window(
+        oligo_parquet_file = oligo_sequences.create_sequences_sliding_window(
             files_fasta_in=files_fasta_oligo_database,
             length_interval_sequences=(oligo_length_min, oligo_length_max),
             region_ids=region_ids,
@@ -1183,8 +1182,8 @@ class TargetProbeDesigner:
             dir_output=self.dir_output,
             n_jobs=1,
         )
-        oligo_database.load_database_from_fasta(
-            files_fasta=oligo_fasta_file,
+        oligo_database.load_database_from_parquet(
+            file_parquet=oligo_parquet_file,
             database_overwrite=True,
             sequence_type="target",
             region_ids=region_ids,

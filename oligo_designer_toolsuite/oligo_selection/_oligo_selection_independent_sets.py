@@ -194,8 +194,8 @@ class IndependentSetsOligoSelection(BaseOligoSelection):
                     [s, e]
                     # loop through sequences from different genomic regions for the same oligo (can have the same coordinates if coming from shorter and longer exons)
                     for start, end in zip(
-                        region.loc[oligo_id]["start"],
-                        region.loc[oligo_id]["end"],
+                        region.loc[oligo_id, "start"],
+                        region.loc[oligo_id, "end"],
                     )
                     # loop through exon junction parts for the same oligo
                     for s, e in zip(start, end)

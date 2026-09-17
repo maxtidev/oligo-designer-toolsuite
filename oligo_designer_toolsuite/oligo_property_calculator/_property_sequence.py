@@ -358,9 +358,8 @@ class ReverseComplementSequenceProperty(BaseProperty):
             get_oligo_property_value(property=sequence_type, region=region, oligo_id=oligo_id, flatten=True)
         )
         sequence_rc: str | None = None
-
         if sequence:
-            sequence_rc = calculate_reverse_complement_sequence(sequence=sequence)
+            sequence_rc = calculate_reverse_complement_sequence(sequence=sequence)#
 
         return {self.sequence_type_reverse_complement: sequence_rc}
 

@@ -6,13 +6,15 @@
 from __future__ import annotations
 
 import dbm.sqlite3
+import itertools
+import math
 import os
 import pickle
 import shelve
 import shutil
+import typing
 from collections import defaultdict
 from dataclasses import dataclass
-from functools import wraps
 from pathlib import Path
 from typing import Any, Literal, Protocol
 
@@ -159,6 +161,12 @@ class OligoDatabase:
             filters = [("region_id", "==", region_id)]
             region_df = pd.read_parquet(file_parquet, filters=filters, dtype_backend="pyarrow")
 
+            # We assume that all columns contain lists of values with two exceptions:
+            # 1. "sequence", this is just a str
+            # 2. any None (pd.NA) values, those will get turned into lists of None instead of lists-of-lists below
+
+            # Combine duplicated sequences (multiple positions) by building lists-of-lists
+            # Outer lists are duplicated sequences, inner lists are fragments of split sequences (e.g. exon-exon-junctions)
             python_data = region_df.to_dict("list")
             region_rows = defaultdict(lambda: defaultdict(list))
             for column_name, column_values in python_data.items():
@@ -259,7 +267,9 @@ class OligoDatabase:
             fasta_sequences = self.fasta_parser.read_fasta_sequences(file, region_ids)
             sequences: dict[str, dict[str, Any]] = {}
             for entry in fasta_sequences:
-                region, additional_info, coordinates = self.fasta_parser.parse_fasta_header_strict(entry.id)
+                assert entry.id is not None
+                region, additional_info, coordinates = self.fasta_parser.parse_fasta_header(entry.id)
+                additional_info = typing.cast(dict[str, list[Any]], additional_info)
                 oligo_properties = coordinates | additional_info
                 oligo_properties = format_oligo_properties(oligo_properties, self.database_sequence_types)
                 # NOTE: multiple rows with same region here
@@ -839,9 +849,6 @@ class OligoDatabase:
 
         dir_output = dir_output if dir_output else self.dir_output
         file_yaml = safe_append_filename(os.path.dirname(dir_output), f"{filename}.yml")
-        thing = str(yaml_dict)
-        pos = thing.find("array")
-        print(thing[pos - 100 : pos + 100])
         with open(file_yaml, "w") as handle:
             yaml.dump(yaml_dict, handle, Dumper=CustomYamlDumper, default_flow_style=False, sort_keys=False)
 
@@ -958,6 +965,7 @@ class OligoDatabase:
 
         for region_id in region_ids:
             database_region = self.load_region(region_id)
+            database_region = database_region.replace({pd.NA: None})
 
             yaml_dict[region_id] = {}
             oligosets_region = self.load_oligoset(region_id)
@@ -1055,9 +1063,9 @@ class OligoDatabase:
         :rtype: list[str]
         """
         region_ids = cast_to_list(region_ids) if region_ids else self.get_regionid_list()
-        oligo_ids = [
-            str(oligo_id) for region_id in region_ids for oligo_id in self.load_region(region_id).index
-        ]
+
+        oligo_ids = [self.load_region(region_id).index.to_series() for region_id in self.get_regionid_list()]
+        oligo_ids = pd.concat(oligo_ids).tolist()
 
         return oligo_ids
 
@@ -1073,11 +1081,9 @@ class OligoDatabase:
         assert sequence_type in self.metadata.columns, (
             f"Sequence type '{sequence_type}' not found in database."
         )
-        sequences = [
-            str(oligo_properties[sequence_type])
-            for region_id in self.get_regionid_list()
-            for _, oligo_properties in self.load_region(region_id).iterrows()
-        ]
+
+        sequences = [self.load_region(region_id)[sequence_type] for region_id in self.get_regionid_list()]
+        sequences = pd.concat(sequences).tolist()
 
         return sequences
 
@@ -1123,21 +1129,14 @@ class OligoDatabase:
             f"Sequence type '{sequence_type}' not found in database."
         )
 
-        sequence_oligoids_mapping = {}
-
+        sequence_oligoids_mapping = defaultdict(list)
         for region_id in self.get_regionid_list():
-            for oligo_id, oligo_properties in self.load_region(region_id).iterrows():
-                oligo_id = str(oligo_id)
-                seq = oligo_properties[sequence_type]
-                if sequence_to_upper:
-                    seq = seq.upper()
-                if seq not in sequence_oligoids_mapping:
-                    # If the sequence key doesn't exist, create a new entry with the oligo ID in a list
-                    sequence_oligoids_mapping[seq] = [oligo_id]
-                else:
-                    # If the sequence key already exists, append the oligo ID to the existing list
-                    sequence_oligoids_mapping[seq].append(oligo_id)
+            sequence_series = self.load_region(region_id)[sequence_type]
+            if sequence_to_upper:
+                sequence_series = sequence_series.str.upper()
 
+            for sequence, oligo_id in zip(sequence_series, sequence_series.index):
+                sequence_oligoids_mapping[sequence].append(oligo_id)
         return sequence_oligoids_mapping
 
     def get_oligo_property_table(
@@ -1239,6 +1238,7 @@ class OligoDatabase:
     def load_region(self, region_id: str) -> pd.DataFrame:
         """Loads region from database, sufficiently multi-processing safe."""
         path = os.path.join(self.database_path, f"{region_id}.feather")
+        # filtering columns not possible because of https://github.com/apache/arrow/issues/46328
         return pd.read_feather(path, dtype_backend="pyarrow")
 
     def save_region(self, region_id: str, region: pd.DataFrame) -> None:
@@ -1302,25 +1302,45 @@ class OligoDatabase:
             # Hopefully align progress bars for all pipeline steps
             description = description.ljust(80)
 
-        @wraps(function)
-        def _run_with_database(oligo_database: OligoDatabase, region_id: str, *args, **kwargs) -> R:
+        def _run_batched_with_database(
+            oligo_database: OligoDatabase, region_ids_batch: list[str], *args, **kwargs
+        ) -> list[R]:
             oligo_database.open_shelfs()
             try:
-                result = function(oligo_database, region_id, *args, **kwargs)
+                results = [
+                    function(oligo_database, region_id, *args, **kwargs) for region_id in region_ids_batch
+                ]
             finally:
                 oligo_database.close_shelfs()
-            return result
-
-        region_ids = self.get_regionid_list()
+            return results
 
         # Close shelfs to hand over control to subprocesses
         self.close_shelfs()
 
-        # Execute function over all regions in process pool
-        with joblib_progress(description=description, total=len(region_ids)):
-            results: list[R] = Parallel(n_jobs=n_jobs, prefer="processes")(
-                delayed(_run_with_database)(self, region_id, *args, **kwargs) for region_id in region_ids
+        # We need batching here for large amounts of regions to avoid sending the same function
+        # a huge amount of times to each worker process
+        # context: joblib pickles function and its arguments for every call of delay
+        # thus, functools.partial would not avoid re-serialization
+
+        # We implement manual batching to avoid large input objects being serialized multiple times
+        # (joblib doesn't handle this well natively: https://github.com/joblib/joblib/issues/996)
+        # -> we dispatch a single batch to each worker
+        # This messes with our progress bar, but that's okay for now
+
+        region_ids = self.get_regionid_list()
+        # 10 batches per worker
+        # this needs to be relative to n_jobs such that inputs aren't serialized more often for larger inputs
+        n_batches_target = 10 * n_jobs if n_jobs < len(region_ids) else len(region_ids)
+        max_batch_size = math.ceil(len(region_ids) / n_batches_target)
+        n_batches = math.ceil(len(region_ids) / max_batch_size)
+
+        # Execute function over all regions in process pool in batches
+        with joblib_progress(description=description, total=n_batches):
+            batched_results: list[list[R]] = Parallel(n_jobs=n_jobs, prefer="processes")(
+                delayed(_run_batched_with_database)(self, region_ids_batch, *args, **kwargs)
+                for region_ids_batch in itertools.batched(region_ids, max_batch_size)
             )
+        results = list(itertools.chain.from_iterable(batched_results))
 
         # Re-open database after all subprocesses finished
         self.open_shelfs()
@@ -1365,14 +1385,20 @@ class OligoDatabase:
                            or a list of region IDs (list[str]). Otherwise all regions are scanned.
         :type region_ids: str | list[str] | None
         """
+        def join_if_overlapping(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
+            new_columns = df2.columns.difference(df1.columns)
+            is_overlapping = not df1.index.intersection(df2.index).empty
+            if is_overlapping:
+                df1 = df1.join(df2[new_columns])
+            return df1
+
         region_ids = cast_to_list(region_ids) if region_ids is not None else self.get_regionid_list()
         new_properties_df = pd.DataFrame.from_dict(new_oligo_property, orient="index")
         for region_id in region_ids:
             if region_id not in self.metadata.region_ids:
                 continue
             database_region = self.load_region(region_id)
-            new_columns = new_properties_df.columns.difference(database_region.columns)
-            database_region = database_region.join(new_properties_df[new_columns])
+            database_region = join_if_overlapping(database_region, new_properties_df)
             self.save_region(region_id, database_region)
 
     def filter_database_by_region(self, remove_region: bool, region_ids: str | list[str]) -> None:

@@ -119,7 +119,7 @@ class RemoveByLargerRegionFilterPolicy(BaseFilterPolicy):
     def __init__(self) -> None:
         """Constructor for the RemoveByLargerRegionFilterPolicy class."""
 
-    def apply(self, oligo_pair_hits: list[tuple[str, str]], oligo_database: OligoDatabase) -> dict:
+    def apply_slow(self, oligo_pair_hits: list[tuple[str, str]], oligo_database: OligoDatabase) -> dict:
         """
         Applies the policy to remove oligonucleotides based on number of oligos per region.
 
@@ -138,20 +138,70 @@ class RemoveByLargerRegionFilterPolicy(BaseFilterPolicy):
         number_oligos_per_region = self._get_number_oligos_per_region(oligo_database=oligo_database)
         oligos_with_hits: dict[str, list[str]] = {region: [] for region in oligo_database.get_regionid_list()}
 
-        # NOTE: this is insanely slow
-        # like, to a ridiculous degree
-        while graph.number_of_edges() > 0:
-            edge = list(graph.edges)[0]  # noqa: RUF015
+        # currently O(n_oligos^2)
+        # - all graph.remove_node() calls take O(n_oligos^2) time overall (all edges get removed, each one exactly once)
+        # - inner loop can execute at most n_oligos times (since one node is always removed)
+        #   - next(iter(graph.edges)) has to search through nodes to find one with an edge O(n_oligos)
+        #       - it also builds a list of all neighbors for the first node that has them, still O(n_oligos) overall though
+        #   - everything else in inner loop O(1)
+
+        #   - I'm starting to think this shouldn't be using networkx
+
+        # NOTE: graph.number_of_edges() counts all edges -> O(n_oligos^3) if it was loop condition
+        n_edges = graph.number_of_edges()
+        while n_edges > 0:
+            edge = next(iter(graph.edges))
             region_0 = self._oligo_to_region(oligo=edge[0])
             region_1 = self._oligo_to_region(oligo=edge[1])
             if number_oligos_per_region[region_0] > number_oligos_per_region[region_1]:
+                n_edges -= graph.degree(edge[0])
                 graph.remove_node(edge[0])
                 oligos_with_hits[region_0].append(edge[0])
                 number_oligos_per_region[region_0] -= 1
             else:
+                n_edges -= graph.degree(edge[1])
                 graph.remove_node(edge[1])
                 oligos_with_hits[region_1].append(edge[1])
                 number_oligos_per_region[region_1] -= 1
+        return oligos_with_hits
+
+    def apply(self, oligo_pair_hits: list[tuple[str, str]], oligo_database: OligoDatabase) -> dict:
+        """
+        Applies the policy to remove oligonucleotides based on number of oligos per region.
+
+        This function processes pairs of oligonucleotide hits, building a graph from the edges representing these pairs.
+        It iteratively removes oligos from larger regions (regions with more oligos) until no more edges remain in the graph.
+        The removed oligos are tracked and returned in a dictionary keyed by region.
+
+        :param oligo_pair_hits: List of pairs of oligonucleotides that have been identified as hits.
+        :type oligo_pair_hits: list[tuple[str, str]]
+        :param oligo_database: The OligoDatabase instance containing oligonucleotide sequences and their associated properties. This database stores oligo data organized by genomic regions and can be used for filtering, property calculations, set generation, and output operations.
+        :type oligo_database: OligoDatabase
+        :return: A dictionary mapping each region to a list of oligos that should be removed based on the policy.
+        :rtype: dict
+        """
+        number_oligos_per_region = self._get_number_oligos_per_region(oligo_database=oligo_database)
+        oligos_with_hits: dict[str, list[str]] = {region: [] for region in oligo_database.get_regionid_list()}
+
+        # This is O(len(oligo_pair_hits)) aka O(n_oligos^2)
+
+        ignore_oligos = set()  # oligos to ignore since they were removed already
+        for oligo_0, oligo_1 in oligo_pair_hits:
+            if oligo_0 in ignore_oligos or oligo_1 in ignore_oligos:
+                continue
+            region_0 = self._oligo_to_region(oligo=oligo_0)
+            region_1 = self._oligo_to_region(oligo=oligo_1)
+            if number_oligos_per_region[region_0] > number_oligos_per_region[region_1]:
+                # remove oligo_0
+                oligos_with_hits[region_0].append(oligo_0)
+                number_oligos_per_region[region_0] -= 1
+                ignore_oligos.add(oligo_0)
+            else:
+                # remove oligo_1
+                oligos_with_hits[region_1].append(oligo_1)
+                number_oligos_per_region[region_1] -= 1
+                ignore_oligos.add(oligo_1)
+
         return oligos_with_hits
 
 
@@ -181,10 +231,19 @@ class RemoveByDegreeFilterPolicy(BaseFilterPolicy):
         graph = nx.from_edgelist(oligo_pair_hits)
         oligos_with_hits: dict[str, list[str]] = {region: [] for region in oligo_database.get_regionid_list()}
 
-        while graph.number_of_edges() > 0:
+        # currently O(n_oligos^2)
+        # - all graph.remove_node() calls take O(n_oligos^2) time overall (all edges get removed, each one exactly once)
+        # - inner loop can execute at most n_oligos times (since one node is always removed)
+        #   - finding node of maximum degree takes O(n_oligos)
+        #   - everything else in inner loop O(1)
+
+        # NOTE: graph.number_of_edges() counts all edges -> O(n_oligos^3) if it was loop condition
+        n_edges = graph.number_of_edges()
+        while n_edges > 0:
             degrees = dict(graph.degree())
             if degrees:
                 max_degree_node = max(degrees, key=degrees.__getitem__)
+                n_edges -= degrees[max_degree_node]
                 graph.remove_node(max_degree_node)
                 oligos_with_hits[self._oligo_to_region(oligo=max_degree_node)].append(max_degree_node)
         return oligos_with_hits
