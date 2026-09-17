@@ -673,7 +673,7 @@ class ScrinshotProbeDesigner:
                         "Tm_diff_arms": round(abs(Tm_arm1 - Tm_arm2), 2),
                     }
 
-            oligo_database.update_oligo_properties(new_oligo_properties)
+            oligo_database.update_oligo_properties(new_oligo_properties, region_id)
 
         return oligo_database
 
@@ -864,7 +864,7 @@ class TargetProbeDesigner:
 
         ##### creating the probe sequences #####
         oligo_sequences = OligoSequenceGenerator(dir_output=self.dir_output)
-        oligo_fasta_file = oligo_sequences.create_sequences_sliding_window(
+        oligo_parquet_file = oligo_sequences.create_sequences_sliding_window(
             files_fasta_in=files_fasta_oligo_database,
             length_interval_sequences=(oligo_length_min, oligo_length_max),
             region_ids=region_ids,
@@ -880,8 +880,8 @@ class TargetProbeDesigner:
             dir_output=self.dir_output,
             n_jobs=1,
         )
-        oligo_database.load_database_from_fasta(
-            files_fasta=oligo_fasta_file,
+        oligo_database.load_database_from_parquet(
+            file_parquet=oligo_parquet_file,
             database_overwrite=True,
             sequence_type="target",
             region_ids=region_ids,
@@ -1713,7 +1713,7 @@ class DetectionOligoDesigner:
                     "sequence_detection_oligo": detection_oligo,
                 }
 
-        oligo_database.update_oligo_properties(new_oligo_properties)
+        oligo_database.update_oligo_properties(new_oligo_properties, region_id)
 
     def _get_Tm_dif(
         self,
