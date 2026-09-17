@@ -7,6 +7,7 @@ import pickle
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 import yaml
 from Bio import SeqIO
@@ -708,7 +709,7 @@ class OligoDatabase:
                 }
 
                 for oligo_idx, oligo_id in enumerate(oligoset):
-                    if oligo_id is None:
+                    if oligo_id is None or oligo_id is np.nan:  # noqa: PLW0177
                         continue
                     yaml_dict_oligo_entry = {"oligo_id": oligo_id}
 
@@ -763,7 +764,7 @@ class OligoDatabase:
             for oligoset_idx, oligoset in oligosets_region.iterrows():
                 oligoset_id = f"oligoset_{oligoset_idx + 1}"
                 for oligo_id in oligoset:
-                    if oligo_id is None:
+                    if oligo_id is None or oligo_id is np.nan:  # noqa: PLW0177
                         continue
                     entry = {
                         "region_id": region_id,
@@ -859,7 +860,7 @@ class OligoDatabase:
                 oligoset_id = f"oligoset_{oligoset_idx + 1}"
                 yaml_dict[region_id][oligoset_id] = {}
                 for oligo_id in oligoset:
-                    if oligo_id is None:
+                    if oligo_id is None or oligo_id is np.nan:  # noqa: PLW0177
                         continue
 
                     entry = {}
