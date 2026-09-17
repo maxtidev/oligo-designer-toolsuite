@@ -538,33 +538,11 @@ class OligoDatabase:
     ############################################
 
     def _safe_as_parquet(self, out_dir: str) -> None:
-
-        def dict_to_dataframe(db: dict) -> pd.DataFrame:
-            for region in db.values():
-                for oligo in region.values():
-                    if "annotation_release" in oligo:
-                        for inner_list in oligo["annotation_release"]:
-                            for i, value in enumerate(inner_list):
-                                inner_list[i] = str(value)
-                    if "exon_number" in oligo:
-                        for inner_list in oligo["exon_number"]:
-                            for i, value in enumerate(inner_list):
-                                inner_list[i] = str(value)
-
-            dfs = []
-            for region_id, region in db.items():
-                df = pd.DataFrame.from_dict(region, orient="index")
-                if "region_id" not in df:
-                    df["region_id"] = region_id
-                dfs.append(df)
-
-            return pd.concat(dfs)
-
         regions_out_dir = os.path.join(out_dir, "regions-snapshot.parquet")
         oligosets_out_dir = os.path.join(out_dir, "oligosets-snapshot.parquet")
 
-        df = dict_to_dataframe(self.database)
-        df.to_parquet(regions_out_dir, compression="zstd")
+        dfs = [self.load_region(region_id) for region_id in self.get_regionid_list()]
+        pd.concat(dfs).to_parquet(regions_out_dir, compression="zstd")
 
         if self.oligosets:
             df = pd.concat(self.oligosets.values())
@@ -596,10 +574,9 @@ class OligoDatabase:
             dir_database = safe_append_filename(dir_output, name_database)
         else:
             dir_database = safe_append_filename(self.dir_output, name_database)
+        Path(dir_database).mkdir(parents=True, exist_ok=True)
 
-        shutil.copytree(self.database_path, dir_database, dirs_exist_ok=True)
-        shutil.copy2(self._oligosets_shelf_path, safe_append_filename(dir_database, "oligosets.shelve"))
-
+        self._safe_as_parquet(dir_database)
         return dir_database
 
     def write_database_to_fasta(
