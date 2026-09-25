@@ -3,6 +3,7 @@
 ############################################
 
 import os
+import random
 import shutil
 from pathlib import Path
 
@@ -799,6 +800,7 @@ class InitiatorDesigner:
 def main() -> None:
 
     print("--------------START PIPELINE--------------")
+    random.seed(42)
 
     args = base_parser()
 

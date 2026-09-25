@@ -438,8 +438,14 @@ class OligoDatabase:
         def dict_to_dataframe(db: dict) -> pd.DataFrame:
             for region in db.values():
                 for oligo in region.values():
+                    if "annotation_release" in oligo:
+                        for inner_list in oligo["annotation_release"]:
+                            for i, value in enumerate(inner_list):
+                                inner_list[i] = str(value)
                     if "exon_number" in oligo:
-                        oligo["exon_number"] = str(oligo["exon_number"])
+                        for inner_list in oligo["exon_number"]:
+                            for i, value in enumerate(inner_list):
+                                inner_list[i] = str(value)
 
             dfs = []
             for region_id, region in db.items():

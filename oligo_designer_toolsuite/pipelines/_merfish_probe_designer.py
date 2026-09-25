@@ -3,6 +3,7 @@
 ############################################
 
 import os
+import random
 import shutil
 from itertools import combinations
 from pathlib import Path
@@ -2650,6 +2651,7 @@ def main() -> None:
     - `config`: Path to the YAML configuration file containing all pipeline parameters
     """
     print("--------------START PIPELINE--------------")
+    random.seed(42)
 
     args = base_parser()
 

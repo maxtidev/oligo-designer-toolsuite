@@ -149,7 +149,7 @@ class HomogeneousPropertyOligoSelection(BaseOligoSelection):
         :return: A list of random combinations.
         :rtype: list[tuple[str, ...]]
         """
-        random.seed(seed)
+        rng = random.Random(seed)
         total_combinations = comb(len(arr), combination_size)
 
         if total_combinations <= number_of_combinations:
@@ -157,7 +157,7 @@ class HomogeneousPropertyOligoSelection(BaseOligoSelection):
 
         seen_combinations = set[tuple[str, ...]]()
         while len(seen_combinations) < number_of_combinations:
-            combination = tuple(sorted(random.sample(list(arr), combination_size)))
+            combination = tuple(sorted(rng.sample(list(arr), combination_size)))
             if combination not in seen_combinations:
                 seen_combinations.add(combination)
         return list(seen_combinations)

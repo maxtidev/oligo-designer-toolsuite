@@ -598,9 +598,8 @@ class ScrinshotProbeDesigner:
                 barcode_length += 1
 
             barcodes: list[str] = ["".join(nts) for nts in itertools.product(choices, repeat=barcode_length)]
-            random.seed(seed)
-            random.shuffle(barcodes)
-
+            rng = random.Random(seed)
+            rng.shuffle(barcodes)
             return barcodes
 
         region_ids = list(oligo_database.database.keys())
@@ -1916,6 +1915,7 @@ def main() -> None:
     - `config`: Path to the YAML configuration file containing all pipeline parameters
     """
     print("--------------START PIPELINE--------------")
+    random.seed(42)
 
     args = base_parser()
 
