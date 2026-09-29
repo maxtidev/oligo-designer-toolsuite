@@ -450,7 +450,8 @@ class OligoDatabase:
             dfs = []
             for region_id, region in db.items():
                 df = pd.DataFrame.from_dict(region, orient="index")
-                df["region_id"] = region_id
+                if "region_id" not in df:
+                    df["region_id"] = region_id
                 dfs.append(df)
 
             return pd.concat(dfs)
