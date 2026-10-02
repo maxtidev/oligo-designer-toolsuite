@@ -1884,7 +1884,7 @@ class ReadoutProbeDesigner:
 
         codebook: pd.DataFrame = pd.DataFrame(
             codebook_list[0:n_regions],
-            index=region_ids,
+            index=sorted(region_ids),
             columns=[f"bit_{i + 1}" for i in range(barcode_size)],
         )
 
@@ -2509,6 +2509,8 @@ def main() -> None:
         codebook=codebook,
         readout_probe_table=readout_probe_table,
     )
+    # enable for debugging:
+    # hybridization_probe_database.save_database(name_database="hybridization_probe_database")
 
     reverse_primer_sequence, forward_primer_sequence = pipeline.design_primers(
         # Step 1: Create Database Parameters
