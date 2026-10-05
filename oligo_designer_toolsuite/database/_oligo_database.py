@@ -1436,13 +1436,14 @@ class OligoDatabase:
         :type remove_if_smaller_threshold: bool
         """
         # NOTE: assume property always a scalar
+        # NOTE: keeps NA values
         for region_id in self.get_regionid_list():
             region_df = self.load_region(region_id)
 
             if remove_if_smaller_threshold:
-                region_df = region_df[region_df[property_name] >= property_thr]
+                region_df = region_df[(region_df[property_name] >= property_thr) | region_df[property_name].isna()]
             else:
-                region_df = region_df[region_df[property_name] <= property_thr]
+                region_df = region_df[(region_df[property_name] <= property_thr) | region_df[property_name].isna()]
             self.save_region(region_id, region_df)
 
     def filter_database_by_property_category(
