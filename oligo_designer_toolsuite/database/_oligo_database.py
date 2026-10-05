@@ -163,7 +163,7 @@ class OligoDatabase:
 
             # We assume that all columns contain lists of values with two exceptions:
             # 1. "sequence", this is just a str
-            # 2. any None (pd.NA) values, those will get turned into lists of None instead of lists-of-lists below
+            # 2. any None (pd.NA) values, those will first get turned into lists of None and afterwards just None values
 
             # Combine duplicated sequences (multiple positions) by building lists-of-lists
             # Outer lists are duplicated sequences, inner lists are fragments of split sequences (e.g. exon-exon-junctions)
@@ -175,6 +175,14 @@ class OligoDatabase:
                 column_rows = region_rows[column_name]
                 for sequence, value in zip(python_data["sequence"], column_values):
                     column_rows[sequence].append(value)
+
+            # Turn list[None] into just None
+            for column_name, column_rows in region_rows.items():
+                for sequence, sequence_values in column_rows.items():
+                    if all(v is None for v in sequence_values):
+                        # pyrefly: ignore [unsupported-operation]
+                        column_rows[sequence] = None
+
             region_df = pd.DataFrame.from_dict(region_rows, orient="columns").reset_index(names=sequence_type)
 
             region_df = region_df.rename(columns={"sequence": sequence_type})
