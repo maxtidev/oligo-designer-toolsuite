@@ -57,26 +57,26 @@ class DynamicProgrammingOligoSelection(BaseOligoSelection):
     def _get_oligo_sets_for_region(
         self,
         oligo_database: OligoDatabase,
-        sequence_type: str,
         region_id: str,
+        sequence_type: str,
         n_sets: int,
     ) -> None:
         """
         Generates oligo sets for a specific region by using dynamic programming.
         """
 
-        database_region: dict[str, dict] = oligo_database.database[region_id]
-        oligo_ids: list[str] = list(database_region.keys())
+        database_region = oligo_database.load_region(region_id)
+        oligo_ids: list[str] = list(database_region.index)
         n = len(oligo_ids)
 
         # Treat oligos with multiple positions as very long oligos, stretching from their first occurence to their last one
         # Multiple positions mostly due to oligos spanning exons (i.e. on exon-exon junctions)
         # These are treated as incompatible with oligos within the bridged introns
         start_points: list[int] = [
-            min(min(starts) for starts in database_region[id]["start"]) for id in oligo_ids
+            min(min(starts) for starts in database_region.loc[id]["start"]) for id in oligo_ids
         ]
         end_points: list[int] = [
-            max(max(ends) for ends in database_region[id]["end"]) for id in oligo_ids
+            max(max(ends) for ends in database_region.loc[id]["end"]) for id in oligo_ids
         ]
 
         # Prepare reordering
@@ -92,9 +92,7 @@ class DynamicProgrammingOligoSelection(BaseOligoSelection):
         end_points = [end_points[i] for i in order]
 
         # Calculate scores
-        scores_series = self.oligos_scoring.apply(
-            oligo_database, region_id, reordered_oligo_ids, sequence_type
-        )
+        scores_series = self.oligos_scoring.apply(database_region, reordered_oligo_ids, sequence_type)
 
         # Invert scores because the lower the better, but we maximize
         scores = [-s for s in scores_series]
@@ -116,10 +114,9 @@ class DynamicProgrammingOligoSelection(BaseOligoSelection):
 
         # Remove oligos from database that are not part of oligosets
         oligos_keep = set().union(*oligosets)
-        for oligo_id in oligo_ids:
-            if oligo_id not in oligos_keep:
-                del database_region[oligo_id]
-        oligo_database.database[region_id] = database_region
+        database_region = database_region.filter(list(oligos_keep), axis=0)
+
+        oligo_database.save_region(region_id, database_region)
 
     def _get_oligo_set_for_subset(
         self,
