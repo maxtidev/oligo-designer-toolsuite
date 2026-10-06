@@ -135,6 +135,7 @@ class RemoveByLargerRegionFilterPolicy(BaseFilterPolicy):
         :rtype: dict
         """
         graph = nx.from_edgelist(oligo_pair_hits)
+        selfloop_nodes = set(nx.nodes_with_selfloops(graph))
         number_oligos_per_region = self._get_number_oligos_per_region(oligo_database=oligo_database)
         oligos_with_hits: dict[str, list[str]] = {region: [] for region in oligo_database.get_regionid_list()}
 
@@ -154,15 +155,22 @@ class RemoveByLargerRegionFilterPolicy(BaseFilterPolicy):
             region_0 = self._oligo_to_region(oligo=edge[0])
             region_1 = self._oligo_to_region(oligo=edge[1])
             if number_oligos_per_region[region_0] > number_oligos_per_region[region_1]:
-                n_edges -= graph.degree(edge[0])
-                graph.remove_node(edge[0])
-                oligos_with_hits[region_0].append(edge[0])
+                node_to_remove = edge[0]
+                oligos_with_hits[region_0].append(node_to_remove)
                 number_oligos_per_region[region_0] -= 1
             else:
-                n_edges -= graph.degree(edge[1])
-                graph.remove_node(edge[1])
-                oligos_with_hits[region_1].append(edge[1])
+                node_to_remove = edge[1]
+                oligos_with_hits[region_1].append(node_to_remove)
                 number_oligos_per_region[region_1] -= 1
+            
+            # remove node
+            if node_to_remove in selfloop_nodes:
+                # special handling for selfloops
+                # nodes with selfloops have a degree of k+1 for k actual edges
+                n_edges -= graph.degree(node_to_remove) - 1
+            else:
+                n_edges -= graph.degree(node_to_remove) - 1
+            graph.remove_node(node_to_remove)
         return oligos_with_hits
 
     def apply(self, oligo_pair_hits: list[tuple[str, str]], oligo_database: OligoDatabase) -> dict:
@@ -229,6 +237,7 @@ class RemoveByDegreeFilterPolicy(BaseFilterPolicy):
         :rtype: dict
         """
         graph = nx.from_edgelist(oligo_pair_hits)
+        selfloop_nodes = set(nx.nodes_with_selfloops(graph))
         oligos_with_hits: dict[str, list[str]] = {region: [] for region in oligo_database.get_regionid_list()}
 
         # currently O(n_oligos^2)
@@ -243,7 +252,15 @@ class RemoveByDegreeFilterPolicy(BaseFilterPolicy):
             degrees = dict(graph.degree())
             if degrees:
                 max_degree_node = max(degrees, key=degrees.__getitem__)
-                n_edges -= degrees[max_degree_node]
+
+                # remove node
+                if max_degree_node in selfloop_nodes:
+                    # special handling for selfloops
+                    # nodes with selfloops have a degree of k+1 for k actual edges
+                    n_edges -= degrees[max_degree_node] - 1
+                else:
+                    n_edges -= degrees[max_degree_node]
                 graph.remove_node(max_degree_node)
+
                 oligos_with_hits[self._oligo_to_region(oligo=max_degree_node)].append(max_degree_node)
         return oligos_with_hits
