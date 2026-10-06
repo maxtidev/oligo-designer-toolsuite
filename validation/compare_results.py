@@ -4,7 +4,6 @@ from typing import Literal
 
 import pandas as pd
 import pyarrow as pa
-import yaml
 
 OUTPUT_PATH = "validation/outputs"
 
@@ -104,7 +103,8 @@ def normalize_df(
 def assert_df_equality(base_df: pd.DataFrame, other_df: pd.DataFrame, step: str | None = None) -> bool:
 
     if other_df.equals(base_df):
-        print(f"{step or ''} ", end="")
+        if step is not None:
+            print(step, end=" ")
         return True
     else:
         print(f"{step or ''} MISMATCH ❌")
@@ -151,44 +151,44 @@ def read_output_paths(subpath: str) -> dict[str, list[str]]:
             output_file_path = os.path.join(pipeline_output_path, output_filename)
             if os.path.isdir(output_filename):
                 continue
-            if output_filename.endswith("probes.yml"):
-                # normalizing this one is too much of a hassle, rely on tsv comparison
-                continue
-            if any(output_filename.endswith(suffix) for suffix in (".yml", ".yaml", ".tsv", ".xlsx")):
+            # NOTE: because of differing oligo ids and complex nesting, don't validate .yml files
+            #   results should be redundant with .tsv files
+            if any(output_filename.endswith(suffix) for suffix in (".tsv", ".xlsx")):
                 result[pipeline_name].append(output_file_path)
 
     return dict(result)
 
 
-def assert_dict_equality(base_dict: dict, other_dict: dict) -> bool:
-    if set(base_dict.keys()) != set(other_dict.keys()):
-        return False
-    for key, value in base_dict.items():
-        other_value = other_dict[key]
-        if isinstance(value, dict):
-            if not isinstance(other_value, dict):
-                print("strucural inequality")
-                return False
-            if not assert_dict_equality(value, other_value):
-                return False
-        else:
-            if isinstance(other_value, dict):
-                print("strucural inequality")
-                return False
-            if value != other_value:
-                print(f"{key=}, {value=}, {other_value=}")
-                return False
-    return True
+# def assert_dict_equality(base_dict: dict, other_dict: dict) -> bool:
+#     if set(base_dict.keys()) != set(other_dict.keys()):
+#         print(f"differing keys ({set(base_dict.keys())=} {set(other_dict.keys())=})")
+#         return False
+#     for key, value in base_dict.items():
+#         other_value = other_dict[key]
+#         if isinstance(value, dict):
+#             if not isinstance(other_value, dict):
+#                 print("strucural inequality")
+#                 return False
+#             if not assert_dict_equality(value, other_value):
+#                 return False
+#         else:
+#             if isinstance(other_value, dict):
+#                 print("strucural inequality")
+#                 return False
+#             if value != other_value:
+#                 print(f"{key=}, {value=}, {other_value=}")
+#                 return False
+#     return True
 
 
-def assert_yml_equality(base_yml_path: str, other_yml_path: str) -> bool:
-    # read into dict, sort keys and value dicts, compare
-    with open(base_yml_path) as f:
-        base_dict: dict = yaml.safe_load(f)
-    with open(other_yml_path) as f:
-        other_dict: dict = yaml.safe_load(f)
+# def assert_yml_equality(base_yml_path: str, other_yml_path: str) -> bool:
+#     # read into dict, sort keys and value dicts, compare
+#     with open(base_yml_path) as f:
+#         base_dict: dict = yaml.safe_load(f)
+#     with open(other_yml_path) as f:
+#         other_dict: dict = yaml.safe_load(f)
 
-    return assert_dict_equality(base_dict, other_dict)
+#     return assert_dict_equality(base_dict, other_dict)
 
 
 def assert_tsv_equality(base_tsv_path: str, other_tsv_path: str) -> bool:
@@ -205,15 +205,26 @@ def assert_tsv_equality(base_tsv_path: str, other_tsv_path: str) -> bool:
 
 def assert_xlsx_equality(base_xlsx_path: str, other_xlsx_path: str) -> bool:
     # for each page: read into df, sort, compare
+    with pd.ExcelFile(base_xlsx_path, engine="openpyxl") as f:
+        region_sheet_names = f.sheet_names
+
+    for sheet_name in region_sheet_names:
+        base_df = pd.read_excel(base_xlsx_path, sheet_name)
+        other_df = pd.read_excel(other_xlsx_path, sheet_name)
+
+        sorting_keys = ["oligoset_id", "sequence_target", "target", "sequence_padlock_probe", "bit"]
+        base_df = normalize_df(base_df, sorting_keys)
+        other_df = normalize_df(other_df, sorting_keys)
+
+        if not assert_df_equality(base_df, other_df):
+            return False
     return True
 
 
 def assert_results_equality(base_output_path: str, other_output_path: str) -> bool:
     # check all output formats
     suffix = base_output_path.rsplit(".", maxsplit=1)[1]
-    if suffix in ("yml", "yaml"):
-        return assert_yml_equality(base_output_path, other_output_path)
-    elif suffix == "tsv":
+    if suffix == "tsv":
         return assert_tsv_equality(base_output_path, other_output_path)
     elif suffix == "xlsx":
         return assert_xlsx_equality(base_output_path, other_output_path)
@@ -256,6 +267,8 @@ def main():
                 print("EQUAL ✔️")
             else:
                 print("NOT EQUAL ❌")
+
+        print()
 
 
 if __name__ == "__main__":
