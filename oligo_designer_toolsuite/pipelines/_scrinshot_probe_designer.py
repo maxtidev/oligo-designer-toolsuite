@@ -602,7 +602,7 @@ class ScrinshotProbeDesigner:
             rng.shuffle(barcodes)
             return barcodes
 
-        region_ids = list(oligo_database.database.keys())
+        region_ids = sorted(oligo_database.database.keys())
 
         barcodes = _get_barcode(len(region_ids), barcode_length=4, seed=0, choices=["A", "C", "T", "G"])
 
