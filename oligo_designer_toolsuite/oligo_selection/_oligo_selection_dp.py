@@ -3,7 +3,7 @@
 ############################################
 
 import bisect
-from math import inf
+from math import ceil, inf
 
 import numpy as np
 import pandas as pd
@@ -44,7 +44,7 @@ class DynamicProgrammingOligoSelection(BaseOligoSelection):
         set_size_opt: int,
         set_size_min: int,
         distance_between_oligos: int,
-        diversification_fraction: float,
+        jaccard_opt: float,
     ) -> None:
         """Constructor for the IndependentSetsOligoSelection class."""
         self.oligos_scoring = oligos_scoring
@@ -52,7 +52,7 @@ class DynamicProgrammingOligoSelection(BaseOligoSelection):
         self.set_size_opt = set_size_opt
         self.set_size_min = set_size_min
         self.distance_between_oligos = distance_between_oligos
-        self.diversification_fraction = diversification_fraction
+        self.jaccard_opt = jaccard_opt
 
     def _get_oligo_sets_for_region(
         self,
@@ -105,7 +105,7 @@ class DynamicProgrammingOligoSelection(BaseOligoSelection):
             if not nodes:
                 break
 
-            skip_indices.update(nodes)
+            skip_indices.update(self._select_nodes_to_skip(nodes, scores))
             oligosets.append({reordered_oligo_ids[i] for i in nodes})
 
         oligo_database.oligosets[region_id] = self._oligosets_to_dataframe(
@@ -118,6 +118,30 @@ class DynamicProgrammingOligoSelection(BaseOligoSelection):
 
         oligo_database.save_region(region_id, database_region)
 
+    def _select_nodes_to_skip(self, oligoset: list[int], scores: list[int]) -> set[int]:
+        """Chooses nodes that should be ignored for additional oligosets.
+
+        Selects the worst k nodes, where `k = n_nodes * self.diversification_fraction`.
+        If `self.diversification_fraction` is set to `1-jaccard_opt`, ensures that new oligosets
+        can not have a Jaccard similarity greater than `jaccard_opt` to existing oligosets..
+        """
+        k_nodes_to_remove = max(ceil((1 - self.jaccard_opt) * len(oligoset)), 1)
+        sorted_oligoset = sorted(oligoset, key=lambda i: scores[i])
+        # TODO: test whether to select last k nodes instead of first for LowestSetScoring
+        return set(sorted_oligoset[:k_nodes_to_remove])
+
+    def _select_nodes_to_skip(self, oligoset: list[int], scores: list[int]) -> set[int]:
+        """Chooses nodes that should be ignored for additional oligosets.
+
+        Selects the worst k nodes, where `k = n_nodes * self.diversification_fraction`.
+        If `self.diversification_fraction` is set to `1-jaccard_opt`, ensures that new oligosets
+        can not have a Jaccard similarity greater than `jaccard_opt` to existing oligosets..
+        """
+        k_nodes_to_remove = max(ceil((1 - self.jaccard_opt) * len(oligoset)), 1)
+        sorted_oligoset = sorted(oligoset, key=lambda i: scores[i])
+        # TODO: test whether to select last k nodes instead of first for LowestSetScoring
+        return set(sorted_oligoset[:k_nodes_to_remove])
+
     def _get_oligo_set_for_subset(
         self,
         start_points: list[int],
@@ -125,22 +149,32 @@ class DynamicProgrammingOligoSelection(BaseOligoSelection):
         scores: list[float],
         skip_indices: set[int],
     ) -> list[int]:
-        n = len(start_points)
-        start_points = [start_points[i] for i in range(n) if i not in skip_indices]
-        end_points = [end_points[i] for i in range(n) if i not in skip_indices]
-        scores = [scores[i] for i in range(n) if i not in skip_indices]
+        total_n = len(start_points)
 
+        remaining_indices = [i for i in range(total_n) if i not in skip_indices]
+        start_points = [start_points[i] for i in remaining_indices]
+        end_points = [end_points[i] for i in remaining_indices]
+        scores = [scores[i] for i in remaining_indices]
+
+        
+
+        selected_subset: list[int]
         match self.set_scoring:
             case LowestSetScoring():
-                return self._maximum_lowest_weight_oligo_selection(
+                selected_subset = self._maximum_lowest_weight_oligo_selection(
                     start_points, end_points, scores, self.set_size_min, self.set_size_opt
                 )
             case AverageSetScoring():
-                return self._maximum_weight_sum_oligo_selection(
+                selected_subset = self._maximum_weight_sum_oligo_selection(
                     start_points, end_points, scores, self.set_size_min, self.set_size_opt
                 )
             case _:
                 raise NotImplementedError()
+
+        # Map back to original indices
+        #   e.g. if skip_indices == {0} the above function may include 0 in its result,
+        #   meaning the first element of the remaining nodes (i.e. 1)
+        return [remaining_indices[i] for i in selected_subset]
 
     def _maximum_weight_sum_oligo_selection(
         self,

@@ -1520,7 +1520,7 @@ class TargetProbeDesigner:
             set_size_opt=set_size_opt,
             set_size_min=set_size_min,
             distance_between_oligos=distance_between_oligos,
-            diversification_fraction=diversification_fraction,
+            jaccard_opt=jaccard_opt,
         )
         oligo_database = oligoset_generator.apply(
             oligo_database=oligo_database,
