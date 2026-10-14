@@ -120,15 +120,14 @@ class DynamicProgrammingOligoSelection(BaseOligoSelection):
         oligo_database.database[region_id] = database_region
 
     def _select_nodes_to_skip(self, oligoset: list[int], scores: list[int]) -> set[int]:
-        """Chooses nodes that should be ignored for additional oligosets.
+        """Chooses nodes that should be ignored for finding additional oligosets.
 
-        Selects the worst k nodes, where `k = n_nodes * self.diversification_fraction`.
-        If `self.diversification_fraction` is set to `1-jaccard_opt`, ensures that new oligosets
-        can not have a Jaccard similarity greater than `jaccard_opt` to existing oligosets..
+        Selects the worst k nodes, where `k = n_nodes * (1-self.jaccard_opt)`.
+        This ensures that new oligosets can not have a Jaccard similarity greater
+        than `self.jaccard_opt` to any previously chosen oligoset.
         """
         k_nodes_to_remove = max(ceil((1 - self.jaccard_opt) * len(oligoset)), 1)
         sorted_oligoset = sorted(oligoset, key=lambda i: scores[i])
-        # TODO: test whether to select last k nodes instead of first for LowestSetScoring
         return set(sorted_oligoset[:k_nodes_to_remove])
 
     def _get_oligo_set_for_subset(
@@ -144,8 +143,6 @@ class DynamicProgrammingOligoSelection(BaseOligoSelection):
         start_points = [start_points[i] for i in remaining_indices]
         end_points = [end_points[i] for i in remaining_indices]
         scores = [scores[i] for i in remaining_indices]
-
-        
 
         selected_subset: list[int]
         match self.set_scoring:
@@ -336,7 +333,7 @@ class DynamicProgrammingOligoSelection(BaseOligoSelection):
                     used_nodes[j].append(i)
 
             if dp_cur[-2][0] == -inf:
-                suboptimal = True  # TODO: investigate minimum_set_size handling, seems to allow result of size minimum_set_size-1
+                suboptimal = True
                 break
             dp_prev, dp_cur = dp_cur, dp_prev
 
