@@ -114,13 +114,16 @@ def assert_df_equality(base_df: pd.DataFrame, other_df: pd.DataFrame, step: str 
                 if base_val is pd.NA and other_val is pd.NA:
                     continue
                 if base_val != other_val:
-                    print(
-                        base_idx,
-                        other_idx,
+                    if "region_id" in base_df and "region_id" in other_df:
+                        print(                        
                         # pyrefly: ignore [bad-argument-type]
                         base_df["region_id"].iloc[int(base_idx)],
                         # pyrefly: ignore [bad-argument-type]
                         other_df["region_id"].iloc[int(other_idx)],
+                        end=" ")
+                    print(
+                        base_idx,
+                        other_idx,
                         base_val,
                         other_val,
                     )
@@ -233,6 +236,8 @@ def assert_results_equality(base_output_path: str, other_output_path: str) -> bo
 
 
 def main():
+    print(f"Comparing {BASE} and {OTHER}".upper())
+
     base_dfs_paths = read_dfs_paths(BASE)
     other_dfs_paths = read_dfs_paths(OTHER)
 
