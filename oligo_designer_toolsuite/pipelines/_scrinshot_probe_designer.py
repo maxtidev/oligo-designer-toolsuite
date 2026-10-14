@@ -8,6 +8,7 @@ import random
 import shutil
 from pathlib import Path
 
+import numpy as np
 import yaml
 
 from oligo_designer_toolsuite.database import OligoDatabase, ReferenceDatabase
@@ -619,7 +620,7 @@ class ScrinshotProbeDesigner:
             for index in range(len(oligo_sets_region.index)):
                 for column in oligo_sets_oligo_columns:
                     oligo_id = oligo_sets_region.loc[index, column]
-                    if oligo_id is None:
+                    if oligo_id is None or oligo_id is np.nan:  # noqa: PLW0177
                         continue
                     barcode: str = barcodes[region_idx]
 
@@ -1636,7 +1637,7 @@ class DetectionOligoDesigner:
         for index in range(len(oligosets_region.index)):
             for column in oligosets_oligo_columns:
                 oligo_id = oligosets_region.loc[index, column]
-                if oligo_id is None:
+                if oligo_id is None or oligo_id is np.nan:  # noqa: PLW0177
                     continue
 
                 ligation_site = get_oligo_property_value(
