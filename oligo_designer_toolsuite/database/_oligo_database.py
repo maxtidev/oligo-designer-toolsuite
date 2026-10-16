@@ -141,8 +141,8 @@ class OligoDatabase:
 
     def __del__(self) -> None:
         self.close_shelfs()
-        # if os.path.exists(self._dir_cache_files):
-        #     shutil.rmtree(self._dir_cache_files, ignore_errors=True)
+        if os.path.exists(self._dir_cache_files):
+            shutil.rmtree(self._dir_cache_files, ignore_errors=True)
 
     ############################################
     # Load Functions
