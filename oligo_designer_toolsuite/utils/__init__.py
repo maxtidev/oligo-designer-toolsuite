@@ -21,7 +21,6 @@ from ._database_processor import (
     flatten_property_list,
     format_oligo_properties,
     get_oligo_property_value,
-    merge_databases,
 )
 from ._logging import configure_root_logger, logger
 from ._sequence_parser import FastaParser, GffParser, VCFParser
@@ -60,7 +59,6 @@ __all__ = [
     "get_oligo_property_value",
     "get_sequence_from_annotation",
     "logger",
-    "merge_databases",
     "remove_index_files",
     "retry",
 ]

@@ -297,20 +297,6 @@ class OligoDatabase:
                     oligo_properties["oligo_id"] = f"{region}{SEPARATOR_OLIGO_ID}{i + 1}"
                     oligo_properties[sequence_type] = oligo_sequence
 
-                # # only merge if there are common keys
-                # if len(set(self.database) & set(database_region)) > 0:
-                #     new_database = merge_databases(
-                #         database1=self.database,
-                #         # pyrefly: ignore [bad-argument-type]
-                #         database2=database_region,
-                #         sequence_type=sequence_type,
-                #         database_sequence_types=self.database_sequence_types,
-                #         dir_cache_files=self._dir_cache_files,
-                #         max_entries_in_memory=self._max_entries_in_memory,
-                #     )
-                #     self.database.close()
-                #     self.database = new_database
-                # else:
                 for region_id, sequences_region in sequences.items():
                     # Convert to pyarrow-backed DataFrame
                     region_df: pd.DataFrame = pa.Table.from_pylist(list(sequences_region.values())).to_pandas(
@@ -423,18 +409,6 @@ class OligoDatabase:
                     entry, self.database_sequence_types
                 )
 
-        # if not database_overwrite and self.database:
-        #     new_database = merge_databases(
-        #         database1=self.database,
-        #         database2=database_tmp2,
-        #         sequence_type=merge_databases_on_sequence_type,
-        #         database_sequence_types=self.database_sequence_types,
-        #         dir_cache_files=self._dir_cache_files,
-        #         max_entries_in_memory=self._max_entries_in_memory,
-        #     )
-        #     database_tmp2.close()
-        #     database_tmp2 = new_database
-
         # Filter for region ids
         if region_ids:
             check_if_region_in_database(
@@ -495,15 +469,6 @@ class OligoDatabase:
             if not region_ids or region_id in region_ids:
                 # only merge if there are common keys
                 if region_id in self.get_regionid_list():
-                    # self.database = merge_databases(
-                    #     database1=self.database,
-                    #     # pyrefly: ignore [bad-argument-type]
-                    #     database2={region_id: database_region},
-                    #     sequence_type=merge_databases_on_sequence_type,
-                    #     database_sequence_types=self.database_sequence_types,
-                    #     dir_cache_files=self._dir_cache_files,
-                    #     max_entries_in_memory=self._max_entries_in_memory,
-                    # )
                     self.save_oligoset(region_id, pd.concat([self.load_oligoset(region_id), oligoset_region]))
                 else:
                     self.save_region(region_id, database_region)
@@ -524,7 +489,7 @@ class OligoDatabase:
         files_database = [entry.path for entry in os.scandir(path) if entry.is_file()]
 
         # Load files parallel into database
-        # NOTE: for thread safety (database access in merge_databases), actually don't do parallel
+        # NOTE: for thread safety, actually don't do parallel
         progress_description = "Database Loading".ljust(80)
         with joblib_progress(description=progress_description, total=len(files_database)):
             Parallel(n_jobs=1, prefer="threads", require="sharedmem")(

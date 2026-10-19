@@ -215,13 +215,6 @@ class OligoSequenceGenerator:
                 if strand == "-":
                     list_of_coordinates.reverse()
 
-                # NOTE: this writes a file starting with the region_id, which there will be many of (one for each entry belonging to a region it seems, on average 10 entries per region per file)
-                # these will get merged later
-                # this could be replaced with a partitioned parquet format (it's append by default after all), but we'd prefer writing less files in the first place -> group by region first?
-                # grouping by region would require reading the entire input first... not ideal
-                # we want to process in batches, write each batch and rechunk (into one file/fragment per region) them afterwards
-                # maybe define a constant after how many sequences we want to write to file and start with a new dataframe?
-
                 # approach for now: write to partitioned parquet (append), but not after every Fasta entry but every 100 entries (configurable)
                 # TODO: there might be trouble if some Fasta entries have keys that others don't
 
