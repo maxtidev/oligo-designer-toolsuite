@@ -200,7 +200,7 @@ def format_sequence(property: str, region: pd.DataFrame, oligo_id: str) -> str:
     :rtype: str
     :raises ValueError: If the property value is not a string.
     """
-    # NOTE: investigate references, get rid if possible
+    # TODO: longterm investigate references, get rid if possible
     value = get_oligo_property_value(
         property=property,
         region=region,

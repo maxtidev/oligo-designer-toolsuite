@@ -621,7 +621,6 @@ class SeqFishPlusProbeDesigner:
 
         for region_id in region_ids:
             database_region = target_probe_database.load_region(region_id)
-            # NOTE: needs some more thought
 
             barcode = codebook.loc[region_id]
             # pyrefly: ignore [bad-index]
@@ -941,7 +940,6 @@ class SeqFishPlusProbeDesigner:
 
         for region_id in region_ids:
             database_region = hybridization_probe_database.load_region(region_id)
-            # NOTE: needs some more thought
 
             probe_ids = list(database_region.index)
             new_properties: dict[str, dict[str, str]] = {probe_id: {} for probe_id in probe_ids}
