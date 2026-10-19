@@ -271,7 +271,6 @@ class HcrProbeDesigner:
 
         for region_id in region_ids:
             database_region = target_probe_database.load_region(region_id)
-            # NOTE: needs some more thought
 
             barcode = codebook.loc[region_id]
             # pyrefly: ignore [bad-index]

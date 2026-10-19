@@ -127,7 +127,6 @@ class BaseSpecificityFilter(ABC):
 
         for region_id in region_ids:
             database_region = oligo_database.load_region(region_id)
-            # NOTE: may have to be converted to pyarrow first
             properties_series = pd.Series(oligos_with_hits_properties).rename(self.filter_name)
             database_region = database_region.join(properties_series)
             oligo_database.save_region(region_id, database_region)

@@ -213,6 +213,6 @@ def flatten_property_list(property: Any) -> list[Any]:
         for sublist in (property if isinstance(property, list | np.ndarray) else [property])
         for item in (sublist if isinstance(sublist, list | np.ndarray) else [sublist])
     ]
-    if len(flattened_property_list) == 1:  # NOTE: umm, what?
+    if len(flattened_property_list) == 1:  # NOTE: questionable
         return cast_to_list(flattened_property_list[0])
     return cast_to_list(flattened_property_list)
