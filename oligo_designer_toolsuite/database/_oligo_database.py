@@ -5,18 +5,15 @@
 # necessary for using the OligoDatabase type before its definition, needed for Python <3.14
 from __future__ import annotations
 
-import dbm.sqlite3
 import itertools
 import math
 import os
-import pickle
-import shelve
 import shutil
 import typing
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, Protocol
+from typing import Any, Protocol
 
 import numpy as np
 import pandas as pd
@@ -25,26 +22,21 @@ import yaml
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-from filelock import FileLock
 from joblib import Parallel, delayed
 from joblib_progress import joblib_progress
 from pandas import DataFrame
 
 from oligo_designer_toolsuite._constants import SEPARATOR_OLIGO_ID
-from oligo_designer_toolsuite._exceptions import DatabaseError, FileFormatError
 from oligo_designer_toolsuite.utils import (
     CustomYamlDumper,
     FastaParser,
     cast_to_list,
     cast_to_list_of_lists,
-    check_if_region_in_database,
-    check_tsv_format,
     collapse_properties_for_duplicated_sequences,
     flatten_property_list,
     format_oligo_properties,
     get_oligo_property_value,
     logger,
-    retry,
 )
 from oligo_designer_toolsuite.utils._checkers_and_helpers import (
     get_parquet_partitions,
@@ -119,12 +111,10 @@ class OligoDatabase:
 
         self.fasta_parser = FastaParser()
 
-        # Initialize database shelfs
-        self._oligosets_shelf_path = safe_append_filename(self._dir_cache_files, "oligosets.db")
-        self._oligosets_lock_path = safe_append_filename(self._dir_cache_files, "oligosets.lock")
-        self.open_shelfs(flag="n")
-
         self.database_path = safe_append_filename(self._dir_cache_files, "database_fragments")
+        Path(self.database_path).mkdir(parents=True, exist_ok=True)
+        self.oligosets_path = safe_append_filename(self._dir_cache_files, "oligosets_fragments")
+        Path(self.oligosets_path).mkdir(parents=True, exist_ok=True)
 
         # Database metadata
         self.database_sequence_types: list[str] = []
@@ -139,8 +129,9 @@ class OligoDatabase:
             with open(self.file_removed_regions, "a") as handle:
                 handle.write("Region\tPipeline step\n")
 
-    def __del__(self) -> None:
-        self.close_shelfs()
+    def cleanup(self) -> None:
+        # This can't be in __del__ since the files should survive the OligoDatabase instance being destroyed
+        # and recreated in a new process for multi-processing.
         if os.path.exists(self._dir_cache_files):
             shutil.rmtree(self._dir_cache_files, ignore_errors=True)
 
@@ -361,66 +352,7 @@ class OligoDatabase:
         :param region_ids: Region identifier(s) to process. Can be a single region ID (str) or a list of region IDs (list[str]). If None, all regions in the database are processed, defaults to None.
         :type region_ids: str | list[str] | None, optional
         """
-        # Check formatting
-        region_ids = cast_to_list(region_ids) if region_ids else None
-
-        # Check if file exists and has correct format
-        if os.path.exists(file_database):
-            if not check_tsv_format(file_database):
-                raise FileFormatError(
-                    f"Database file '{file_database}' has incorrect format. Expected TSV format."
-                )
-        else:
-            raise FileFormatError(f"Database file '{file_database}' does not exist.")
-
-        # Clear database if it should be overwritten
-        if database_overwrite:
-            shutil.rmtree(self.database_path, ignore_errors=True)
-            os.mkdir(self.database_path)
-
-        # Load file and process content
-        file_tsv_content = pd.read_table(file_database, sep="\t")
-        file_tsv_content = file_tsv_content.apply(
-            lambda col: col.apply(lambda x: x if pd.notna(x) else [None])
-        )
-
-        # convert lists represented as string to proper list format in the table with the eval function
-        file_tsv_content = file_tsv_content.apply(
-            lambda col: col.apply(
-                lambda x: (
-                    eval(x)
-                    if isinstance(x, str) and x.startswith("[") and x.endswith("]")
-                    else ([int(x)] if isinstance(x, str) and x.isdigit() else x)
-                )
-            )
-        )
-
-        # Merge loaded database with existing one
-        database_tmp1 = file_tsv_content.to_dict(orient="records")
-
-        database_tmp2 = shelve.open(safe_append_filename(self._dir_cache_files, "database_tmp2"), flag="n")  # noqa: SIM115
-
-        for entry in database_tmp1:
-            region_id, oligo_id = entry.pop("region_id"), entry.pop("oligo_id")
-            if (not region_ids) or (region_ids and region_id in region_ids):
-                if region_id not in database_tmp2:
-                    database_tmp2[region_id] = {}
-                database_tmp2[region_id][oligo_id] = format_oligo_properties(
-                    entry, self.database_sequence_types
-                )
-
-        # Filter for region ids
-        if region_ids:
-            check_if_region_in_database(
-                # pyrefly: ignore [bad-argument-type]
-                database=database_tmp2,
-                region_ids=region_ids,
-                write_regions_with_insufficient_oligos=self.write_regions_with_insufficient_oligos,
-                file_removed_regions=self.file_removed_regions,
-            )
-
-        # self.database.close()
-        # self.database = database_tmp2
+        raise NotImplementedError
 
     def load_database(
         self,
@@ -446,66 +378,6 @@ class OligoDatabase:
         """
         raise NotImplementedError
 
-        def _load_database_file(file: str) -> None:
-            """
-            Loads a database file and integrates its content into the existing database and oligosets.
-
-            This function opens a pickled database file, extracts the region ID, and the associated database and oligoset regions.
-            If the region ID is already present in the current database, it merges the new data with the existing one.
-            Otherwise, it adds the new region data to the database and oligosets.
-
-            :param file: The path to the database file to be loaded.
-            :type file: str
-            :return: None
-            """
-            # extract region ID and content from the file
-            with open(file, "rb") as handle:
-                content = pickle.load(handle)
-                region_id = content["region_id"]
-                database_region = content["database_region"]
-                oligoset_region = content["oligoset_region"]
-
-            # Only process selected regions
-            if not region_ids or region_id in region_ids:
-                # only merge if there are common keys
-                if region_id in self.get_regionid_list():
-                    self.save_oligoset(region_id, pd.concat([self.load_oligoset(region_id), oligoset_region]))
-                else:
-                    self.save_region(region_id, database_region)
-                    self.save_oligoset(region_id, oligoset_region)
-
-        # Check formatting
-        region_ids = cast_to_list(region_ids) if region_ids else None
-
-        if not os.path.isdir(dir_database):
-            raise DatabaseError(f"Database directory '{dir_database}' does not exist.")
-
-        if database_overwrite:
-            shutil.rmtree(self.database_path, ignore_errors=True)
-            os.mkdir(self.database_path)
-
-        # retrieve all files in the directory
-        path = os.path.abspath(dir_database)
-        files_database = [entry.path for entry in os.scandir(path) if entry.is_file()]
-
-        # Load files parallel into database
-        # NOTE: for thread safety, actually don't do parallel
-        progress_description = "Database Loading".ljust(80)
-        with joblib_progress(description=progress_description, total=len(files_database)):
-            Parallel(n_jobs=1, prefer="threads", require="sharedmem")(
-                delayed(_load_database_file)(file_database) for file_database in files_database
-            )
-
-        # add this step to log regions which are not available in database
-        # if region_ids:
-        #     check_if_region_in_database(
-        #         # pyrefly: ignore [bad-argument-type]
-        #         database=self.database,
-        #         region_ids=region_ids,
-        #         write_regions_with_insufficient_oligos=self.write_regions_with_insufficient_oligos,
-        #         file_removed_regions=self.file_removed_regions,
-        #     )
-
     ############################################
     # Save Functions
     ############################################
@@ -514,12 +386,16 @@ class OligoDatabase:
         regions_out_dir = os.path.join(out_dir, "regions-snapshot.parquet")
         oligosets_out_dir = os.path.join(out_dir, "oligosets-snapshot.parquet")
 
+        # Concat regions to parquet file
         dfs = [self.load_region(region_id) for region_id in self.get_regionid_list()]
         pd.concat(dfs).to_parquet(regions_out_dir, compression="zstd")
 
-        if self.oligosets:
-            df = pd.concat(self.oligosets.values())
-            df.to_parquet(oligosets_out_dir, compression="zstd")
+        # Concat oligosets to parquet file
+        dfs = [
+            df for region_id in self.get_regionid_list() if (df := self.load_oligoset(region_id)) is not None
+        ]
+        if dfs:
+            pd.concat(dfs).to_parquet(oligosets_out_dir, compression="zstd")
 
     def save_database(
         self,
@@ -758,6 +634,7 @@ class OligoDatabase:
             database_region = database_region.replace({pd.NA: None})
 
             oligosets_region = self.load_oligoset(region_id)
+            assert oligosets_region is not None
             oligosets_oligo_columns = [col for col in oligosets_region.columns if col.startswith("oligo_")]
             oligosets_score_columns = [
                 col for col in oligosets_region.columns if col.startswith("set_score_")
@@ -821,6 +698,7 @@ class OligoDatabase:
             database_region = database_region.replace({pd.NA: None})
 
             oligosets_region = self.load_oligoset(region_id)
+            assert oligosets_region is not None
             oligosets_oligo_columns = [col for col in oligosets_region.columns if col.startswith("oligo_")]
             oligosets_score_columns = [
                 col for col in oligosets_region.columns if col.startswith("set_score_")
@@ -919,6 +797,7 @@ class OligoDatabase:
 
             yaml_dict[region_id] = {}
             oligosets_region = self.load_oligoset(region_id)
+            assert oligosets_region is not None
             oligosets_oligo_columns = [col for col in oligosets_region.columns if col.startswith("oligo_")]
             oligosets_score_columns = [
                 col for col in oligosets_region.columns if col.startswith("set_score_")
@@ -976,7 +855,7 @@ class OligoDatabase:
 
         for region_id in regions_to_remove:
             self._remove_region(region_id)
-            self.oligosets.pop(region_id, None)
+            self._remove_oligoset(region_id)
 
         if self.write_regions_with_insufficient_oligos and regions_to_remove:
             with open(self.file_removed_regions, "a") as handle:
@@ -1162,18 +1041,6 @@ class OligoDatabase:
     # Disk Access
     ############################################
 
-    def open_shelfs(self, flag: Literal["r", "w", "c", "n"] = "w") -> None:
-        with (
-            FileLock(self._oligosets_lock_path, is_singleton=True),
-        ):
-            self.oligosets = shelve.open(self._oligosets_shelf_path, flag=flag)  # noqa: SIM115
-
-    def close_shelfs(self) -> None:
-        with (
-            FileLock(self._oligosets_lock_path, is_singleton=True),
-        ):
-            self.oligosets.close()
-
     def update_database_metadata(self) -> None:
         fragments = os.listdir(self.database_path)
         region_ids = [filename.removesuffix(".feather") for filename in fragments]
@@ -1208,23 +1075,30 @@ class OligoDatabase:
         if os.path.isfile(path):
             os.remove(path)
 
-    @retry(attempts=100, exception_type=dbm.sqlite3.error)
-    def load_oligoset(self, region_id: str) -> DataFrame:
+    def load_oligoset(self, region_id: str) -> DataFrame | None:
         """Loads oligoset from database, sufficiently multi-processing safe.
 
         Notes:
             See `OligoDatabase.load_region()`.
         """
-        return self.oligosets[region_id]
+        path = os.path.join(self.oligosets_path, f"{region_id}.feather")
+        if not os.path.isfile(path):
+            return None
+        return pd.read_feather(path, dtype_backend="pyarrow")
 
-    @retry(attempts=100, exception_type=dbm.sqlite3.error)
     def save_oligoset(self, region_id: str, oligoset: DataFrame) -> None:
         """Writes oligoset to database, sufficiently multi-processing safe.
 
         Notes:
-            See `OligoDatabase.load_region()`.
+            See `OligoDatabase.save_region()`.
         """
-        self.oligosets[region_id] = oligoset
+        path = os.path.join(self.oligosets_path, f"{region_id}.feather")
+        oligoset.to_feather(path, compression="zstd")
+
+    def _remove_oligoset(self, region_id: str) -> None:
+        path = os.path.join(self.oligosets_path, f"{region_id}.feather")
+        if os.path.isfile(path):
+            os.remove(path)
 
     ############################################
     # Manipulation Functions
@@ -1252,20 +1126,10 @@ class OligoDatabase:
             # Hopefully align progress bars for all pipeline steps
             description = description.ljust(80)
 
-        def _run_batched_with_database(
+        def _run_batched(
             oligo_database: OligoDatabase, region_ids_batch: list[str], *args, **kwargs
         ) -> list[R]:
-            oligo_database.open_shelfs()
-            try:
-                results = [
-                    function(oligo_database, region_id, *args, **kwargs) for region_id in region_ids_batch
-                ]
-            finally:
-                oligo_database.close_shelfs()
-            return results
-
-        # Close shelfs to hand over control to subprocesses
-        self.close_shelfs()
+            return [function(oligo_database, region_id, *args, **kwargs) for region_id in region_ids_batch]
 
         # We need batching here for large amounts of regions to avoid sending the same function
         # a huge amount of times to each worker process
@@ -1287,13 +1151,10 @@ class OligoDatabase:
         # Execute function over all regions in process pool in batches
         with joblib_progress(description=description, total=n_batches):
             batched_results: list[list[R]] = Parallel(n_jobs=n_jobs, prefer="processes")(
-                delayed(_run_batched_with_database)(self, region_ids_batch, *args, **kwargs)
+                delayed(_run_batched)(self, region_ids_batch, *args, **kwargs)
                 for region_ids_batch in itertools.batched(region_ids, max_batch_size)
             )
         results = list(itertools.chain.from_iterable(batched_results))
-
-        # Re-open database after all subprocesses finished
-        self.open_shelfs()
 
         # Update database metadata
         # (necessary since processes don't synchronize the state of self.metadata)
@@ -1335,6 +1196,7 @@ class OligoDatabase:
                            or a list of region IDs (list[str]). Otherwise all regions are scanned.
         :type region_ids: str | list[str] | None
         """
+
         def join_if_overlapping(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
             new_columns = df2.columns.difference(df1.columns)
             is_overlapping = not df1.index.intersection(df2.index).empty
@@ -1414,9 +1276,13 @@ class OligoDatabase:
             region_df = self.load_region(region_id)
 
             if remove_if_smaller_threshold:
-                region_df = region_df[(region_df[property_name] >= property_thr) | region_df[property_name].isna()]
+                region_df = region_df[
+                    (region_df[property_name] >= property_thr) | region_df[property_name].isna()
+                ]
             else:
-                region_df = region_df[(region_df[property_name] <= property_thr) | region_df[property_name].isna()]
+                region_df = region_df[
+                    (region_df[property_name] <= property_thr) | region_df[property_name].isna()
+                ]
             self.save_region(region_id, region_df)
 
     def filter_database_by_property_category(

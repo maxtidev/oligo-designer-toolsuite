@@ -2,15 +2,11 @@
 # imports
 ############################################
 
-import shelve
-from shelve import Shelf
 from typing import Any
 
 import numpy as np
 import pandas as pd
 
-from oligo_designer_toolsuite._constants import SEPARATOR_OLIGO_ID
-from oligo_designer_toolsuite.utils._checkers_and_helpers import safe_append_filename
 from oligo_designer_toolsuite.utils._logging import logger
 
 from ._checkers_and_helpers import cast_to_list
@@ -18,7 +14,6 @@ from ._checkers_and_helpers import cast_to_list
 ############################################
 # Collection of utility functions
 ############################################
-
 
 
 def collapse_properties_for_duplicated_sequences(
@@ -90,93 +85,13 @@ def get_oligo_property_value(
 
         if property_value and len(property_value) == 1:
             property_value = property_value[0]
-        
+
         # Due to some functions not handling lists of None values properly, merge lists of None into just None
         # also see exception 2 in load_database_from_parquet
         if isinstance(property_value, list) and all(v is None for v in property_value):
             property_value = None
 
     return property_value
-
-
-def check_if_region_in_database(
-    database: Shelf,
-    region_ids: list[str],
-    write_regions_with_insufficient_oligos: bool,
-    file_removed_regions: str,
-) -> None:
-    """
-    Checks if specified regions are present in the database and logs missing regions.
-
-    :param database: The database.
-    :type database: dict
-    :param region_ids: Region identifier(s) to process. Can be a single region ID (str) or a list of region IDs (List[str]). If None, all regions in the database are processed.
-    :type region_ids: list
-    :param write_regions_with_insufficient_oligos: Whether to write regions with insufficient oligos to a file.
-    :type write_regions_with_insufficient_oligos: bool
-    :param file_removed_regions: The file to which missing regions should be logged.
-    :type file_removed_regions: str
-    """
-    keys = list(database.keys())
-    for region_id in region_ids:
-        if region_id not in keys:
-            logger.warning(f"Region {region_id} not available in reference file.")
-            if write_regions_with_insufficient_oligos:
-                with open(file_removed_regions, "a") as hanlde:
-                    hanlde.write(f"{region_id}\t{'Not in Annotation'}\n")
-
-
-def check_if_key_in_database(database: Shelf, key: str, region_ids: str | list[str] | None = None) -> bool:
-    """
-    Checks if a key exists in the database.
-
-    :param database: The database to check.
-    :type database: Shelf
-    :param key: The key to check.
-    :type key: str
-    :param region_ids: Optional region ID(s) to check in specific region(s). Can be a single region ID (str) or a list of region IDs (list[str]). If provided, checks that the key exists in ALL specified regions. If None, checks if it exists in at least one region.
-    :type region_ids: str | list[str] | None
-    :return: True if the key exists in the database (in all specified regions if region_ids is provided, or in at least one region if region_ids is None), False otherwise.
-    :rtype: bool
-    """
-
-    # for thread safety and because we don't assume our code to contain bugs, always return True
-    # (this is only used with assert statements)
-    return True
-
-    # # Helper for recursive search
-    # def recursive_contains(d: Any, target: str) -> bool:
-    #     """
-    #     Recursively checks if `target` exists as a key in a nested structure.
-    #     Top-level is EffiDict, deeper levels are plain dicts.
-    #     """
-    #     try:
-    #         if isinstance(d, dict):  # this will match EffiDict at the top AND nested dicts
-    #             if target in d:
-    #                 return True
-    #             return any(recursive_contains(v, target) for v in d.values())
-    #         return False
-    #     except Exception:  # noqa: BLE001, RUF100
-    #         return False
-
-    # database_region_ids = set(database.keys())
-
-    # # --- Case: region restriction ---
-    # if region_ids is not None:
-    #     region_ids = cast_to_list(region_ids)
-    #     regions_found = False  # check if at least one region is found in the database
-    #     for region_id in region_ids:
-    #         if region_id not in database_region_ids:
-    #             continue
-    #         else:
-    #             regions_found = True
-    #         region_data = database[region_id]
-    #         if not recursive_contains(region_data, key):
-    #             return False
-    #     return regions_found
-
-    # # --- Case: no region restriction → any region may match ---
-    # return any(recursive_contains(database[region_id], key) for region_id in database_region_ids)
 
 
 def format_oligo_properties(

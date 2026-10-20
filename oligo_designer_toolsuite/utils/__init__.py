@@ -12,11 +12,8 @@ from ._checkers_and_helpers import (
     check_if_key_exists,
     check_tsv_format,
     generate_unique_filename,
-    retry,
 )
 from ._database_processor import (
-    check_if_key_in_database,
-    check_if_region_in_database,
     collapse_properties_for_duplicated_sequences,
     flatten_property_list,
     format_oligo_properties,
@@ -45,8 +42,6 @@ __all__ = [
     "cast_to_string",
     "check_if_dna_sequence",
     "check_if_key_exists",
-    "check_if_key_in_database",
-    "check_if_region_in_database",
     "check_tsv_format",
     "collapse_properties_for_duplicated_sequences",
     "configure_root_logger",
@@ -60,5 +55,4 @@ __all__ = [
     "get_sequence_from_annotation",
     "logger",
     "remove_index_files",
-    "retry",
 ]

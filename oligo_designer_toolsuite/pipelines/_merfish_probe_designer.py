@@ -674,6 +674,7 @@ class MerfishProbeDesigner:
             channels_ids=channels_ids,
             n_bits=n_bits,
         )
+        oligo_database.cleanup()
 
         return codebook, readout_probe_table
 
@@ -998,6 +999,7 @@ class MerfishProbeDesigner:
                     forward_primer_sequence = primer_properties["oligo"]
 
         os.remove(file_fasta_hybridization_probes_database)
+        oligo_database.cleanup()
 
         return reverse_primer_sequence, forward_primer_sequence
 
@@ -2833,6 +2835,7 @@ def main() -> None:
         codebook=codebook,
         readout_probe_table=readout_probe_table,
     )
+    probe_database.cleanup()
 
     print("--------------END PIPELINE--------------")
 

@@ -1107,6 +1107,7 @@ def oligo_seq_probe_designer(config: OligoSeqProbeDesignerConfig) -> None:
     )
 
     pipeline.generate_output(oligo_database=oligo_database)
+    oligo_database.cleanup()
 
 
 def main() -> None:

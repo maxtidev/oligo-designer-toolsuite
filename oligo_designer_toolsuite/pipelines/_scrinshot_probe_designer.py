@@ -609,6 +609,7 @@ class ScrinshotProbeDesigner:
             database_region = oligo_database.load_region(region_id)
 
             oligo_sets_region = oligo_database.load_oligoset(region_id)
+            assert oligo_sets_region is not None
             oligo_sets_oligo_columns = [col for col in oligo_sets_region.columns if col.startswith("oligo_")]
 
             new_oligo_properties = {}
@@ -1615,6 +1616,7 @@ class DetectionOligoDesigner:
         database_region = oligo_database.load_region(region_id)
 
         oligosets_region = oligo_database.load_oligoset(region_id)
+        assert oligosets_region is not None
         oligosets_oligo_columns = [col for col in oligosets_region.columns if col.startswith("oligo_")]
 
         new_oligo_properties = {}
@@ -2023,6 +2025,7 @@ def main() -> None:
     )
 
     pipeline.generate_output(probe_database=probe_database)
+    probe_database.cleanup()
 
     print("--------------END PIPELINE--------------")
 
