@@ -902,6 +902,7 @@ def main() -> None:
         codebook=codebook,
         initiator_table=initiator_table,
     )
+    hybridization_probe_database.cleanup()
 
     print("--------------END PIPELINE--------------")
 

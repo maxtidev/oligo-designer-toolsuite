@@ -1993,6 +1993,7 @@ def main() -> None:
         codebook=codebook,
         readout_probe_table=readout_probe_table,
     )
+    final_probe_database.cleanup()
 
     print("--------------END PIPELINE--------------")
 

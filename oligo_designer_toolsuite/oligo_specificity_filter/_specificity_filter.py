@@ -5,7 +5,6 @@
 
 from oligo_designer_toolsuite.database import OligoDatabase
 from oligo_designer_toolsuite.oligo_specificity_filter import BaseSpecificityFilter
-from oligo_designer_toolsuite.utils import check_if_key_in_database
 
 ############################################
 # Specificity Filter Classe
