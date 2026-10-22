@@ -108,8 +108,8 @@ class DynamicProgrammingOligoSelection(BaseOligoSelection):
             skip_indices.update(self._select_nodes_to_skip(nodes, scores))
             oligosets.append({reordered_oligo_ids[i] for i in nodes})
 
-        oligo_database.oligosets[region_id] = self._oligosets_to_dataframe(
-            oligosets, scores_series, self.set_size_opt
+        oligo_database.save_oligoset(
+            region_id, self._oligosets_to_dataframe(oligosets, scores_series, self.set_size_opt)
         )
 
         # Remove oligos from database that are not part of oligosets
