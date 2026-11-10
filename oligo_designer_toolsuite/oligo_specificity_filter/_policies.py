@@ -162,7 +162,7 @@ class RemoveByLargerRegionFilterPolicy(BaseFilterPolicy):
                 node_to_remove = edge[1]
                 oligos_with_hits[region_1].append(node_to_remove)
                 number_oligos_per_region[region_1] -= 1
-            
+
             # remove node
             if node_to_remove in selfloop_nodes:
                 # special handling for selfloops

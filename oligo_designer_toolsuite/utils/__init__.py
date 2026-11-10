@@ -12,6 +12,7 @@ from ._checkers_and_helpers import (
     check_if_key_exists,
     check_tsv_format,
     generate_unique_filename,
+    is_none,
 )
 from ._database_processor import (
     collapse_properties_for_duplicated_sequences,
@@ -53,6 +54,7 @@ __all__ = [
     "get_intersection",
     "get_oligo_property_value",
     "get_sequence_from_annotation",
+    "is_none",
     "logger",
     "remove_index_files",
 ]

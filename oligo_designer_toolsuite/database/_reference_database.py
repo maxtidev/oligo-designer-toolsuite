@@ -283,7 +283,9 @@ class ReferenceDatabase:
         fasta_sequences_filtered = []
 
         for entry in fasta_sequences:
-            _, properties, _ = self.fasta_parser.parse_fasta_header_strict(entry.id, parse_additional_info=True)
+            _, properties, _ = self.fasta_parser.parse_fasta_header_strict(
+                entry.id, parse_additional_info=True
+            )
             if isinstance(properties, str):
                 continue
             if property_name in properties:

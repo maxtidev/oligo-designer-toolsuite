@@ -846,8 +846,10 @@ class BlastNSeedregionSiteFilter(BlastNSeedregionFilterBase):
             )
         ]
         calculator = PropertyCalculator(properties=properties)
-        oligo_database = calculator.apply(
-            oligo_database=oligo_database, sequence_type=self.sequence_type, n_jobs=1
+        # directly calculate for just the region since we only need the values for that
+        # the Filter already gets mapped over all regions so calculating the property for all regions in here would be O(n_regions^2)
+        calculator._calculate_region(
+            oligo_database=oligo_database, region_id=region_id, sequence_type=self.sequence_type,
         )
 
         seedregion = oligo_database.get_oligo_property_table(
