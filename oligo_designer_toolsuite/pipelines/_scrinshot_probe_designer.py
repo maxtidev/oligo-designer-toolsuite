@@ -8,6 +8,8 @@ import random
 import shutil
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
 import yaml
 
 from oligo_designer_toolsuite.database import OligoDatabase, ReferenceDatabase
@@ -59,7 +61,7 @@ from oligo_designer_toolsuite.pipelines._utils import (
     preprocess_tm_parameters,
 )
 from oligo_designer_toolsuite.sequence_generator import OligoSequenceGenerator
-from oligo_designer_toolsuite.utils import configure_root_logger, logger
+from oligo_designer_toolsuite.utils import configure_root_logger, is_none, logger
 from oligo_designer_toolsuite.utils._database_processor import get_oligo_property_value
 
 ############################################
@@ -610,13 +612,18 @@ class ScrinshotProbeDesigner:
 
             oligo_sets_region = oligo_database.load_oligoset(region_id)
             assert oligo_sets_region is not None
+            oligo_sets_region = oligo_sets_region.replace({pd.NA: None, np.nan: None})
+
             oligo_sets_oligo_columns = [col for col in oligo_sets_region.columns if col.startswith("oligo_")]
 
             new_oligo_properties = {}
 
             for index in range(len(oligo_sets_region.index)):
                 for column in oligo_sets_oligo_columns:
-                    oligo_id = str(oligo_sets_region.loc[index, column])
+                    oligo_id = oligo_sets_region.loc[index, column]
+                    if is_none(oligo_id):
+                        continue
+                    oligo_id = str(oligo_id)
                     barcode: str = barcodes[region_idx]
 
                     ligation_site = get_oligo_property_value(
@@ -1617,13 +1624,18 @@ class DetectionOligoDesigner:
 
         oligosets_region = oligo_database.load_oligoset(region_id)
         assert oligosets_region is not None
+        oligosets_region = oligosets_region.replace({pd.NA: None, np.nan: None})
+
         oligosets_oligo_columns = [col for col in oligosets_region.columns if col.startswith("oligo_")]
 
         new_oligo_properties = {}
 
         for index in range(len(oligosets_region.index)):
             for column in oligosets_oligo_columns:
-                oligo_id = str(oligosets_region.loc[index, column])
+                oligo_id = oligosets_region.loc[index, column]
+                if is_none(oligo_id):
+                    continue
+                oligo_id = str(oligo_id)
 
                 ligation_site = get_oligo_property_value(
                     property="ligation_site", region=database_region, oligo_id=oligo_id, flatten=True

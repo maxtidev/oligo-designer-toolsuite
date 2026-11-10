@@ -78,7 +78,6 @@ def log_parameters_and_get_db(func: Callable[..., Any], args: tuple[Any, ...], k
     return bound_args.arguments.get("oligo_database")
 
 
-
 def get_oligo_length_min_max_from_database(oligo_database: OligoDatabase) -> tuple[int, int]:
     """
     Get the minimum and maximum oligo lengths from the database.

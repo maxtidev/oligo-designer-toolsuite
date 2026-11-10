@@ -36,6 +36,7 @@ from oligo_designer_toolsuite.utils import (
     flatten_property_list,
     format_oligo_properties,
     get_oligo_property_value,
+    is_none,
     logger,
 )
 from oligo_designer_toolsuite.utils._checkers_and_helpers import (
@@ -571,7 +572,7 @@ class OligoDatabase:
         first_entry = True
         for region_id in region_ids:
             database_region = self.load_region(region_id)
-            database_region = database_region.replace({pd.NA: None})
+            database_region = database_region.replace({pd.NA: None, np.nan: None})
             # NOTE: lots of custom and confusing formatting, we'd be better off changing this to a simple export of the dataframe
 
             file_tsv_content = []
@@ -631,10 +632,11 @@ class OligoDatabase:
 
         for region_id in region_ids:
             database_region = self.load_region(region_id)
-            database_region = database_region.replace({pd.NA: None})
+            database_region = database_region.replace({pd.NA: None, np.nan: None})
 
             oligosets_region = self.load_oligoset(region_id)
             assert oligosets_region is not None
+            oligosets_region = oligosets_region.replace({pd.NA: None, np.nan: None})
             oligosets_oligo_columns = [col for col in oligosets_region.columns if col.startswith("oligo_")]
             oligosets_score_columns = [
                 col for col in oligosets_region.columns if col.startswith("set_score_")
@@ -653,6 +655,8 @@ class OligoDatabase:
                 }
 
                 for oligo_idx, oligo_id in enumerate(oligoset):
+                    if is_none(oligo_id):
+                        continue
                     oligo_id = str(oligo_id)
                     yaml_dict_oligo_entry = {"oligo_id": oligo_id}
                     oligo_properties = database_region.loc[oligo_id]
@@ -695,10 +699,11 @@ class OligoDatabase:
 
         for region_id in region_ids:
             database_region = self.load_region(region_id)
-            database_region = database_region.replace({pd.NA: None})
+            database_region = database_region.replace({pd.NA: None, np.nan: None})
 
             oligosets_region = self.load_oligoset(region_id)
             assert oligosets_region is not None
+            oligosets_region = oligosets_region.replace({pd.NA: None, np.nan: None})
             oligosets_oligo_columns = [col for col in oligosets_region.columns if col.startswith("oligo_")]
             oligosets_score_columns = [
                 col for col in oligosets_region.columns if col.startswith("set_score_")
@@ -713,6 +718,8 @@ class OligoDatabase:
                 # pyrefly: ignore [unsupported-operation]
                 oligoset_id = f"oligoset_{oligoset_idx + 1}"
                 for oligo_id in oligoset:
+                    if is_none(oligo_id):
+                        continue
                     entry = {
                         "region_id": region_id,
                         "oligoset_id": oligoset_id,
@@ -793,11 +800,12 @@ class OligoDatabase:
 
         for region_id in region_ids:
             database_region = self.load_region(region_id)
-            database_region = database_region.replace({pd.NA: None})
+            database_region = database_region.replace({pd.NA: None, np.nan: None})
 
             yaml_dict[region_id] = {}
             oligosets_region = self.load_oligoset(region_id)
             assert oligosets_region is not None
+            oligosets_region = oligosets_region.replace({pd.NA: None, np.nan: None})
             oligosets_oligo_columns = [col for col in oligosets_region.columns if col.startswith("oligo_")]
             oligosets_score_columns = [
                 col for col in oligosets_region.columns if col.startswith("set_score_")
@@ -813,6 +821,9 @@ class OligoDatabase:
                 oligoset_id = f"oligoset_{oligoset_idx + 1}"
                 yaml_dict[region_id][oligoset_id] = {}
                 for oligo_id in oligoset:
+                    if is_none(oligo_id):
+                        continue
+
                     entry = {}
                     oligo_properties = database_region.loc[oligo_id]
                     for property in properties:
@@ -1306,6 +1317,7 @@ class OligoDatabase:
 
         for region_id in self.get_regionid_list():
             database_region = self.load_region(region_id)
+            database_region = database_region.replace({pd.NA: None, np.nan: None})
             oligos_to_remove = []
             for oligo_id in list(database_region.index):
                 property_values = cast_to_list(
@@ -1313,7 +1325,7 @@ class OligoDatabase:
                         property=property_name, region=database_region, oligo_id=oligo_id, flatten=True
                     )
                 )
-                if property_values is not None and property_values is not pd.NA:  # noqa: SIM102
+                if not is_none(property_values):  # noqa: SIM102
                     # remove if any of the items match category
                     if (
                         remove_if_equals_category

@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+import pandas as pd
 import pyarrow.dataset as ds
 import pyarrow.parquet as pq
 
@@ -53,6 +54,10 @@ class CustomYamlDumper(yaml.SafeDumper):
     # Disables the use of aliases by returning True for all data
     def ignore_aliases(self, data: Any) -> bool:
         return True
+
+
+def is_none(value: Any) -> bool:
+    return value is None or value is np.nan or value is pd.NA  # noqa: PLW0177
 
 
 def check_if_dna_sequence(seq: str, valid_characters: list[str] | None = None) -> bool:
