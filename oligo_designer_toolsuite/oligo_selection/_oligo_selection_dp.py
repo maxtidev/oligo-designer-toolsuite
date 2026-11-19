@@ -91,6 +91,9 @@ class DynamicProgrammingOligoSelection(BaseOligoSelection):
         start_points = [start_points[i] for i in order]
         end_points = [end_points[i] for i in order]
 
+        # Enforce minimum distance between oligos by artificially extending their lengths
+        end_points = [e+self.distance_between_oligos for e in end_points]
+
         # Calculate scores
         scores_series = self.oligos_scoring.apply(database_region, reordered_oligo_ids, sequence_type)
 
