@@ -88,6 +88,10 @@ def normalize_df(
     df = df.reset_index(drop=True)
     if "oligo_id" in df:
         df = df.drop("oligo_id", axis=1)
+    
+    # drop oligoset_id because it can be arbitrary
+    if "oligoset_id" in df:
+        df = df.drop("oligoset_id", axis=1)
 
     # sort columns by name
     df = df.reindex(sorted(df.columns), axis=1)
@@ -199,7 +203,8 @@ def assert_tsv_equality(base_tsv_path: str, other_tsv_path: str) -> bool:
     base_df = pd.read_csv(base_tsv_path, sep="\t")
     other_df = pd.read_csv(other_tsv_path, sep="\t")
 
-    sorting_keys = ["region_id", "oligoset_id", "sequence_target", "target", "sequence_padlock_probe", "bit"]
+    # oligoset_id should be isomorphic, but not necessarily identical -> drop column
+    sorting_keys = ["region_id", "sequence_target", "target", "sequence_padlock_probe", "bit"]
     base_df = normalize_df(base_df, sorting_keys)
     other_df = normalize_df(other_df, sorting_keys)
 
@@ -215,7 +220,8 @@ def assert_xlsx_equality(base_xlsx_path: str, other_xlsx_path: str) -> bool:
         base_df = pd.read_excel(base_xlsx_path, sheet_name)
         other_df = pd.read_excel(other_xlsx_path, sheet_name)
 
-        sorting_keys = ["oligoset_id", "sequence_target", "target", "sequence_padlock_probe", "bit"]
+        # oligoset_id should be isomorphic, but not necessarily identical -> drop column
+        sorting_keys = ["sequence_target", "target", "sequence_padlock_probe", "bit"]
         base_df = normalize_df(base_df, sorting_keys)
         other_df = normalize_df(other_df, sorting_keys)
 
